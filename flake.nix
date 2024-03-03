@@ -16,11 +16,11 @@
         overlays = [ rust-overlay.overlays.default ];
         pkgs = import nixpkgs { inherit system overlays; };
         rust = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
-        inputs = [ rust pkgs.wasm-bindgen-cli pkgs.rust-analyzer];
+        inputs = [ rust pkgs.wasm-bindgen-cli pkgs.rust-analyzer pkgs.sqlite pkgs.diesel-cli];
       in
       {
         defaultPackage = pkgs.rustPlatform.buildRustPackage {
-          pname = "c2rs";
+          pname = "boat_tracking";
           version = "1.0.0";
 
           src = ./.;
@@ -32,7 +32,7 @@
           nativeBuildInputs = inputs;
 
           buildPhase = ''
-            cargo build --release --target=wasm32-unknown-unknown
+            cargo build --release 
 
             echo 'Creating out dir...'
             mkdir -p $out/src;
@@ -41,17 +41,20 @@
             # echo 'Copying package.json...'
             # cp ./package.json $out/;
 
-            echo 'Generating node module...'
-            wasm-bindgen \
-              --target nodejs \
-              --out-dir $out/src \
-              target/wasm32-unknown-unknown/release/gcd.wasm;
+            # echo 'Generating node module...'
+            # wasm-bindgen \
+            #   --target nodejs \
+            #   --out-dir $out/src \
+            #   target/wasm32-unknown-unknown/release/gcd.wasm;
           '';
           installPhase = "echo 'Skipping installPhase'";
         };
 
 
-        devShell = pkgs.mkShell { packages = inputs; };
+        devShell = pkgs.mkShell { 
+          packages = inputs;
+          DATABASE_URL = "db.sql";
+        };
       }
     );
 }
