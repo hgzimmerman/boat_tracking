@@ -11,7 +11,8 @@ CREATE TABLE boat (
     oars_per_seat INTEGER CHECK( oars_per_seat IN (1, 2) ) NOT NULL,
 
     acquired_at DATE, 
-    manufactured_at DATE
+    manufactured_at DATE,
+    relinquished_at DATE
 );
 
 

@@ -13,6 +13,7 @@ diesel::table! {
         oars_per_seat -> Integer,
         acquired_at -> Nullable<Date>,
         manufactured_at -> Nullable<Date>,
+        relinquished_at -> Nullable<Date>,
     }
 }
 
@@ -47,8 +48,4 @@ diesel::joinable!(issue -> boat (boat_id));
 diesel::joinable!(issue -> use_event (use_event_id));
 diesel::joinable!(use_event -> boat (boat_id));
 
-diesel::allow_tables_to_appear_in_same_query!(
-    boat,
-    issue,
-    use_event,
-);
+diesel::allow_tables_to_appear_in_same_query!(boat, issue, use_event,);

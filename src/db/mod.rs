@@ -1,9 +1,6 @@
-
-
 pub mod boat;
 pub mod issue;
 pub mod use_event;
-
 
 pub mod sql_types {
     pub use super::boat::types::WeightClassMapping;
@@ -13,5 +10,5 @@ pub mod sql_types {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum DbOrdering {
     Asc,
-    Desc
+    Desc,
 }

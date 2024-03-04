@@ -16,3 +16,9 @@ serde_json = "1.0.114"
 
 diesel-derive-enum = {version="2.1.0", features = ["sqlite"]}
 diesel-derive-newtype = "2.1.0"
+dioxus = "0.4.3"
+dioxus-liveview = { version = "0.4.3", features = ["axum"] }
+axum = {version = "0.6.20", features = ["ws"]}
+tracing = "0.1.40"
+deadpool-diesel = {version = "0.5.0", features = ["sqlite"]}
+anyhow = "1.0.80"
