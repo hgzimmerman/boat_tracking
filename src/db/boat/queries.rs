@@ -19,7 +19,6 @@ impl Boat {
         conn: &mut SqliteConnection,
         filter: BoatFilter2,
     ) -> Result<Vec<Boat>, diesel::result::Error> {
-        use crate::schema::boat;
         match filter {
             BoatFilter2::None => boat::table.get_results(conn),
             BoatFilter2::ByType(ty) => {
@@ -49,7 +48,6 @@ impl Boat {
         conn: &mut SqliteConnection,
         id: BoatId,
     ) -> Result<Boat, diesel::result::Error> {
-        use crate::schema::boat;
         boat::table.filter(boat::id.eq(id)).get_result(conn)
     }
 
@@ -58,7 +56,6 @@ impl Boat {
         conn: &mut SqliteConnection,
         id: BoatId,
     ) -> Result<Boat, diesel::result::Error> {
-        use crate::schema::boat;
         let now = chrono::Utc::now().naive_utc().date();
         let target = boat::table.filter(boat::id.eq(id));
         diesel::update(target)
@@ -72,7 +69,6 @@ impl BoatAndStats {
         conn: &mut SqliteConnection,
         id: BoatId,
     ) -> Result<Self, diesel::result::Error> {
-        use crate::schema::{boat, issue, use_event};
         let ago_30_d = chrono::Utc::now().naive_utc() - chrono::TimeDelta::days(30);
         boat::table
             .filter(boat::id.eq(id))
@@ -98,7 +94,6 @@ impl BoatAndStats {
     }
 
     pub fn get_boats(conn: &mut SqliteConnection) -> Result<Vec<Self>, diesel::result::Error> {
-        use crate::schema::{boat, issue, use_event};
         let ago_30_d = chrono::Utc::now().naive_utc() - chrono::TimeDelta::days(30);
         boat::table
             .left_outer_join(issue::table.on(issue::boat_id.eq(boat::id.nullable())))

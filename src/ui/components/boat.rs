@@ -1,4 +1,3 @@
-use std::ops::Deref;
 
 use dioxus_fullstack::prelude::*;
 use dioxus::prelude::*;
@@ -93,7 +92,7 @@ fn BoatTitle<'a>(cx: Scope, boat: RefResult<'a, BoatAndStats>) -> Element<'a> {
 
 #[component]
 fn BoatIssueList<'a>(cx: Scope, issues: RefResult<'a, Vec<Issue>>) -> Element<'a> {
-    use crate::ui::util::loadable::Loadable::*;
+    // use crate::ui::util::loadable::Loadable::*;
     cx.render(match issues.as_deref() {
         Ok(issues) => {
             rsx! {
