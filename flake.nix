@@ -16,7 +16,16 @@
         overlays = [ rust-overlay.overlays.default ];
         pkgs = import nixpkgs { inherit system overlays; };
         rust = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
-        inputs = [ rust pkgs.wasm-bindgen-cli pkgs.rust-analyzer pkgs.sqlite pkgs.diesel-cli];
+        inputs = [ 
+          rust 
+          pkgs.wasm-bindgen-cli 
+          pkgs.rust-analyzer 
+          pkgs.sqlite 
+          pkgs.diesel-cli 
+          pkgs.openssl 
+          pkgs.pkg-config
+          pkgs.dioxus-cli
+          ];
       in
       {
         defaultPackage = pkgs.rustPlatform.buildRustPackage {
@@ -53,6 +62,8 @@
 
         devShell = pkgs.mkShell { 
           packages = inputs;
+          # packages = self;
+          PKG_CONFIG_PATH = "{pkgs.openssl.dev}/lib/pkgconfig";
           DATABASE_URL = "db.sql";
         };
       }

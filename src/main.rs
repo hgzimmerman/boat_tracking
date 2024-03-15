@@ -1,90 +1,99 @@
 use anyhow::Error;
-use boat_tracking::{
-    db::{
-        boat::{BoatAndStats, NewBoat},
-        use_event::{NewUseEvent, UseEvent, UseScenario},
-    }, ui::AppState 
-};
-use diesel::Connection;
 
 
-use axum::{extract::WebSocketUpgrade, response::Html, routing::get, Router};
-use dioxus::prelude::*;
-
-#[tokio::main]
-async fn main() -> Result<(), Error> {
-    println!("Hello, world!");
-
+// #[tokio::main]
+fn main() -> Result<(), Error> {
 
     let conn_string = "db.sql";
+    #[cfg(feature = "ssr")]
     {
+        use diesel::Connection;
+        use boat_tracking::db;
         let mut conn = diesel::SqliteConnection::establish(conn_string)?;
         let conn = &mut conn;
-        let new_boat = NewBoat::new(
+        let new_boat = db::boat::NewBoat::new(
             "a good boat name".to_string(),
-            boat_tracking::db::boat::types::WeightClass::Medium,
-            boat_tracking::db::boat::types::BoatType::Eight,
+            db::boat::types::WeightClass::Medium,
+            db::boat::types::BoatType::Eight,
             Some(chrono::Utc::now().naive_utc().date()),
             None,
         );
-        let boat = boat_tracking::db::boat::Boat::new_boat(conn, new_boat)?;
-        let new_event = NewUseEvent {
+        let boat = db::boat::Boat::new_boat(conn, new_boat)?;
+        let new_event = db::use_event::NewUseEvent {
             boat_id: boat.id,
             recorded_at: chrono::Utc::now().naive_utc(),
-            use_scenario: UseScenario::AM,
+            use_scenario: db::use_event::UseScenario::AM,
             note: Some("we had a good row".to_string()),
         };
-        UseEvent::new_event(conn, new_event)?;
-        let _boats = BoatAndStats::get_boats(conn)?;
+        db::use_event::UseEvent::new_event(conn, new_event)?;
+        let boats = db::boat::BoatAndStats::get_boats(conn)?;
+        println!("{}", boats.len())
     }
 
 
-    let addr: std::net::SocketAddr = ([127, 0, 0, 1], 3030).into();
+    #[cfg(feature = "web")]
+    dioxus_web::launch_cfg(boat_tracking::ui::app, dioxus_web::Config::new().hydrate(true));
 
-    let view = dioxus_liveview::LiveViewPool::new();
+    #[cfg(feature = "ssr")]
+    {
+        use axum::routing::*;
+        use dioxus_fullstack::prelude::*;
+        use boat_tracking::ui::state::AppState;
+        
+        tokio::runtime::Runtime::new()
+            .unwrap()
+            .block_on(async move {
+                let cfg = ServeConfigBuilder::new(boat_tracking::ui::app, ())
+                    .assets_path("dist")
+                    .build();
+                let ssr_state = SSRState::new(&cfg);
 
-    let state = AppState::new(
-        conn_string
-    );
+                let state = AppState::new(conn_string);
 
-    let app = Router::new()
-        // The root route contains the glue code to connect to the WebSocket
-        .route(
-            "/",
-            get(move || async move {
-                Html(format!(
-                    r#"
-                <!DOCTYPE html>
-                <html>
-                <head> <title>GRC Boat Tracker</title>  </head>
-                <body style="margin: 0; padding: 0"> <div id="main"></div> </body>
-                {glue}
-                </html>
-                "#,
-                    // Create the glue code to connect to the WebSocket on the "/ws" route
-                    glue = dioxus_liveview::interpreter_glue(&format!("ws://{addr}/ws"))
-                ))
-            }),
-        )
-        // The WebSocket route is what Dioxus uses to communicate with the browser
-        .route(
-            "/ws",
-            get(move |ws: WebSocketUpgrade| async move {
-                ws.on_upgrade(move |socket| async move {
-                    // When the WebSocket is upgraded, launch the LiveView with the app component
-                    _ = view.launch_with_props(dioxus_liveview::axum_socket(socket), boat_tracking::ui::app, state).await;
-                })
-            }),
-        );
+                // build our application with some routes
+                let app = Router::new()
+                    .serve_static_assets("dist")
+                    .connect_hot_reload()
+                    // .register_server_fns("")
+                    .register_server_fns_with_handler("", |func| {
+                        let state = state.clone();
+                        move |req: axum::http::Request<axum::body::Body>| {
+                            let mut context = DioxusServerContext::default();
+                            let _ = context.insert(state.clone());
+                            let mut service = dioxus_fullstack::server_fn_service(context, func);
+                            async move {
+                                let (req, body) = req.into_parts();
+                                let req = axum::http::Request::from_parts(req, body);
+                                let res = service.0.run(req);
+                                match res.await {
+                                    Ok(res) => Ok::<_, std::convert::Infallible>(res.map(|b| b.into())),
+                                    Err(e) => {
+                                        let mut res = axum::response::Response::new(axum::body::Body::from(e.to_string()));
+                                        *res.status_mut() = axum::http::StatusCode::INTERNAL_SERVER_ERROR;
+                                        Ok(res)
+                                    }
+                                }
+                            }
+                        }
+                    })
+                    // .fallback(get(render_handler).with_state((cfg, ssr_state)));
+                    .fallback(get(render_handler_with_context).with_state((
+                        move |ctx|{
+                            ctx.insert::<AppState>(state.clone()).unwrap();
+                        },
+                        cfg,
+                        ssr_state,
+                    )));
+                    // dioxus_fullstack::axum_adapter::DioxusRouterExt
 
-    println!("Listening on http://{addr}");
-
-    axum::Server::bind(&addr.to_string().parse().unwrap())
-        .serve(app.into_make_service())
-        .await
-        .unwrap();
-
-
+                // run it
+                let addr = std::net::SocketAddr::from(([127, 0, 0, 1], 3000));
+                println!("running at http://{addr}");
+                axum::Server::bind(&addr).serve(app.into_make_service())
+                    .await
+                    .unwrap();
+            });
+    }
 
     Ok(())
 }

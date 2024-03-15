@@ -21,6 +21,18 @@ impl BoatId {
         self.0
     }
 }
+impl std::str::FromStr for BoatId {
+    type Err = std::num::ParseIntError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        i32::from_str(s).map(Self)
+    }
+}
+impl std::fmt::Display for BoatId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
 
 #[derive(
     Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize,
@@ -141,9 +153,9 @@ pub struct BoatAttributes {
     Ord,
     serde::Serialize,
     serde::Deserialize,
-    diesel_derive_enum::DbEnum,
 )]
-#[DbValueStyle = "verbatim"]
+#[cfg_attr(feature = "ssr", derive(diesel_derive_enum::DbEnum))]
+#[cfg_attr(feature = "ssr", DbValueStyle = "verbatim")]
 pub enum WeightClass {
     Light,
     Medium,

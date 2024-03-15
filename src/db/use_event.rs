@@ -1,12 +1,14 @@
-use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, SqliteConnection};
+
+#[cfg(feature = "ssr")]
+pub mod queries;
+use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
 
 use super::boat::types::BoatId;
-use crate::schema::use_event;
 
 /// Whenever the equipment is used, it can be recorded that it was used
-#[derive(Debug, Clone, diesel::Queryable, diesel::Selectable)]
-#[diesel(table_name = crate::schema::use_event)]
-
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "ssr", derive(diesel::Queryable, diesel::Selectable, diesel::Identifiable))]
+#[cfg_attr(feature = "ssr", diesel(table_name = crate::schema::use_event))]
 pub struct UseEvent {
     id: UseEventId,
     boat_id: BoatId,
@@ -25,9 +27,9 @@ pub struct UseEvent {
     Ord,
     serde::Serialize,
     serde::Deserialize,
-    diesel_derive_enum::DbEnum,
 )]
-#[DbValueStyle = "verbatim"]
+#[cfg_attr(feature = "ssr", derive(diesel_derive_enum::DbEnum))]
+#[cfg_attr(feature = "ssr", DbValueStyle = "verbatim")]
 pub enum UseScenario {
     AM,
     PM,
@@ -35,9 +37,9 @@ pub enum UseScenario {
     Other,
 }
 
-#[derive(Debug, Clone, diesel::Insertable)]
-#[diesel(table_name = crate::schema::use_event)]
-
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "ssr", derive(diesel::Insertable))]
+#[cfg_attr(feature = "ssr", diesel(table_name = crate::schema::use_event))]
 pub struct NewUseEvent {
     pub boat_id: BoatId,
     pub recorded_at: chrono::NaiveDateTime,
@@ -45,26 +47,7 @@ pub struct NewUseEvent {
     pub note: Option<String>,
 }
 
-impl UseEvent {
-    pub fn new_event(
-        conn: &mut SqliteConnection,
-        event: NewUseEvent,
-    ) -> Result<Self, diesel::result::Error> {
-        diesel::insert_into(use_event::table)
-            .values(event)
-            .get_result(conn)
-    }
 
-    pub fn events_for_boat(
-        conn: &mut SqliteConnection,
-        boat_id: BoatId,
-    ) -> Result<Vec<UseEvent>, diesel::result::Error> {
-        use_event::table
-            .filter(use_event::boat_id.eq(boat_id))
-            .order_by(use_event::recorded_at.desc()) // newest first
-            .get_results(conn)
-    }
-}
 
 #[derive(
     Clone,

@@ -2,6 +2,7 @@ pub mod boat;
 pub mod issue;
 pub mod use_event;
 
+#[cfg(feature = "ssr")]
 pub mod sql_types {
     pub use super::boat::types::WeightClassMapping;
     pub use super::use_event::UseScenarioMapping;

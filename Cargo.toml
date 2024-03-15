@@ -5,20 +5,31 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+default = []
+ssr = ["dioxus-fullstack/axum", "axum", "diesel/sqlite", "deadpool-diesel/sqlite", "tokio"]
+web = ["dioxus-fullstack/web", "dioxus-web"]
+
 [dependencies]
-tokio = {version = "1.0.0", features = ["full"] }
-diesel = {version = "2.1.0", features = ["sqlite", "chrono", "returning_clauses_for_sqlite_3_35"] }
-futures = "0.3.30"
-chrono = "0.4.34"
+tokio = {version = "1.0.0", features = [], optional = true}
+#futures = "0.3.30"
+chrono = {version = "0.4.34", features = ["serde"]}
 serde = {version= "1.0.197", features = ["derive"]}
 serde_json = "1.0.114"
-
+getrandom = {version = "0.2.12", features = ["js"]}
 
 diesel-derive-enum = {version="2.1.0", features = ["sqlite"]}
 diesel-derive-newtype = "2.1.0"
 dioxus = "0.4.3"
-dioxus-liveview = { version = "0.4.3", features = ["axum"] }
-axum = {version = "0.6.20", features = ["ws"]}
-tracing = "0.1.40"
-deadpool-diesel = {version = "0.5.0", features = ["sqlite"]}
+#dioxus-liveview = { version = "0.4.3", features = ["axum"] }
+axum = {version = "0.6.20", features = ["ws"], optional = true}
+
+deadpool-diesel = {version = "0.5.0", features = []}
+diesel = {version = "2.1.0", features = ["chrono", "returning_clauses_for_sqlite_3_35"], optional = false}
+
 anyhow = "1.0.80"
+dioxus-router = { version = "0.4.3", features = [] }
+dioxus-fullstack = { version = "0.4.3", features = ["router", "dioxus-router"] }
+dioxus-web = { version = "0.4.3", optional = true }
+
+async-trait = "0.1.77"

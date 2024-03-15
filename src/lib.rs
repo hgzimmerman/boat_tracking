@@ -1,4 +1,5 @@
 pub mod db;
+#[cfg(feature = "ssr")]
 mod schema;
 pub mod ui;
 
