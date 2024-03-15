@@ -16,6 +16,19 @@ pub(crate) async fn get_boats() -> Result<Vec<BoatAndStats>, ServerFnError> {
         .await
         .map_err(ServerFnError::from)?
 }
+pub fn BoatListPage(cx: Scope) -> Element {
+    let boats_fut= use_server_future(cx, (), |_| async {
+        get_boats().await
+    });
+    cx.render(rsx! {
+        div {
+            BoatList {
+                boats: Loadable::from_option(boats_fut.map(|x|x.value()))
+            }
+        }
+    })
+}
+
 
 #[derive(Props)]
 struct BoatRowProps<'a> {
@@ -38,7 +51,7 @@ fn BoatRow<'a>(cx: Scope<'a, BoatRowProps<'a>>) -> Element<'a> {
                     "style": "min-width: 160px; font-size: x-large; font-weight: 500",
                     // boat.boat.name.clone(),
                     dioxus_router::components::Link { 
-                        to: crate::ui::Route::BoatPage{id: boat.boat.id}, 
+                        to: crate::ui::components::Route::BoatPage{id: boat.boat.id}, 
                         boat.boat.name.clone(),
                     }
                 }
