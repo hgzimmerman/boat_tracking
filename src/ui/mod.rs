@@ -14,15 +14,6 @@ pub fn app(cx: Scope) -> Element {
     // });
     // boat_svc.send(BoatListMsg::Fetch);
 
-    let boats_fut= use_server_future(cx, (), |_| async {
-        components::boat_list::get_boats().await
-    });
-
-    // let page = use_state(cx, || AppPage::BoatList);
-
-
-    // let boats = boats_fut.value();
-    // let boats = Loadable::from_option(boats_fut2.as_ref().map(|x|x.value()));
     cx.render(
         rsx!{
             Router::<Route>{}

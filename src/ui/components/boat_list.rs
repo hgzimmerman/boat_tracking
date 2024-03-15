@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use crate::{db::boat::BoatAndStats, ui::util::loadable::{Loadable, LoadableRefResult}};
 
 use dioxus::prelude::*;

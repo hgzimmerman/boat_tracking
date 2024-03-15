@@ -10,11 +10,11 @@ use super::boat::types::BoatId;
 #[cfg_attr(feature = "ssr", derive(diesel::Queryable, diesel::Selectable, diesel::Identifiable))]
 #[cfg_attr(feature = "ssr", diesel(table_name = crate::schema::use_event))]
 pub struct UseEvent {
-    id: UseEventId,
-    boat_id: BoatId,
-    recorded_at: chrono::NaiveDateTime,
-    use_scenario: UseScenario,
-    note: Option<String>,
+    pub id: UseEventId,
+    pub boat_id: BoatId,
+    pub recorded_at: chrono::NaiveDateTime,
+    pub use_scenario: UseScenario,
+    pub note: Option<String>,
 }
 
 #[derive(
