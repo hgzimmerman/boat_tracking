@@ -6,7 +6,7 @@ use diesel::{BoolExpressionMethods, ExpressionMethods, QueryDsl, RunQueryDsl};
 
 use super::{boat::types::BoatId, use_event::UseEventId, DbOrdering};
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize)]
 #[cfg_attr(feature = "ssr", derive(diesel::Queryable, diesel::Selectable, diesel::Identifiable))]
 #[cfg_attr(feature = "ssr", diesel(table_name = crate::schema::issue))]
 pub struct Issue {

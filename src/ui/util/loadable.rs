@@ -2,8 +2,7 @@ use std::ops::Deref;
 
 use dioxus_fullstack::prelude::ServerFnError;
 
-pub type LoadableResult<T> = Loadable<Result<T, ServerFnError>>;
-pub type LoadableRefResult<'a, T> = Loadable<&'a Result<T, ServerFnError>>;
+pub type LoadableRefResult<'a, T> = Loadable<std::cell::Ref<'a, Result<T, ServerFnError>>>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub enum Loadable<T> {
