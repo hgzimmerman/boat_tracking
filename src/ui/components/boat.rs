@@ -101,7 +101,6 @@ fn BoatIssueList<'a>(cx: Scope, issues: RefResult<'a, Vec<Issue>>) -> Element<'a
                     h3 {
                         "Issues"
                     }
-                    
                     if issues.is_empty() {
                         cx.render(rsx!{
                             div {

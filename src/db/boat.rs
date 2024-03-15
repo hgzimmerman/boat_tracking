@@ -83,9 +83,9 @@ pub enum BoatOrder {
 }
 
 pub struct BoatFilter {
-    boat_type: Option<BoatType>,
-    coxed: Option<bool>,
-    oars: Option<OarsPerSeat>,
+    pub boat_type: Option<BoatType>,
+    pub coxed: Option<bool>,
+    pub oars: Option<OarsPerSeat>,
 }
 
 pub enum BoatFilter2 {

@@ -61,7 +61,22 @@
 
 
         devShell = pkgs.mkShell { 
-          packages = inputs;
+          packages = (inputs) ++ (with pkgs.nodePackages; [tailwindcss]) ;
+          nativeBuildInputs = with pkgs; [
+            cargo-watch
+            (writeShellScriptBin "watch-tailwind" ''
+              tailwindcss -i ./input.css -o ./public/tailwind.css --watch
+            '')
+            (writeShellScriptBin "watch-dx" ''
+              dx serve --features web 
+            '')
+            (writeShellScriptBin "run-server" ''
+              cargo run --features ssr
+            '')
+            (writeShellScriptBin "watch-server" ''
+              cargo watch -x "run" --features ssr --clear -d 2.5 -w ./src
+            '')
+          ];
           # packages = self;
           PKG_CONFIG_PATH = "{pkgs.openssl.dev}/lib/pkgconfig";
           DATABASE_URL = "db.sql";
