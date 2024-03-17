@@ -137,6 +137,26 @@ impl BoatType {
     }
 }
 
+impl std::fmt::Display for BoatType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            BoatType::Single => "Single",
+            BoatType::Double => "Double",
+            BoatType::DoublePlus => "Double+",
+            BoatType::Quad => "Quad",
+            BoatType::QuadPlus => "Quad+",
+            BoatType::Octo => "Octo",
+            BoatType::OctoPlus => "Octo+",
+            BoatType::Pair => "Pair",
+            BoatType::PairPlus => "Pair+",
+            BoatType::Four => "Four",
+            BoatType::FourPlus => "Four+",
+            BoatType::Eight => "Eight",
+        };
+        f.write_str(s)
+    }
+}
+
 pub struct BoatAttributes {
     pub has_cox: HasCox,
     pub seats: SeatCount,
@@ -258,6 +278,7 @@ impl OarsPerSeat {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize)]
 pub enum OarConfiguration {
     Sweep,
     Scull,

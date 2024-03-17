@@ -1,7 +1,7 @@
 use super::*;
 
 use crate::schema::{boat, issue, use_event};
-use diesel::SqliteConnection;
+use diesel::{SqliteConnection, TextExpressionMethods};
 
 impl Boat {
 
@@ -15,13 +15,16 @@ impl Boat {
             .get_result(conn)
     }
 
+    #[tracing::instrument(level = "debug", skip_all)]
     pub fn get_boats(
         conn: &mut SqliteConnection,
         filter: BoatFilter2,
+        search: Option<String>
     ) -> Result<Vec<Boat>, diesel::result::Error> {
-        match filter {
-            BoatFilter2::None => boat::table.get_results(conn),
-            BoatFilter2::ByType(ty) => {
+        tracing::debug!(?search);
+        match (filter, search.map(|x| format!("%{x}%"))) {
+            (BoatFilter2::None, None) => boat::table.get_results(conn),
+            (BoatFilter2::ByType(ty), None) => {
                 let (has_cox, seats, oars_per_seat) = ty.into_values();
                 let cox = has_cox.as_value();
                 let seats = seats.count();
@@ -35,9 +38,32 @@ impl Boat {
                     )
                     .get_results(conn)
             }
-            BoatFilter2::OarConfig(config) => {
+            (BoatFilter2::OarConfig(config), None) => {
                 let oars = config.num_oars();
                 boat::table
+                    .filter(boat::oars_per_seat.eq(oars))
+                    .get_results(conn)
+            }
+            (BoatFilter2::None, Some(search)) => boat::table.filter(boat::name.like(search)).get_results(conn),
+            (BoatFilter2::ByType(ty), Some(search)) => {
+                let (has_cox, seats, oars_per_seat) = ty.into_values();
+                let cox = has_cox.as_value();
+                let seats = seats.count();
+                let oars = oars_per_seat.count();
+
+                boat::table
+                    .filter(boat::name.like(search))
+                    .filter(
+                        boat::has_cox
+                            .eq(cox)
+                            .and(boat::seat_count.eq(seats).and(boat::oars_per_seat.eq(oars))),
+                    )
+                    .get_results(conn)
+            }
+            (BoatFilter2::OarConfig(config), Some(search)) => {
+                let oars = config.num_oars();
+                boat::table
+                    .filter(boat::name.like(search))
                     .filter(boat::oars_per_seat.eq(oars))
                     .get_results(conn)
             }

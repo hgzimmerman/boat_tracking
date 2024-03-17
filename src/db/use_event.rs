@@ -36,6 +36,17 @@ pub enum UseScenario {
     Regatta,
     Other,
 }
+impl std::fmt::Display for UseScenario {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            UseScenario::AM => "AM",
+            UseScenario::PM => "PM",
+            UseScenario::Regatta => "Regatta",
+            UseScenario::Other => "Other",
+        };
+        f.write_str(s)
+    }
+}
 
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "ssr", derive(diesel::Insertable))]

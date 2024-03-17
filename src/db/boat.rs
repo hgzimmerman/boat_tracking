@@ -88,6 +88,7 @@ pub struct BoatFilter {
     pub oars: Option<OarsPerSeat>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize)]
 pub enum BoatFilter2 {
     None,
     ByType(BoatType),
