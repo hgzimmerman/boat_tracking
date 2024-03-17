@@ -15,16 +15,22 @@ CREATE TABLE boat (
     relinquished_at DATE
 );
 
+CREATE TABLE use_event_batch (
+    id INTEGER PRIMARY KEY ASC NOT NULL,
+    recorded_at DATETIME NOT NULL, 
+    use_scenario TEXT CHECK( use_scenario IN ('AM', 'PM', 'Regatta', 'Other') ) NOT NULL
+);
 
 CREATE TABLE use_event (
     id INTEGER PRIMARY KEY ASC NOT NULL,
     boat_id INTEGER NOT NULL,
+    batch_id INTEGER,
     recorded_at DATETIME NOT NULL, 
     use_scenario TEXT CHECK( use_scenario IN ('AM', 'PM', 'Regatta', 'Other') ) NOT NULL,
     note TEXT,
     FOREIGN KEY (boat_id) REFERENCES boat(id)
+    FOREIGN KEY (batch_id) REFERENCES batch(id)
 );
-
 
 
 CREATE TABLE issue (

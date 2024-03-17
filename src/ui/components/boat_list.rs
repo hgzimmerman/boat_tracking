@@ -22,6 +22,7 @@ pub fn BoatListPage(cx: Scope) -> Element {
     });
     cx.render(rsx! {
         div {
+            class: "overflow-y-auto flex-grow max-h-[calc(100vh-42px)]",
             BoatList {
                 boats: Loadable::from_option(boats_fut.map(|x|x.value()))
             }
@@ -105,8 +106,7 @@ pub fn BoatList<'a>(
                         } 
                     })
                 }
-            }
-            
+            } 
         },
         Loaded(Err(error)) => {
             rsx!{

@@ -3,7 +3,7 @@
 pub mod queries;
 use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
 
-use super::boat::types::BoatId;
+use super::{boat::types::BoatId, use_event_batch::BatchId};
 
 /// Whenever the equipment is used, it can be recorded that it was used
 #[derive(Debug, Clone)]
@@ -12,6 +12,7 @@ use super::boat::types::BoatId;
 pub struct UseEvent {
     pub id: UseEventId,
     pub boat_id: BoatId,
+    pub batch_id: Option<BatchId>,
     pub recorded_at: chrono::NaiveDateTime,
     pub use_scenario: UseScenario,
     pub note: Option<String>,
@@ -53,6 +54,7 @@ impl std::fmt::Display for UseScenario {
 #[cfg_attr(feature = "ssr", diesel(table_name = crate::schema::use_event))]
 pub struct NewUseEvent {
     pub boat_id: BoatId,
+    pub batch_id: Option<BatchId>,
     pub recorded_at: chrono::NaiveDateTime,
     pub use_scenario: UseScenario,
     pub note: Option<String>,

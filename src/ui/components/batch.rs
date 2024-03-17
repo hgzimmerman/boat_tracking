@@ -14,7 +14,7 @@ use std::collections::HashSet;
 use dioxus::prelude::*;
 use dioxus_fullstack::prelude::*;
 
-use crate::db::{boat::{types::BoatId, Boat, BoatFilter2}, use_event::UseScenario};
+use crate::db::{boat::{types::BoatId, Boat, BoatFilter2}, use_event::UseScenario, use_event_batch::{BatchId, NewBatch, NewBatchArgs, UseEventBatch}};
 
 #[component]
 pub fn BatchCreationPage(cx: Scope) -> Element {
@@ -34,7 +34,8 @@ pub fn BatchCreationPage(cx: Scope) -> Element {
 
     cx.render(rsx!{
         div {
-            class: "flex flex-row max-h-full overflow-hide divide-x-2 grow",
+            // I don't love the magic number (42px corresponds to the nav height)
+            class: "flex flex-row overflow-hide divide-x-4 grow max-h-[calc(100vh-42px)]", 
             BatchListPane {
                 boats: selected,
                 boat_svc: boat_svc
@@ -65,6 +66,27 @@ pub(crate) async fn search_boats(
         .await
         .map_err(ServerFnError::from)?
 }
+
+#[server(SubmitBoats)]
+pub(crate) async fn submit_boats(
+    boat_ids: Vec<BoatId>,
+    session_type: UseScenario
+) -> Result<BatchId, ServerFnError> {
+    let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu"); 
+    let conn = state.pool().get().await.map_err(ServerFnError::from)?;
+    let new_batch = NewBatchArgs { boat_ids, batch: NewBatch { use_scenario: session_type, recorded_at: chrono::Utc::now().naive_utc() }};
+    conn 
+        .interact(|conn| {
+            UseEventBatch::create_batch(conn, new_batch)
+            .map_err(ServerFnError::from)
+        })
+        .await
+        .map_err(ServerFnError::from)?
+}
+
+
+
+
 enum BoatListMsg {
     /// Run the fetch
     Fetch,
@@ -72,6 +94,8 @@ enum BoatListMsg {
     SetSearch(String),
     AddToBatch(BoatId),
     RemoveFromBatch(BoatId),
+    /// Submits the selected boats, saving use events for each one.
+    Submit
 }
 
 
@@ -83,27 +107,34 @@ async fn boat_list_service(
     search_name: UseState<Option<String>>
 ) {
     use futures::stream::StreamExt;
+
+    let search = || async {
+        let _ = search_boats(
+                filter.current().as_ref().to_owned(), 
+                search_name.current().as_ref().to_owned(),
+            )
+            .await
+            .map(|boats| {
+                let exclude: HashSet<BoatId> = selected_boats.current().iter().map(|x| x.id).collect();
+                boats.into_iter().filter(|x| !exclude.contains(&x.id)).collect()
+            })
+            .map(|x| searched_boats.set(x));
+    };
+
     while let Some(msg) = rx.next().await {
         match msg {
             BoatListMsg::Fetch => {
                 tracing::info!("fetching");
-                let _ = search_boats(
-                    filter.current().as_ref().to_owned(), 
-                    search_name.current().as_ref().to_owned(),
-                )
-                .await
-                .map(|boats| {
-                    let exclude: HashSet<BoatId> = selected_boats.current().iter().map(|x| x.id).collect();
-                    boats.into_iter().filter(|x| !exclude.contains(&x.id)).collect()
-                })
-                .map(|x| searched_boats.set(x));
+                search().await
             },
-            BoatListMsg::SetSearch(search) => {
-                tracing::info!(%search, "setting search");
-                if search.is_empty() {
+            BoatListMsg::SetSearch(search_str) => {
+                tracing::info!(%search_str, "setting search");
+                if search_str.is_empty() {
                     search_name.set(None);
                 } else {
-                    search_name.set(Some(search));
+                    search_name.set(Some(search_str));
+                    // TODO add some debouncing if already searching
+                    search().await
                 }
             }
             BoatListMsg::SetFilter(new_filter) => {
@@ -147,6 +178,23 @@ async fn boat_list_service(
                     selected_boats.needs_update();
                 }
             },
+            BoatListMsg::Submit => {
+                let ids: Vec<BoatId> = selected_boats.current().iter().map(|b| b.id).collect();
+                let session_type = UseScenario::AM; // TODO Get this from the actual setting
+                if !ids.is_empty() {
+                    match submit_boats(ids, session_type).await {
+                        Ok(id) => {
+                            tracing::info!(%id, "Created batch");
+                            // In the future, toast a success message
+                            searched_boats.set(Vec::new());
+                            selected_boats.set(Vec::new());
+                        }
+                        Err(error) => {
+                            tracing::error!(?error, "could not submit batch")
+                        }
+                    }
+                }
+            }
         }
         
     }
@@ -166,13 +214,13 @@ fn BatchListPane<'a>(
     cx.render(rsx!{
         // The pane
         div {
-            class: "flex flex-col grow overflow-auto divide-y",
+            class: "flex flex-col grow divide-y-2",
             // The list of boats
             div {
-                class: "flex flex-col grow overflow-auto",
+                class: "flex flex-col grow overflow-auto divide-y",
                 boats.iter().map(|b| rsx!{
                     div {
-                        class: "flex flex-row h-4",
+                        class: "flex flex-row h-16 items-center",
                         div {
                             class: "m-2",
                             b.name.clone()
@@ -196,52 +244,73 @@ fn BatchListPane<'a>(
                 form {
                     onclick: move |e| {
                         e.stop_propagation();
-                        // boat_svc.send(BoatListMsg::Fetch);
                     },
                     class: "flex flex-col h-30",
                     div {
+                        id: "button-group",
                         class: "inline-flex rounded-md shadow-sm m-4",
                         role: "group",
                         button {
-                            class:"btn btn-blue",
-                            "data-dropdown-toggle": "dropdown",
+                            id: "session-dropdown-btn",
+                            class: "btn btn-blue min-w-28 rounded-s ",
                             onclick: move |e| {
                                 e.stop_propagation();
                                 show_session_type_dropdown.set(!show_session_type_dropdown.get())
                             },
                             session_type.get().to_string()
                         }
+                        // the dropdown
                         div {
-                            id: "dropdown",
-                            class: if *show_session_type_dropdown.get() {
-                                "relative bg-white divide-y rounded-lg -top-45 shadow w-44 dark:bg-gray-700"
-                            } else {
-                                "hidden"
-                            },
-                            ul {
-                                li {
-                                    onclick: |_| session_type.set(UseScenario::AM),
-                                    "AM"
-                                }
-                                li {
-                                    onclick: |_| session_type.set(UseScenario::PM),
-                                    "PM"
-                                }
-                                li {
-                                    onclick: |_| session_type.set(UseScenario::Regatta),
-                                    "Regatta"
-                                }
-                                li {
-                                    onclick: |_| session_type.set(UseScenario::Other),
-                                    "Other"
+                            id: "session-dropdown-positioner",
+                            class: "relative h-0 w-0",
+                            div {
+                                id: "session-dropdown",
+                                class: if *show_session_type_dropdown.get() {
+                                    "absolute z-10 mt-2 w-20 bottom-2 right-0 origin-bottom-right rounded-md bg-white shadow-lg divide-y p-2"
+                                } else {
+                                    "hidden"
+                                },
+                                ul {
+                                    li {
+                                        onclick: |e| {
+                                            e.stop_propagation();
+                                            session_type.set(UseScenario::AM);
+                                            show_session_type_dropdown.set(false);
+                                        },
+                                        "AM"
+                                    }
+                                    li {
+                                        onclick: |e| {
+                                            e.stop_propagation();
+                                            session_type.set(UseScenario::PM);
+                                            show_session_type_dropdown.set(false);
+                                        },
+                                        "PM"
+                                    }
+                                    li {
+                                        onclick: |e| {
+                                            e.stop_propagation();
+                                            session_type.set(UseScenario::Regatta);
+                                            show_session_type_dropdown.set(false);
+                                        },
+                                        "Regatta"
+                                    }
+                                    li {
+                                        onclick: |e| {
+                                            e.stop_propagation();
+                                            session_type.set(UseScenario::Other);
+                                            show_session_type_dropdown.set(false);
+                                        },
+                                        "Other"
+                                    }
                                 }
                             }
                         }
                         button {
-                            class: "btn btn-blue",
+                            class: "btn btn-blue rounded-e",
                             onclick: move |e| {
                                 e.stop_propagation();
-                                // boat_svc.send(BoatListMsg::Fetch);
+                                boat_svc.send(BoatListMsg::Submit);
                             },
                             "Save Boats"
                         }
@@ -264,7 +333,8 @@ fn BoatSearchPane<'a>(
 ) -> Element {
     cx.render(rsx!{
         div {
-            class: "flex flex-col w-1/2 overflow-auto divide-y",
+            class: "flex flex-col w-1/2 overflow-auto divide-y-2",
+            // The submission box
             form {
                 class: "flex flex-col h-30 m-4",
                 onsubmit: move |e| {
@@ -275,7 +345,8 @@ fn BoatSearchPane<'a>(
                     r#type:"text",
                     id: "boat_search",
                     class: "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500",
-                    placeholder:  "Boat Name",
+                    placeholder: "Boat Name",
+                    autocomplete: "off",
                     value: search_name.as_deref(),
                     oninput: |event| {
                         boat_svc.send(BoatListMsg::SetSearch(event.value.clone()));
@@ -290,11 +361,12 @@ fn BoatSearchPane<'a>(
                     "search"
                 }
             }
+            // The search results 
             div {
-                class: "flex flex-col grow",
+                class: "flex flex-col grow divide-y",
                 boats.iter().map(|b| rsx!{
                     div {
-                        class: "flex flex-row h-16",
+                        class: "flex flex-row h-16 items-center",
                         div {
                             class: "m-2",
                             b.name.clone()

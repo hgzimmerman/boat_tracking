@@ -1,0 +1,62 @@
+
+use super::{boat::types::BoatId, use_event::UseScenario};
+
+#[cfg(feature = "ssr")]
+pub mod queries;
+
+#[derive(Debug, Clone,  PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[cfg_attr(feature = "ssr", derive(diesel::Queryable, diesel::Selectable, diesel::Identifiable))]
+#[cfg_attr(feature = "ssr", diesel(table_name = crate::schema::use_event_batch))]
+pub struct UseEventBatch {
+    pub id: BatchId,
+    pub recorded_at: chrono::NaiveDateTime,
+    pub use_scenario: UseScenario,
+}
+
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    serde::Serialize,
+    serde::Deserialize,
+    diesel_derive_newtype::DieselNewType,
+)]
+pub struct BatchId(i32);
+
+impl BatchId {
+    pub fn new(new: i32) -> Self {
+        Self(new)
+    }
+    pub fn as_int(&self) -> i32 {
+        self.0
+    }
+}
+impl std::str::FromStr for BatchId {
+    type Err = std::num::ParseIntError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        i32::from_str(s).map(Self)
+    }
+}
+impl std::fmt::Display for BatchId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+pub struct NewBatchArgs {
+    pub boat_ids: Vec<BoatId>,
+    pub batch: NewBatch
+}
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "ssr", derive(diesel::Insertable))]
+#[cfg_attr(feature = "ssr", diesel(table_name = crate::schema::use_event_batch))]
+pub struct NewBatch {
+    pub use_scenario: UseScenario,
+    pub recorded_at: chrono::NaiveDateTime
+}

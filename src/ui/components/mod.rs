@@ -4,6 +4,7 @@ pub mod new_boat;
 pub mod new_issue;
 pub mod issue_list;
 pub mod batch;
+mod toast;
 
 use new_boat::NewBoatPage;
 use boat_list::BoatListPage;
@@ -53,7 +54,7 @@ fn Home(cx: Scope) -> Element {
 fn NavBar(cx: Scope) -> Element {
     render! {
         nav {
-            class: "bg-ggrc",
+            class: "bg-ggrc sticky top-0",
             ul {
                 class: "flex items-center justify-between",
                 li { 
