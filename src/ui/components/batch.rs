@@ -49,6 +49,7 @@ pub fn BatchCreationPage(cx: Scope) -> Element {
         }
     })
 }
+
 #[server(GetBoats)]
 pub(crate) async fn search_boats(
     filter: BoatFilter2,
@@ -188,6 +189,7 @@ async fn boat_list_service(
                             // In the future, toast a success message
                             searched_boats.set(Vec::new());
                             selected_boats.set(Vec::new());
+                            search_name.set(None);
                         }
                         Err(error) => {
                             tracing::error!(?error, "could not submit batch")
@@ -255,59 +257,69 @@ fn BatchListPane<'a>(
                             class: "btn btn-blue min-w-28 rounded-s ",
                             onclick: move |e| {
                                 e.stop_propagation();
-                                show_session_type_dropdown.set(!show_session_type_dropdown.get())
+                                show_session_type_dropdown.set(!show_session_type_dropdown.get());
+                            },
+                            onmouseover: move |e| {
+                                e.stop_propagation();
+                                show_session_type_dropdown.set(true);
+                            },
+                            onmouseout: move |e| {
+                                e.stop_propagation();
+                                show_session_type_dropdown.set(false);
                             },
                             session_type.get().to_string()
-                        }
-                        // the dropdown
-                        div {
-                            id: "session-dropdown-positioner",
-                            class: "relative h-0 w-0",
+                            // the dropdown
                             div {
-                                id: "session-dropdown",
-                                class: if *show_session_type_dropdown.get() {
-                                    "absolute z-10 mt-2 w-20 bottom-2 right-0 origin-bottom-right rounded-md bg-white shadow-lg divide-y p-2"
-                                } else {
-                                    "hidden"
-                                },
-                                ul {
-                                    li {
-                                        onclick: |e| {
-                                            e.stop_propagation();
-                                            session_type.set(UseScenario::AM);
-                                            show_session_type_dropdown.set(false);
-                                        },
-                                        "AM"
-                                    }
-                                    li {
-                                        onclick: |e| {
-                                            e.stop_propagation();
-                                            session_type.set(UseScenario::PM);
-                                            show_session_type_dropdown.set(false);
-                                        },
-                                        "PM"
-                                    }
-                                    li {
-                                        onclick: |e| {
-                                            e.stop_propagation();
-                                            session_type.set(UseScenario::Regatta);
-                                            show_session_type_dropdown.set(false);
-                                        },
-                                        "Regatta"
-                                    }
-                                    li {
-                                        onclick: |e| {
-                                            e.stop_propagation();
-                                            session_type.set(UseScenario::Other);
-                                            show_session_type_dropdown.set(false);
-                                        },
-                                        "Other"
+                                id: "session-dropdown-positioner",
+                                class: "relative h-0 w-0",
+                                div {
+                                    id: "session-dropdown",
+                                    class: if *show_session_type_dropdown.get() {
+                                        "absolute z-10 mt-2 w-20 bottom-8 left-4 origin-bottom-right rounded-md bg-white shadow-lg divide-y p-2 text-slate-600 font-normal"
+                                    } else {
+                                        "hidden"
+                                    },
+                                    ul {
+                                        li {
+                                            onclick: |e| {
+                                                e.stop_propagation();
+                                                session_type.set(UseScenario::AM);
+                                                show_session_type_dropdown.set(false);
+                                            },
+                                            "AM"
+                                        }
+                                        li {
+                                            onclick: |e| {
+                                                e.stop_propagation();
+                                                session_type.set(UseScenario::PM);
+                                                show_session_type_dropdown.set(false);
+                                            },
+                                            "PM"
+                                        }
+                                        li {
+                                            onclick: |e| {
+                                                e.stop_propagation();
+                                                session_type.set(UseScenario::Regatta);
+                                                show_session_type_dropdown.set(false);
+                                            },
+                                            "Regatta"
+                                        }
+                                        li {
+                                            onclick: |e| {
+                                                e.stop_propagation();
+                                                session_type.set(UseScenario::Other);
+                                                show_session_type_dropdown.set(false);
+                                            },
+                                            "Other"
+                                        }
                                     }
                                 }
                             }
                         }
+                        
                         button {
-                            class: "btn btn-blue rounded-e",
+                            class: "btn btn-blue rounded-e disabled:opacity-45 disabled:bg-blue-500",
+                            disabled: boats.is_empty(),
                             onclick: move |e| {
                                 e.stop_propagation();
                                 boat_svc.send(BoatListMsg::Submit);
@@ -358,7 +370,7 @@ fn BoatSearchPane<'a>(
                         e.stop_propagation();
                         boat_svc.send(BoatListMsg::Fetch);
                     },
-                    "search"
+                    "Search"
                 }
             }
             // The search results 

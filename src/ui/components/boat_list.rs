@@ -118,7 +118,7 @@ pub fn BoatList<'a>(
         }
         Loading => {
             rsx! {
-                "loading... boats"
+                "Loading... boats"
             }
         }
     })
