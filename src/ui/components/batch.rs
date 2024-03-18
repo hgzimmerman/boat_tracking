@@ -14,7 +14,7 @@ use std::collections::HashSet;
 use dioxus::prelude::*;
 use dioxus_fullstack::prelude::*;
 
-use crate::db::{boat::{types::BoatId, Boat, BoatFilter2}, use_event::UseScenario, use_event_batch::{BatchId, NewBatch, NewBatchArgs, UseEventBatch}};
+use crate::db::{boat::{types::{BoatId, BoatType}, Boat, BoatFilter2}, use_event::UseScenario, use_event_batch::{BatchId, NewBatch, NewBatchArgs, UseEventBatch}};
 
 #[component]
 pub fn BatchCreationPage(cx: Scope) -> Element {
@@ -216,7 +216,7 @@ fn BatchListPane<'a>(
     cx.render(rsx!{
         // The pane
         div {
-            class: "flex flex-col grow divide-y-2",
+            class: "flex flex-col grow divide-y-2 min-w-1/2",
             // The list of boats
             div {
                 class: "flex flex-col grow overflow-auto divide-y",
@@ -343,6 +343,7 @@ fn BoatSearchPane<'a>(
     search_name: &'a Option<String>,
     boat_svc: &'a Coroutine<BoatListMsg>
 ) -> Element {
+    let show_filter_dropdown = use_state(cx, || false); 
     cx.render(rsx!{
         div {
             class: "flex flex-col w-1/2 overflow-auto divide-y-2",
@@ -353,6 +354,86 @@ fn BoatSearchPane<'a>(
                     e.stop_propagation();
                     boat_svc.send(BoatListMsg::Fetch);
                 },
+                button {
+                    id: "filter-dropdown-btn",
+                    class: "btn btn-blue min-w-28 rounded-s",
+                    onclick: move |e| {
+                        e.stop_propagation();
+                        show_filter_dropdown.set(!show_filter_dropdown.get());
+                    },
+                    onmouseover: move |e| {
+                        e.stop_propagation();
+                        show_filter_dropdown.set(true);
+                    },
+                    onmouseout: move |e| {
+                        e.stop_propagation();
+                        show_filter_dropdown.set(false);
+                    },
+                    format!("{filter:?}")
+                    // the dropdown
+                    div {
+                        id: "filter-dropdown-positioner",
+                        class: "relative h-0 w-0",
+                        div {
+                            id: "filter-dropdown",
+                            class: if *show_filter_dropdown.get() {
+                                "absolute z-10 mt-2 w-20 top-2 left-4 origin-bottom-right rounded-md bg-white shadow-lg divide-y p-2 text-slate-600 font-normal"
+                            } else {
+                                "hidden"
+                            },
+                            ul {
+                                li {
+                                    onclick: |e| {
+                                        e.stop_propagation();
+                                        boat_svc.send(BoatListMsg::SetFilter(BoatFilter2::None));
+                                        show_filter_dropdown.set(false);
+                                    },
+                                    "None"
+                                }
+                                li {
+                                    onclick: |e| {
+                                        e.stop_propagation();
+                                        boat_svc.send(BoatListMsg::SetFilter(BoatFilter2::ByType(BoatType::Single)));
+                                        show_filter_dropdown.set(false);
+                                    },
+                                    "Single"
+                                }
+                                li {
+                                    onclick: |e| {
+                                        e.stop_propagation();
+                                        boat_svc.send(BoatListMsg::SetFilter(BoatFilter2::ByType(BoatType::Double)));
+                                        show_filter_dropdown.set(false);
+                                    },
+                                    "Double"
+                                }
+                                li {
+                                    onclick: |e| {
+                                        e.stop_propagation();
+                                        boat_svc.send(BoatListMsg::SetFilter(BoatFilter2::ByType(BoatType::Quad)));
+                                        show_filter_dropdown.set(false);
+                                    },
+                                    "Quad"
+                                }
+                                li {
+                                    onclick: |e| {
+                                        e.stop_propagation();
+                                        boat_svc.send(BoatListMsg::SetFilter(BoatFilter2::ByType(BoatType::Four)));
+                                        show_filter_dropdown.set(false);
+                                    },
+                                    "Four"
+                                }
+                                li {
+                                    onclick: |e| {
+                                        e.stop_propagation();
+                                        boat_svc.send(BoatListMsg::SetFilter(BoatFilter2::ByType(BoatType::Eight)));
+                                        show_filter_dropdown.set(false);
+                                    },
+                                    "Eight"
+                                }
+                            }
+                        }
+                    }
+                }
                 input {
                     r#type:"text",
                     id: "boat_search",
@@ -363,20 +444,14 @@ fn BoatSearchPane<'a>(
                     oninput: |event| {
                         boat_svc.send(BoatListMsg::SetSearch(event.value.clone()));
                     }
-                }
-                button {
-                    class: "m-4 btn btn-blue",
-                    onclick: move |e| {
-                        e.stop_propagation();
-                        boat_svc.send(BoatListMsg::Fetch);
-                    },
-                    "Search"
-                }
+                } 
+
+
             }
             // The search results 
             div {
                 class: "flex flex-col grow divide-y",
-                boats.iter().map(|b| rsx!{
+                boats.iter().map(|b| rsx! {
                     div {
                         class: "flex flex-row h-16 items-center",
                         div {
