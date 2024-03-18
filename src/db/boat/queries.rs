@@ -1,7 +1,7 @@
 use super::*;
 
-use crate::schema::{boat, issue, use_event};
-use diesel::{SqliteConnection, TextExpressionMethods};
+use crate::schema::{boat::{self}, issue, use_event};
+use diesel::{QueryDsl, SqliteConnection, TextExpressionMethods};
 
 impl Boat {
 
@@ -15,59 +15,36 @@ impl Boat {
             .get_result(conn)
     }
 
+
     #[tracing::instrument(level = "debug", skip_all)]
-    pub fn get_boats(
+    pub fn get_boats3(
         conn: &mut SqliteConnection,
-        filter: BoatFilter2,
+        filter: BoatFilter3,
         search: Option<String>
     ) -> Result<Vec<Boat>, diesel::result::Error> {
-        tracing::debug!(?search);
-        match (filter, search.map(|x| format!("%{x}%"))) {
-            (BoatFilter2::None, None) => boat::table.get_results(conn),
-            (BoatFilter2::ByType(ty), None) => {
-                let (has_cox, seats, oars_per_seat) = ty.into_values();
-                let cox = has_cox.as_value();
-                let seats = seats.count();
-                let oars = oars_per_seat.count();
+        let BoatFilter3 {num_seats,coxed,oars_config,.. } = filter;
 
-                boat::table
-                    .filter(
-                        boat::has_cox
-                            .eq(cox)
-                            .and(boat::seat_count.eq(seats).and(boat::oars_per_seat.eq(oars))),
-                    )
-                    .get_results(conn)
-            }
-            (BoatFilter2::OarConfig(config), None) => {
-                let oars = config.num_oars();
-                boat::table
-                    .filter(boat::oars_per_seat.eq(oars))
-                    .get_results(conn)
-            }
-            (BoatFilter2::None, Some(search)) => boat::table.filter(boat::name.like(search)).get_results(conn),
-            (BoatFilter2::ByType(ty), Some(search)) => {
-                let (has_cox, seats, oars_per_seat) = ty.into_values();
-                let cox = has_cox.as_value();
-                let seats = seats.count();
-                let oars = oars_per_seat.count();
+        let seat_count: Option<i32> = num_seats.as_ref().map(SeatCount::count);
+        let oars_per_seat: Option<i32> = oars_config.as_ref().map(OarConfiguration::num_oars);
+        let cox = coxed.as_ref().map(HasCox::as_value);
 
-                boat::table
-                    .filter(boat::name.like(search))
-                    .filter(
-                        boat::has_cox
-                            .eq(cox)
-                            .and(boat::seat_count.eq(seats).and(boat::oars_per_seat.eq(oars))),
-                    )
-                    .get_results(conn)
-            }
-            (BoatFilter2::OarConfig(config), Some(search)) => {
-                let oars = config.num_oars();
-                boat::table
-                    .filter(boat::name.like(search))
-                    .filter(boat::oars_per_seat.eq(oars))
-                    .get_results(conn)
-            }
+        let mut query = boat::table.into_boxed();
+
+        if let Some(search) = search.map(|x| format!("%{x}%")) {
+            query = query.filter(boat::name.like(search))
         }
+        if let Some(num_seats) = seat_count {
+            query = query.filter(boat::seat_count.eq(num_seats))
+        };
+        if let Some(cox) = cox {
+            query = query.filter(boat::has_cox.eq(cox))
+        };
+        if let Some(oars_per_seat) = oars_per_seat {
+            query = query.filter(boat::oars_per_seat.eq(oars_per_seat))
+        };
+
+           query 
+            .get_results(conn)
     }
 
     pub fn get_boat(

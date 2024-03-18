@@ -5,7 +5,7 @@ pub mod queries;
 
 use diesel::{
     BoolExpressionMethods, ExpressionMethods, JoinOnDsl,
-    NullableExpressionMethods, QueryDsl, RunQueryDsl, SelectableHelper,
+    NullableExpressionMethods, RunQueryDsl, SelectableHelper,
 };
 use types::{HasCox, OarsPerSeat, SeatCount, WeightClass};
 
@@ -88,11 +88,14 @@ pub struct BoatFilter {
     pub oars: Option<OarsPerSeat>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize)]
-pub enum BoatFilter2 {
-    None,
-    ByType(BoatType),
-    OarConfig(OarConfiguration),
+
+#[derive(Default, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize)]
+pub struct BoatFilter3 {
+    /// Currently needed by dioxus to avoid failing to deserialize when all items are empty.
+    pub _x: usize,
+    pub num_seats: Option<SeatCount>,
+    pub coxed: Option<HasCox>,
+    pub oars_config: Option<OarConfiguration>,
 }
 
 

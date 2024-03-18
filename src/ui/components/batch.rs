@@ -14,12 +14,12 @@ use std::collections::HashSet;
 use dioxus::prelude::*;
 use dioxus_fullstack::prelude::*;
 
-use crate::db::{boat::{types::{BoatId, BoatType}, Boat, BoatFilter2}, use_event::UseScenario, use_event_batch::{BatchId, NewBatch, NewBatchArgs, UseEventBatch}};
+use crate::db::{boat::{types::BoatId, Boat, BoatFilter3}, use_event::UseScenario, use_event_batch::{BatchId, NewBatch, NewBatchArgs, UseEventBatch}};
 
 #[component]
 pub fn BatchCreationPage(cx: Scope) -> Element {
     let selected = use_state(cx, || Vec::<Boat>::new());
-    let filter = use_state(cx, || BoatFilter2::None);
+    let filter = use_state(cx, BoatFilter3::default);
     let search_name = use_state(cx, || Option::<String>::None);
 
     let search_boat_state = use_state(cx,  || Vec::<Boat>::new());
@@ -46,9 +46,9 @@ pub fn BatchCreationPage(cx: Scope) -> Element {
     })
 }
 
-#[server(GetBoats)]
+#[server(GetBoats2)]
 pub(crate) async fn search_boats(
-    filter: BoatFilter2,
+    filter: BoatFilter3,
     search_name: Option<String>, 
 ) -> Result<Vec<Boat>, ServerFnError> {
     let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu"); 
@@ -56,7 +56,7 @@ pub(crate) async fn search_boats(
     tracing::info!(?search_name);
     conn 
         .interact(|conn| {
-            Boat::get_boats(conn, filter, search_name)
+            Boat::get_boats3(conn, filter, search_name)
             .map_err(ServerFnError::from)
             
         })
@@ -87,7 +87,7 @@ pub(crate) async fn submit_boats(
 enum BoatListMsg {
     /// Run the fetch
     Fetch,
-    SetFilter(BoatFilter2),
+    SetFilter(BoatFilter3),
     SetSearch(String),
     AddToBatch(BoatId),
     RemoveFromBatch(BoatId),
@@ -100,7 +100,7 @@ async fn boat_list_service(
     mut rx: UnboundedReceiver<BoatListMsg>,
     searched_boats: UseState<Vec<Boat>>,
     selected_boats: UseState<Vec<Boat>>,
-    filter: UseState<BoatFilter2>,
+    filter: UseState<BoatFilter3>,
     search_name: UseState<Option<String>>
 ) {
     use futures::stream::StreamExt;
@@ -335,7 +335,7 @@ fn BatchListPane<'a>(
 fn BoatSearchPane<'a>(
     cx: Scope, 
     boats: &'a [Boat], 
-    filter: &'a BoatFilter2,
+    filter: &'a BoatFilter3,
     search_name: &'a Option<String>,
     boat_svc: &'a Coroutine<BoatListMsg>
 ) -> Element {
@@ -350,6 +350,7 @@ fn BoatSearchPane<'a>(
                     e.stop_propagation();
                     boat_svc.send(BoatListMsg::Fetch);
                 },
+                /* 
                 button {
                     id: "filter-dropdown-btn",
                     class: "btn btn-blue min-w-28 rounded-s",
@@ -430,6 +431,7 @@ fn BoatSearchPane<'a>(
                         }
                     }
                 }
+                **/
                 input {
                     r#type:"text",
                     id: "boat_search",
