@@ -9,9 +9,9 @@ pub fn TastCenter(
     let toasts = use_state(cx, VecDeque::new);
 
     cx.spawn({
-        let toasts = toasts.to_owned();
+        let _toasts = toasts.to_owned();
         async move {
-            // remove toasts? Probably want a coroutine for this.
+            // remove toasts after expire? Probably want a coroutine for this.
         }
     });
 

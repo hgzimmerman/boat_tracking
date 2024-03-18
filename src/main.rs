@@ -5,31 +5,31 @@ use anyhow::Error;
 fn main() -> Result<(), Error> {
 
     let conn_string = "db.sql";
-    #[cfg(feature = "ssr")]
-    {
-        use diesel::Connection;
-        use boat_tracking::db;
-        let mut conn = diesel::SqliteConnection::establish(conn_string)?;
-        let conn = &mut conn;
-        let new_boat = db::boat::NewBoat::new(
-            "a good boat name".to_string(),
-            db::boat::types::WeightClass::Medium,
-            db::boat::types::BoatType::Eight,
-            Some(chrono::Utc::now().naive_utc().date()),
-            None,
-        );
-        let boat = db::boat::Boat::new_boat(conn, new_boat)?;
-        let new_event = db::use_event::NewUseEvent {
-            boat_id: boat.id,
-            recorded_at: chrono::Utc::now().naive_utc(),
-            use_scenario: db::use_event::UseScenario::AM,
-            note: Some("we had a good row".to_string()),
-            batch_id: None,
-        };
-        db::use_event::UseEvent::new_event(conn, new_event)?;
-        let boats = db::boat::BoatAndStats::get_boats(conn)?;
-        println!("{}", boats.len())
-    }
+    // #[cfg(feature = "ssr")]
+    // {
+    //     use diesel::Connection;
+    //     use boat_tracking::db;
+    //     let mut conn = diesel::SqliteConnection::establish(conn_string)?;
+    //     let conn = &mut conn;
+    //     let new_boat = db::boat::NewBoat::new(
+    //         "a good boat name".to_string(),
+    //         db::boat::types::WeightClass::Medium,
+    //         db::boat::types::BoatType::Eight,
+    //         Some(chrono::Utc::now().naive_utc().date()),
+    //         None,
+    //     );
+    //     let boat = db::boat::Boat::new_boat(conn, new_boat)?;
+    //     let new_event = db::use_event::NewUseEvent {
+    //         boat_id: boat.id,
+    //         recorded_at: chrono::Utc::now().naive_utc(),
+    //         use_scenario: db::use_event::UseScenario::AM,
+    //         note: Some("we had a good row".to_string()),
+    //         batch_id: None,
+    //     };
+    //     db::use_event::UseEvent::new_event(conn, new_event)?;
+    //     let boats = db::boat::BoatAndStats::get_boats(conn)?;
+    //     println!("{}", boats.len())
+    // }
 
 
     #[cfg(feature = "web")]

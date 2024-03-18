@@ -33,6 +33,7 @@ dioxus-fullstack = { version = "0.4.3", features = ["router", "dioxus-router"] }
 dioxus-web = { version = "0.4.3", optional = true }
 
 async-trait = "0.1.77"
+thiserror = "1.0.58"
 
 
 tracing = "0.1.40"

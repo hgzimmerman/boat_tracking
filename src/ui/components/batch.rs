@@ -21,16 +21,12 @@ pub fn BatchCreationPage(cx: Scope) -> Element {
     let selected = use_state(cx, || Vec::<Boat>::new());
     let filter = use_state(cx, || BoatFilter2::None);
     let search_name = use_state(cx, || Option::<String>::None);
-    // let boat_search = use_server_future(cx, (filter.get(),), |(filter,)| async move {
-    //     search_boats(filter.to_owned()).await
-    // })?;
 
     let search_boat_state = use_state(cx,  || Vec::<Boat>::new());
     let boat_svc = use_coroutine(cx, |rx| {
         to_owned![search_boat_state, filter, selected, search_name];
         boat_list_service(rx, search_boat_state, selected, filter, search_name)
     });
-    // boat_svc.send(BoatListMsg::Fetch);
 
     cx.render(rsx!{
         div {
@@ -324,7 +320,7 @@ fn BatchListPane<'a>(
                                 e.stop_propagation();
                                 boat_svc.send(BoatListMsg::Submit);
                             },
-                            "Save Boats"
+                            "Save Boat Uses"
                         }
                     }
                     
