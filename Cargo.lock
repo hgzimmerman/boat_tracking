@@ -313,6 +313,7 @@ dependencies = [
  "dioxus-web",
  "futures",
  "getrandom",
+ "indexmap",
  "serde",
  "serde_json",
  "thiserror",

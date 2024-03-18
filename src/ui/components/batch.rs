@@ -14,19 +14,23 @@ use std::collections::HashSet;
 use dioxus::prelude::*;
 use dioxus_fullstack::prelude::*;
 
-use crate::db::{boat::{types::BoatId, Boat, BoatFilter3}, use_event::UseScenario, use_event_batch::{BatchId, NewBatch, NewBatchArgs, UseEventBatch}};
+use crate::{db::{boat::{types::BoatId, Boat, BoatFilter3}, use_event::UseScenario, use_event_batch::{BatchId, NewBatch, NewBatchArgs, UseEventBatch}}, ui::components::toast::{MsgType, ToastData}};
+
+use super::toast::ToastList;
 
 #[component]
 pub fn BatchCreationPage(cx: Scope) -> Element {
     let selected = use_state(cx, || Vec::<Boat>::new());
     let filter = use_state(cx, BoatFilter3::default);
     let search_name = use_state(cx, || Option::<String>::None);
-
     let search_boat_state = use_state(cx,  || Vec::<Boat>::new());
+
+    let toasts = use_shared_state::<ToastList>(cx)?;
     let boat_svc = use_coroutine(cx, |rx| {
-        to_owned![search_boat_state, filter, selected, search_name];
-        boat_list_service(rx, search_boat_state, selected, filter, search_name)
+        to_owned![search_boat_state, filter, selected, search_name, toasts];
+        boat_list_service(rx, search_boat_state, selected, filter, search_name, toasts)
     });
+
 
     cx.render(rsx!{
         div {
@@ -101,7 +105,8 @@ async fn boat_list_service(
     searched_boats: UseState<Vec<Boat>>,
     selected_boats: UseState<Vec<Boat>>,
     filter: UseState<BoatFilter3>,
-    search_name: UseState<Option<String>>
+    search_name: UseState<Option<String>>,
+    toasts: UseSharedState<ToastList>
 ) {
     use futures::stream::StreamExt;
 
@@ -186,9 +191,15 @@ async fn boat_list_service(
                             searched_boats.set(Vec::new());
                             selected_boats.set(Vec::new());
                             search_name.set(None);
+                            toasts.read().add(ToastData { msg: "Submitted boats".to_string(), ty: MsgType::Normal }, std::time::Duration::from_secs(2));
+                            // Notify consumers crashes the app for some reason on 0.4.
+                            // toasts.notify_consumers()
                         }
                         Err(error) => {
-                            tracing::error!(?error, "could not submit batch")
+                            tracing::error!(?error, "Could not submit batch");
+                            toasts.read().add(ToastData { msg: format!("Could not submit batch {error}"), ty: MsgType::Normal }, std::time::Duration::from_secs(2));
+                            // Notify consumers crashes the app for some reason on 0.4.
+                            // toasts.notify_consumers()
                         }
                     }
                 }

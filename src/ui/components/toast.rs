@@ -1,28 +1,26 @@
-use std::collections::VecDeque;
+use std::sync::Arc;
 
 use dioxus::prelude::*;
 
 
-pub fn TastCenter(
+pub fn ToastCenter(
     cx: Scope, 
 ) -> Element {
-    let toasts = use_state(cx, VecDeque::new);
+    let toasts = use_shared_state::<ToastList>(cx)?;
+    let t = {
+        toasts.read().toasts.as_ref().lock().unwrap().clone() 
+        // toasts.read().toasts.clone() 
+    };
 
-    cx.spawn({
-        let _toasts = toasts.to_owned();
-        async move {
-            // remove toasts after expire? Probably want a coroutine for this.
-        }
-    });
 
     cx.render(rsx!(
         div {
-            class: "",
-            toasts.get()
-                .iter()
-                .map(|toast: &ToastData| rsx!{
+            class: "absolute top-8 right-8 z-20",
+            t
+                .into_values()
+                .map(|toast: ToastData| rsx!{
                     Toast {
-                        msg: &toast.msg,
+                        msg: toast.msg,
                         ty: toast.ty
                     }
                 })
@@ -30,21 +28,79 @@ pub fn TastCenter(
     ))
 }
 
+#[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ToastData {
-    msg: String,
-    ty: MsgType,
-    duration: std::time::Duration
+    pub msg: String,
+    pub ty: MsgType,
+}
+
+
+#[derive(Default, Clone)]
+pub struct ToastList {
+    counter: Arc<std::sync::Mutex<usize>>,
+    toasts: Arc<std::sync::Mutex<indexmap::IndexMap<usize, ToastData>>>
+}
+
+impl ToastList {
+
+    pub fn add(&self, toast: ToastData, remove_after: std::time::Duration) {
+        let counter = {
+            let mut counter = self.counter.lock().unwrap();
+            let c = *counter;
+            *counter += 1;
+            c
+        };
+        
+        {
+            self.toasts.lock().unwrap().insert(counter, toast);
+        }
+        // let toasts = self.toasts.clone();
+        // tokio::task::spawn(async move {
+        //     tokio::time::sleep(remove_after).await;
+        //     toasts.lock().unwrap().shift_remove(&counter);
+        // });
+    }
+}
+
+#[allow(unused)]
+#[derive(Default, Clone)]
+pub struct ToastList2 {
+    counter: usize,
+    toasts: indexmap::IndexMap<usize, ToastData>
+}
+
+#[allow(unused)]
+impl ToastList2 {
+
+    pub fn add(&mut self, toast: ToastData, remove_after: std::time::Duration) {
+        // let counter = self.counter.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        let counter = {
+            let mut counter = &mut self.counter;
+            let c = *counter;
+            *counter += 1;
+            c
+        };
+        
+        {
+            self.toasts.insert(counter, toast);
+        }
+        let toasts = self.toasts.clone();
+        // tokio::task::spawn(async move {
+        //     tokio::time::sleep(remove_after).await;
+        //     toasts.lock().unwrap().shift_remove(&counter);
+        // });
+    }
 }
 
 /// https://preline.co/docs/toasts.html
 #[component]
-pub fn Toast<'a>(
+pub fn Toast(
     cx: Scope, 
-    msg: &'a str,
+    msg: String,
     ty: MsgType
-) -> Element<'a> {
+) -> Element {
     let svg = match ty {
-        MsgType::Normal => rsx!{
+        MsgType::Info => rsx!{
             svg {
                 xmlns: "http://www.w3.org/2000/svg",
                 width: "16",
@@ -55,8 +111,7 @@ pub fn Toast<'a>(
                 path { d: "M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z" }
             }
         },
-        MsgType::Info => rsx!{
-            
+        MsgType::Normal => rsx!{ 
             svg {
                 height: "16",
                 width: "16",
@@ -94,7 +149,7 @@ pub fn Toast<'a>(
     cx.render(rsx!{
         div {
             role: "alert",
-            class: "max-w-xs bg-white border border-gray-200 rounded-xl shadow-lg dark:bg-gray-800 dark:border-gray-700",
+            class: "max-w-xs bg-white border border-gray-200 rounded-xl shadow-xl dark:bg-gray-800 dark:border-gray-700",
             div { 
                 class: "flex p-4",
                 div { 
@@ -104,7 +159,7 @@ pub fn Toast<'a>(
                 div { class: "ms-3",
                     p { 
                         class: "text-sm text-gray-700 dark:text-gray-400",
-                        msg
+                        msg.as_str()
                     }
                 }
             }
@@ -112,8 +167,9 @@ pub fn Toast<'a>(
     })
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum MsgType {
+    #[default]
     Normal,
     Info,
     Warn,

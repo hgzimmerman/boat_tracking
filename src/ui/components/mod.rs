@@ -4,7 +4,7 @@ pub mod new_boat;
 pub mod new_issue;
 pub mod issue_list;
 pub mod batch;
-mod toast;
+pub mod toast;
 
 use new_boat::NewBoatPage;
 use boat_list::BoatListPage;

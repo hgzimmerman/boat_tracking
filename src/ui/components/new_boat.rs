@@ -3,7 +3,7 @@ use std::ops::Deref;
 use chrono::NaiveDate;
 use dioxus::prelude::*;
 use dioxus_fullstack::prelude::*;
-use crate::db::boat::{types::{BoatType, WeightClass}, Boat, NewBoat};
+use crate::{db::boat::{types::{BoatType, WeightClass}, Boat, NewBoat}, ui::components::toast::{MsgType, ToastData, ToastList}};
 
 
 
@@ -11,6 +11,9 @@ use crate::db::boat::{types::{BoatType, WeightClass}, Boat, NewBoat};
 
 #[component]
 pub fn NewBoatPage(cx: Scope) -> Element {
+
+    let toasts = use_shared_state::<ToastList>(cx)?;
+
     let name = use_state(cx, String::new);
     let acquired_at = use_state(cx, String::new);
     let manufactured_at = use_state(cx, String::new);
@@ -22,8 +25,8 @@ pub fn NewBoatPage(cx: Scope) -> Element {
 
 
     let boat_svc = use_coroutine(cx, |rx| {
-        to_owned![name, boat_type, weight_class, acquired_at, manufactured_at];
-        create_boat_service(rx, name, weight_class, boat_type, acquired_at, manufactured_at)
+        to_owned![name, boat_type, weight_class, acquired_at, manufactured_at, toasts];
+        create_boat_service(rx, name, weight_class, boat_type, acquired_at, manufactured_at, toasts)
     });
 
 
@@ -394,7 +397,8 @@ async fn create_boat_service(
     weight: UseState<Option<WeightClass>>,
     ty: UseState<Option<BoatType>>,
     acquired_at: UseState<String>,
-    manufactured_at: UseState<String>
+    manufactured_at: UseState<String>,
+    toasts: UseSharedState<ToastList>
 ) {
     use futures::stream::StreamExt;
 
@@ -411,14 +415,17 @@ async fn create_boat_service(
                                 ty.set(None);
                                 acquired_at.set(String::new());
                                 manufactured_at.set(String::new());
+                                toasts.read().add(ToastData {msg: "Created new boat".to_string(), ty: MsgType::Normal}, std::time::Duration::from_secs(2));
                             },
                             Err(error) => {
                                 tracing::warn!(?error, "Could not send request");
+                                toasts.read().add(ToastData {msg: "Could not send requests".to_string(), ty: MsgType::Error}, std::time::Duration::from_secs(2));
                             },
                         }
                     }
                     Err(error) => {
                         tracing::warn!(?error, "failed validation");
+                        toasts.read().add(ToastData {msg: error.to_string(), ty: MsgType::Warn}, std::time::Duration::from_secs(2));
                     },
                 }
             },

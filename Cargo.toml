@@ -8,7 +8,7 @@ edition = "2021"
 [features]
 default = []
 ssr = ["dioxus-fullstack/axum", "axum", "diesel/sqlite", "deadpool-diesel/sqlite", "tokio"]
-web = ["dioxus-fullstack/web", "dioxus-web"]
+web = ["dioxus-fullstack/web", "dioxus-web", "tokio"]
 
 [dependencies]
 tokio = {version = "1.0.0", features = [], optional = true}
@@ -34,6 +34,8 @@ dioxus-web = { version = "0.4.3", optional = true }
 
 async-trait = "0.1.77"
 thiserror = "1.0.58"
+
+indexmap = "2.2.5"
 
 
 tracing = "0.1.40"
