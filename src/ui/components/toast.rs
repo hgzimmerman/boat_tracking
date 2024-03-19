@@ -2,14 +2,72 @@ use std::sync::Arc;
 
 use dioxus::prelude::*;
 
+pub enum ToastMsgMsg {
+    Add(ToastData, std::time::Duration),
+    Remove(usize)
+}
 
-pub fn ToastCenter(
+
+/// A hacked-together sleep function that works in both server and web contexts.
+async fn sleep(duration: std::time::Duration) {
+    #[cfg(feature = "ssr")]
+    {
+        tokio::time::sleep(duration).await
+    }
+    #[cfg(feature = "web")]
+    {
+        use wasm_bindgen::JsCast;
+        let (send, recv) = futures::channel::oneshot::channel();
+        let closure = wasm_bindgen::closure::Closure::once(|| {
+            let _ = send.send(());
+        });
+        web_sys::window().unwrap().set_timeout_with_callback_and_timeout_and_arguments_0( 
+            closure.as_ref().unchecked_ref(), 
+            duration.as_millis() as i32
+        );
+
+        closure.forget();
+        recv.await;
+    }
+}
+
+pub async fn toast_service(
+    mut rx: UnboundedReceiver<ToastMsgMsg>,
+    toasts: UseState<ToastList>
+) {
+    use futures::stream::StreamExt;
+    while let Some(msg) = rx.next().await {
+        match msg {
+            ToastMsgMsg::Add(toast, duration) => {
+                let counter = toasts.add(toast);
+                toasts.needs_update();
+                let toasts = toasts.clone();
+                wasm_bindgen_futures::spawn_local(async move {
+                    sleep(duration).await;
+                    toasts.toasts.lock().unwrap().shift_remove(&counter);
+                    tracing::debug!("removed toast");
+                    toasts.needs_update();
+                });
+            },
+            ToastMsgMsg::Remove(id) => {
+                tracing::debug!(?id, "removed toast externally");
+                toasts.toasts.lock().unwrap().shift_remove(&id);
+                toasts.needs_update();
+            },
+        }
+    }
+}
+
+
+
+#[component]
+pub fn ToastCenter<'a>(
     cx: Scope, 
-) -> Element {
-    let toasts = use_shared_state::<ToastList>(cx)?;
+    toasts: &'a UseState<ToastList>,
+    toast_svc: &'a Coroutine<ToastMsgMsg>
+) -> Element<'a> {
     let t = {
-        toasts.read().toasts.as_ref().lock().unwrap().clone() 
-        // toasts.read().toasts.clone() 
+        toasts.toasts.as_ref().lock().unwrap().clone() 
     };
 
 
@@ -17,11 +75,13 @@ pub fn ToastCenter(
         div {
             class: "absolute top-8 right-8 z-20",
             t
-                .into_values()
-                .map(|toast: ToastData| rsx!{
+                .into_iter()
+                .map(|(counter, toast)| rsx!{
                     Toast {
                         msg: toast.msg,
-                        ty: toast.ty
+                        ty: toast.ty,
+                        toast_svc: toast_svc,
+                        counter: counter
                     }
                 })
         }
@@ -41,9 +101,27 @@ pub struct ToastList {
     toasts: Arc<std::sync::Mutex<indexmap::IndexMap<usize, ToastData>>>
 }
 
+impl PartialEq for ToastList {
+    fn eq(&self, other: &Self) -> bool {
+        let self_counter = {
+            *self.counter.lock().unwrap()
+        };
+        let other_counter = {
+            *other.counter.lock().unwrap()
+        };
+        let self_toasts = {
+            self.toasts.lock().unwrap().clone()
+        };
+        let other_toasts = {
+            other.toasts.lock().unwrap().clone()
+        };
+        self_counter == other_counter && self_toasts == other_toasts
+    }
+}
+
 impl ToastList {
 
-    pub fn add(&self, toast: ToastData, remove_after: std::time::Duration) {
+    pub fn add(&self, toast: ToastData) -> usize {
         let counter = {
             let mut counter = self.counter.lock().unwrap();
             let c = *counter;
@@ -54,51 +132,19 @@ impl ToastList {
         {
             self.toasts.lock().unwrap().insert(counter, toast);
         }
-        // let toasts = self.toasts.clone();
-        // tokio::task::spawn(async move {
-        //     tokio::time::sleep(remove_after).await;
-        //     toasts.lock().unwrap().shift_remove(&counter);
-        // });
-    }
-}
-
-#[allow(unused)]
-#[derive(Default, Clone)]
-pub struct ToastList2 {
-    counter: usize,
-    toasts: indexmap::IndexMap<usize, ToastData>
-}
-
-#[allow(unused)]
-impl ToastList2 {
-
-    pub fn add(&mut self, toast: ToastData, remove_after: std::time::Duration) {
-        // let counter = self.counter.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
-        let counter = {
-            let mut counter = &mut self.counter;
-            let c = *counter;
-            *counter += 1;
-            c
-        };
-        
-        {
-            self.toasts.insert(counter, toast);
-        }
-        let toasts = self.toasts.clone();
-        // tokio::task::spawn(async move {
-        //     tokio::time::sleep(remove_after).await;
-        //     toasts.lock().unwrap().shift_remove(&counter);
-        // });
+        counter
     }
 }
 
 /// https://preline.co/docs/toasts.html
 #[component]
-pub fn Toast(
+pub fn Toast<'a>(
     cx: Scope, 
     msg: String,
-    ty: MsgType
-) -> Element {
+    ty: MsgType,
+    toast_svc: &'a Coroutine<ToastMsgMsg>,
+    counter: usize
+) -> Element<'a> {
     let svg = match ty {
         MsgType::Info => rsx!{
             svg {
@@ -150,6 +196,7 @@ pub fn Toast(
         div {
             role: "alert",
             class: "max-w-xs bg-white border border-gray-200 rounded-xl shadow-xl dark:bg-gray-800 dark:border-gray-700",
+            onclick: |_| toast_svc.send(ToastMsgMsg::Remove(*counter)),
             div { 
                 class: "flex p-4",
                 div { 

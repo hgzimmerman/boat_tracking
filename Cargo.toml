@@ -8,7 +8,7 @@ edition = "2021"
 [features]
 default = []
 ssr = ["dioxus-fullstack/axum", "axum", "diesel/sqlite", "deadpool-diesel/sqlite", "tokio"]
-web = ["dioxus-fullstack/web", "dioxus-web", "tokio"]
+web = ["dioxus-fullstack/web", "dioxus-web", "web-sys", "wasm-bindgen"]
 
 [dependencies]
 tokio = {version = "1.0.0", features = [], optional = true}
@@ -21,6 +21,9 @@ getrandom = {version = "0.2.12", features = ["js"]}
 diesel-derive-enum = {version="2.1.0", features = ["sqlite"]}
 diesel-derive-newtype = "2.1.0"
 dioxus = "0.4.3"
+dioxus-router = { version = "0.4.3", features = [] }
+dioxus-fullstack = { version = "0.4.3", features = ["router", "dioxus-router"] }
+dioxus-web = { version = "0.4.3", optional = true }
 #dioxus-liveview = { version = "0.4.3", features = ["axum"] }
 axum = {version = "0.6.20", features = ["ws"], optional = true}
 
@@ -28,15 +31,18 @@ deadpool-diesel = {version = "0.5.0", features = []}
 diesel = {version = "2.1.0", features = ["chrono", "returning_clauses_for_sqlite_3_35"], optional = false}
 
 anyhow = "1.0.80"
-dioxus-router = { version = "0.4.3", features = [] }
-dioxus-fullstack = { version = "0.4.3", features = ["router", "dioxus-router"] }
-dioxus-web = { version = "0.4.3", optional = true }
 
+fermi = "0.4.3"
+# wasm-bindgen needs to be the same version as the dx tool.
+# Be careful about updating these without updating the flake too.
+# The version of the tool in nix should be the limiting factor
+web-sys = {version = "0.3.66", features = ["Window"], optional = true }
+wasm-bindgen = {version = "0.2.88", optional = true}
+wasm-bindgen-futures = "0.4.41"
 async-trait = "0.1.77"
 thiserror = "1.0.58"
 
 indexmap = "2.2.5"
-
 
 tracing = "0.1.40"
 tracing-subscriber = "=0.3.18"

@@ -14,9 +14,9 @@ use std::collections::HashSet;
 use dioxus::prelude::*;
 use dioxus_fullstack::prelude::*;
 
-use crate::{db::{boat::{types::BoatId, Boat, BoatFilter3}, use_event::UseScenario, use_event_batch::{BatchId, NewBatch, NewBatchArgs, UseEventBatch}}, ui::components::toast::{MsgType, ToastData}};
+use crate::{db::{boat::{types::BoatId, Boat, BoatFilter3}, use_event::UseScenario, use_event_batch::{BatchId, NewBatch, NewBatchArgs, UseEventBatch}}, ui::components::toast::{MsgType, ToastCenter, ToastData}};
 
-use super::toast::ToastList;
+use super::toast::{ToastList, ToastMsgMsg};
 
 #[component]
 pub fn BatchCreationPage(cx: Scope) -> Element {
@@ -25,14 +25,22 @@ pub fn BatchCreationPage(cx: Scope) -> Element {
     let search_name = use_state(cx, || Option::<String>::None);
     let search_boat_state = use_state(cx,  || Vec::<Boat>::new());
 
-    let toasts = use_shared_state::<ToastList>(cx)?;
+    let toasts = use_state(cx, ToastList::default);
+    let toast_svc = use_coroutine(cx, |rx| {
+        to_owned![toasts];
+        crate::ui::components::toast::toast_service(rx, toasts)
+    });
     let boat_svc = use_coroutine(cx, |rx| {
-        to_owned![search_boat_state, filter, selected, search_name, toasts];
-        boat_list_service(rx, search_boat_state, selected, filter, search_name, toasts)
+        to_owned![search_boat_state, filter, selected, search_name, toast_svc];
+        boat_list_service(rx, search_boat_state, selected, filter, search_name, toast_svc)
     });
 
 
     cx.render(rsx!{
+        ToastCenter {
+            toasts: &*toasts,
+            toast_svc: toast_svc
+        }
         div {
             // I don't love the magic number (42px corresponds to the nav height)
             class: "flex flex-row overflow-hide divide-x-4 grow max-h-[calc(100vh-42px)]", 
@@ -106,7 +114,7 @@ async fn boat_list_service(
     selected_boats: UseState<Vec<Boat>>,
     filter: UseState<BoatFilter3>,
     search_name: UseState<Option<String>>,
-    toasts: UseSharedState<ToastList>
+    toasts: Coroutine<ToastMsgMsg>
 ) {
     use futures::stream::StreamExt;
 
@@ -191,15 +199,17 @@ async fn boat_list_service(
                             searched_boats.set(Vec::new());
                             selected_boats.set(Vec::new());
                             search_name.set(None);
-                            toasts.read().add(ToastData { msg: "Submitted boats".to_string(), ty: MsgType::Normal }, std::time::Duration::from_secs(2));
-                            // Notify consumers crashes the app for some reason on 0.4.
-                            // toasts.notify_consumers()
+                            toasts.send(ToastMsgMsg::Add(
+                                ToastData { msg: "Submitted boats".to_string(), ty: MsgType::Normal }, 
+                                std::time::Duration::from_secs(2)
+                            ));
                         }
                         Err(error) => {
                             tracing::error!(?error, "Could not submit batch");
-                            toasts.read().add(ToastData { msg: format!("Could not submit batch {error}"), ty: MsgType::Normal }, std::time::Duration::from_secs(2));
-                            // Notify consumers crashes the app for some reason on 0.4.
-                            // toasts.notify_consumers()
+                            toasts.send(ToastMsgMsg::Add(
+                                ToastData { msg: format!("Could not submit batch {error}"), ty: MsgType::Normal }, 
+                                std::time::Duration::from_secs(2)
+                            ));
                         }
                     }
                 }
