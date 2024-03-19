@@ -14,7 +14,7 @@ use std::collections::HashSet;
 use dioxus::prelude::*;
 use dioxus_fullstack::prelude::*;
 
-use crate::{db::{boat::{types::BoatId, Boat, BoatFilter3}, use_event::UseScenario, use_event_batch::{BatchId, NewBatch, NewBatchArgs, UseEventBatch}}, ui::components::toast::{MsgType, ToastCenter, ToastData}};
+use crate::{db::{boat::{types::{BoatId, HasCox, OarConfiguration, SeatCount}, Boat, BoatFilter3}, use_event::UseScenario, use_event_batch::{BatchId, NewBatch, NewBatchArgs, UseEventBatch}}, ui::components::toast::{MsgType, ToastCenter, ToastData}};
 
 use super::toast::{ToastList, ToastMsgMsg};
 
@@ -65,12 +65,11 @@ pub(crate) async fn search_boats(
 ) -> Result<Vec<Boat>, ServerFnError> {
     let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu"); 
     let conn = state.pool().get().await.map_err(ServerFnError::from)?;
-    tracing::info!(?search_name);
+    tracing::info!(?search_name, ?filter);
     conn 
         .interact(|conn| {
             Boat::get_boats3(conn, filter, search_name)
             .map_err(ServerFnError::from)
-            
         })
         .await
         .map_err(ServerFnError::from)?
@@ -99,7 +98,9 @@ pub(crate) async fn submit_boats(
 enum BoatListMsg {
     /// Run the fetch
     Fetch,
-    SetFilter(BoatFilter3),
+    SetFilterOarConfig(Option<OarConfiguration>),
+    SetFilterCoxed(Option<HasCox>),
+    SetFilterNumSeats(Option<SeatCount>),
     SetSearch(String),
     AddToBatch(BoatId),
     RemoveFromBatch(BoatId),
@@ -147,10 +148,27 @@ async fn boat_list_service(
                     search().await
                 }
             }
-            BoatListMsg::SetFilter(new_filter) => {
-                tracing::info!(?new_filter, "set filter");
-                filter.set(new_filter);
-            },
+            BoatListMsg::SetFilterOarConfig(oars_config) => {
+                filter.set({
+                    let current = filter.current();
+                    BoatFilter3 { _x: current._x, num_seats: current.num_seats, coxed: current.coxed, oars_config }
+                });
+                search().await;
+            }
+            BoatListMsg::SetFilterCoxed(coxed) => {
+                filter.set({
+                    let current = filter.current();
+                    BoatFilter3 { _x: current._x, num_seats: current.num_seats, coxed, oars_config: current.oars_config }
+                });
+                search().await;
+            }
+            BoatListMsg::SetFilterNumSeats(num_seats) => {
+                filter.set({
+                    let current = filter.current();
+                    BoatFilter3 { _x: current._x, num_seats, coxed: current.coxed, oars_config: current.oars_config }
+                });
+                search().await;
+            }
             BoatListMsg::AddToBatch(id) => {
                 tracing::info!(?id,"adding to batch");
                 let mut boat_to_add = None;
@@ -360,99 +378,155 @@ fn BoatSearchPane<'a>(
     search_name: &'a Option<String>,
     boat_svc: &'a Coroutine<BoatListMsg>
 ) -> Element {
-    let show_filter_dropdown = use_state(cx, || false); 
     cx.render(rsx!{
         div {
             class: "flex flex-col w-1/2 overflow-auto divide-y-2",
             // The submission box
             form {
-                class: "flex flex-col h-30 m-4",
+                class: "flex flex-col h-30 p-4 bg-white dark:bg-gray-500",
                 onsubmit: move |e| {
                     e.stop_propagation();
                     boat_svc.send(BoatListMsg::Fetch);
                 },
-                /* 
-                button {
-                    id: "filter-dropdown-btn",
-                    class: "btn btn-blue min-w-28 rounded-s",
-                    onclick: move |e| {
-                        e.stop_propagation();
-                        show_filter_dropdown.set(!show_filter_dropdown.get());
-                    },
-                    onmouseover: move |e| {
-                        e.stop_propagation();
-                        show_filter_dropdown.set(true);
-                    },
-                    onmouseout: move |e| {
-                        e.stop_propagation();
-                        show_filter_dropdown.set(false);
-                    },
-                    format!("{filter:?}")
-                    // the dropdown
+                div {
+                    class: "flex flex-row gap-x-4 flex-wrap justify-items-center",
                     div {
-                        id: "filter-dropdown-positioner",
-                        class: "relative h-0 w-0",
-                        div {
-                            id: "filter-dropdown",
-                            class: if *show_filter_dropdown.get() {
-                                "absolute z-10 mt-2 w-20 top-2 left-4 origin-bottom-right rounded-md bg-white shadow-lg divide-y p-2 text-slate-600 font-normal"
-                            } else {
-                                "hidden"
-                            },
-                            ul {
-                                li {
-                                    onclick: |e| {
-                                        e.stop_propagation();
-                                        boat_svc.send(BoatListMsg::SetFilter(BoatFilter2::None));
-                                        show_filter_dropdown.set(false);
-                                    },
-                                    "None"
-                                }
-                                li {
-                                    onclick: |e| {
-                                        e.stop_propagation();
-                                        boat_svc.send(BoatListMsg::SetFilter(BoatFilter2::ByType(BoatType::Single)));
-                                        show_filter_dropdown.set(false);
-                                    },
-                                    "Single"
-                                }
-                                li {
-                                    onclick: |e| {
-                                        e.stop_propagation();
-                                        boat_svc.send(BoatListMsg::SetFilter(BoatFilter2::ByType(BoatType::Double)));
-                                        show_filter_dropdown.set(false);
-                                    },
-                                    "Double"
-                                }
-                                li {
-                                    onclick: |e| {
-                                        e.stop_propagation();
-                                        boat_svc.send(BoatListMsg::SetFilter(BoatFilter2::ByType(BoatType::Quad)));
-                                        show_filter_dropdown.set(false);
-                                    },
-                                    "Quad"
-                                }
-                                li {
-                                    onclick: |e| {
-                                        e.stop_propagation();
-                                        boat_svc.send(BoatListMsg::SetFilter(BoatFilter2::ByType(BoatType::Four)));
-                                        show_filter_dropdown.set(false);
-                                    },
-                                    "Four"
-                                }
-                                li {
-                                    onclick: |e| {
-                                        e.stop_propagation();
-                                        boat_svc.send(BoatListMsg::SetFilter(BoatFilter2::ByType(BoatType::Eight)));
-                                        show_filter_dropdown.set(false);
-                                    },
-                                    "Eight"
-                                }
+                        class: "grow",
+                        label {
+                            r#for: "select-oar-config",
+                            class: "block mb-2 text-sm font-medium text-gray-900 dark:text-white",
+                            "Oar Configuration"
+                        }
+                        select {
+                            id: "select-oar-config",
+                            class: "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500",
+                            option {
+                                selected: filter.oars_config.is_none(),
+                                onclick: |e| {
+                                    e.stop_propagation();
+                                    boat_svc.send(BoatListMsg::SetFilterOarConfig(None));
+                                },
+                                value: "None",
+                                "None"
+                            }
+                            option {
+                                selected: filter.oars_config == Some(OarConfiguration::Sweep),
+                                onclick: |e| {
+                                    e.stop_propagation();
+                                    boat_svc.send(BoatListMsg::SetFilterOarConfig(Some(OarConfiguration::Sweep)));
+                                },
+                                value: "Sweep", 
+                                "Sweep"
+                            }
+                            option {
+                                selected: filter.oars_config == Some(OarConfiguration::Scull),
+                                onclick: |e| {
+                                    e.stop_propagation();
+                                    boat_svc.send(BoatListMsg::SetFilterOarConfig(Some(OarConfiguration::Scull)));
+                                },
+                                value: "Scull",
+                                "Scull"
+                            }
+                        }
+                    }
+                    div {
+                        class: "grow",
+                        label {
+                            r#for: "select-coxed",
+                            class: "block mb-2 text-sm font-medium text-gray-900 dark:text-white",
+                            "Filter by Coxed"
+                        }
+                        select {
+                            id: "select-coxed",
+                            class: "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500",
+                            option {
+                                selected: filter.coxed.is_none(),
+                                onclick: |e| {
+                                    e.stop_propagation();
+                                    boat_svc.send(BoatListMsg::SetFilterCoxed(None));
+                                },
+                                value: "None",
+                                "None"
+                            }
+                            option {
+                                selected: filter.coxed == Some(HasCox::new(true)),
+                                onclick: |e| {
+                                    e.stop_propagation();
+                                    boat_svc.send(BoatListMsg::SetFilterCoxed(Some(HasCox::new(true))));
+                                },
+                                value: "Coxed",
+                                "Coxed"
+                            }
+                            option {
+                                selected: filter.coxed == Some(HasCox::new(false)),
+                                onclick: |e| {
+                                    e.stop_propagation();
+                                    boat_svc.send(BoatListMsg::SetFilterCoxed(Some(HasCox::new(false))));
+                                },
+                                value: "Coxless",
+                                "Coxless" 
+                            }
+                        }
+                    }
+
+                    div {
+                        class: "grow",
+                        label {
+                            r#for: "select-num-seats",
+                            class: "block mb-2 text-sm font-medium text-gray-900 dark:text-white",
+                            "Filter by Coxed"
+                        }
+                        select {
+                            id: "select-num-seats",
+                            class: "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500",
+                            option {
+                                selected: filter.num_seats.is_none(),
+                                onclick: |e| {
+                                    e.stop_propagation();
+                                    boat_svc.send(BoatListMsg::SetFilterNumSeats(None));
+                                },
+                                value: "None",
+                                "None" 
+                            }
+                            option {
+                                selected: filter.num_seats.as_ref().map(SeatCount::count).unwrap_or_default() == 1,
+                                onclick: |e| {
+                                    e.stop_propagation();
+                                    boat_svc.send(BoatListMsg::SetFilterNumSeats(SeatCount::new(1)));
+                                },
+                                value: "1",
+                                "1" 
+                            }
+                            option {
+                                selected: filter.num_seats.as_ref().map(SeatCount::count).unwrap_or_default() == 2,
+                                onclick: |e| {
+                                    e.stop_propagation();
+                                    boat_svc.send(BoatListMsg::SetFilterNumSeats(SeatCount::new(2)));
+                                },
+                                value: "2",
+                                "2" 
+                            }
+                            option {
+                                selected: filter.num_seats.as_ref().map(SeatCount::count).unwrap_or_default() == 4,
+                                onclick: |e| {
+                                    e.stop_propagation();
+                                    boat_svc.send(BoatListMsg::SetFilterNumSeats(SeatCount::new(4)));
+                                },
+                                value: "4",
+                                "4"
+                            }
+                            option {
+                                selected: filter.num_seats.as_ref().map(SeatCount::count).unwrap_or_default() == 8,
+                                onclick: |e| {
+                                    e.stop_propagation();
+                                    boat_svc.send(BoatListMsg::SetFilterNumSeats(SeatCount::new(8)));
+                                },
+                                value: "8",
+                                "8"
                             }
                         }
                     }
                 }
-                **/
                 input {
                     r#type:"text",
                     id: "boat_search",

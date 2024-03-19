@@ -3,11 +3,7 @@ use std::ops::Deref;
 use chrono::NaiveDate;
 use dioxus::prelude::*;
 use dioxus_fullstack::prelude::*;
-use fermi::prelude::*;
 use crate::{db::boat::{types::{BoatType, WeightClass}, Boat, NewBoat}, ui::components::toast::{MsgType, ToastCenter, ToastData, ToastList, ToastMsgMsg}};
-
-
-
 
 
 #[component]

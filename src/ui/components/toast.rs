@@ -214,6 +214,7 @@ pub fn Toast<'a>(
     })
 }
 
+#[allow(unused)]
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum MsgType {
     #[default]
