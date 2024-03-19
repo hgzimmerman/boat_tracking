@@ -20,33 +20,47 @@ pub(super) fn BoatSearchPane<'a>(
                 boat_svc: boat_svc
             } 
             // The search results 
-            div {
-                class: "flex flex-col grow divide-y",
-                boats.iter().map(|b| rsx! {
-                    div {
-                        class: "flex flex-row h-16 items-center",
-                        div {
-                            class: "m-2",
-                            b.name.clone()
-                        }
-                        div {
-                            class: "m-2",
-                            b.boat_type().as_ref().map(ToString::to_string)
-                        }
-                        button {
-                            class: "m-2 btn btn-blue",
-                            onclick: move |_| {
-                                boat_svc.send(BoatListMsg::AddToBatch(b.id.clone()));
-                            },
-                            "Add to batch"
-                        }
-                    }
-                }) 
+            SearchResults {
+                boats: boats,
+                boat_svc: boat_svc
             }
         } 
     })
 }
 
+
+#[component]
+fn SearchResults<'a>(
+    cx: Scope, 
+    boats: &'a [Boat], 
+    boat_svc: &'a Coroutine<BoatListMsg>
+) -> Element {
+    cx.render(rsx! {
+        div {
+            class: "flex flex-col grow divide-y",
+            boats.iter().map(|b| rsx! {
+                div {
+                    class: "flex flex-row h-16 items-center",
+                    div {
+                        class: "m-2 grow",
+                        b.name.clone()
+                    }
+                    div {
+                        class: "m-2",
+                        b.boat_type().as_ref().map(ToString::to_string)
+                    }
+                    button {
+                        class: "m-2 btn btn-blue",
+                        onclick: move |_| {
+                            boat_svc.send(BoatListMsg::AddToBatch(b.id.clone()));
+                        },
+                        "Add to batch"
+                    }
+                }
+            }) 
+        }
+    })
+}
 
 
 #[component]
