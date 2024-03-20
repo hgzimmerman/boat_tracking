@@ -41,7 +41,7 @@ fn List<'a>(
                 div {
                     class: "flex flex-row h-16 items-center",
                     div {
-                        class: "m-2",
+                        class: "m-2 grow",
                         b.name.clone()
                     }
                     div {

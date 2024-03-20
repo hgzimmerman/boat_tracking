@@ -37,6 +37,24 @@ pub fn BatchCreationPage(cx: Scope) -> Element {
         boat_list_service(rx, search_boat_state, selected, filter, search_name, toast_svc)
     });
 
+    // use_on_create(cx, || {
+    //     to_owned![search_boat_state, filter, selected, search_name];
+    //     async move {
+    //         use crate::ui::util::sleep::sleep;
+    //         sleep(std::time::Duration::from_millis(1050)).await;
+    //         search_boats(
+    //                 filter.current().as_ref().to_owned(), 
+    //                 search_name.current().as_ref().to_owned(),
+    //             )
+    //             .await
+    //             .map(|boats| {
+    //                 let exclude: HashSet<BoatId> = selected.current().iter().map(|x| x.id).collect();
+    //                 boats.into_iter().filter(|x| !exclude.contains(&x.id)).collect()
+    //             })
+    //             .map(|x| search_boat_state.set(x))
+    //     }
+    // });
+
 
     cx.render(rsx!{
         ToastCenter {
@@ -221,14 +239,14 @@ async fn boat_list_service(
                             search_name.set(None);
                             toasts.send(ToastMsgMsg::Add(
                                 ToastData { msg: "Submitted boats".to_string(), ty: MsgType::Normal }, 
-                                std::time::Duration::from_secs(2)
+                                std::time::Duration::from_secs(3)
                             ));
                         }
                         Err(error) => {
                             tracing::error!(?error, "Could not submit batch");
                             toasts.send(ToastMsgMsg::Add(
                                 ToastData { msg: format!("Could not submit batch {error}"), ty: MsgType::Normal }, 
-                                std::time::Duration::from_secs(2)
+                                std::time::Duration::from_secs(3)
                             ));
                         }
                     }

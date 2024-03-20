@@ -28,7 +28,7 @@ CREATE TABLE use_event (
     recorded_at DATETIME NOT NULL, 
     use_scenario TEXT CHECK( use_scenario IN ('AM', 'PM', 'Regatta', 'Other') ) NOT NULL,
     note TEXT,
-    FOREIGN KEY (boat_id) REFERENCES boat(id)
+    FOREIGN KEY (boat_id) REFERENCES boat(id),
     FOREIGN KEY (batch_id) REFERENCES batch(id)
 );
 

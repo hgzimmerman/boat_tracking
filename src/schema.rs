@@ -59,6 +59,7 @@ diesel::table! {
 diesel::joinable!(issue -> boat (boat_id));
 diesel::joinable!(issue -> use_event (use_event_id));
 diesel::joinable!(use_event -> boat (boat_id));
+diesel::joinable!(use_event -> use_event_batch(batch_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     boat,

@@ -6,8 +6,8 @@ use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
 use super::{boat::types::BoatId, use_event_batch::BatchId};
 
 /// Whenever the equipment is used, it can be recorded that it was used
-#[derive(Debug, Clone)]
-#[cfg_attr(feature = "ssr", derive(diesel::Queryable, diesel::Selectable, diesel::Identifiable))]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[cfg_attr(feature = "ssr", derive(diesel::Queryable, diesel::Selectable, diesel::Identifiable, ))]
 #[cfg_attr(feature = "ssr", diesel(table_name = crate::schema::use_event))]
 pub struct UseEvent {
     pub id: UseEventId,
