@@ -1,9 +1,9 @@
-use std::{fmt::Write, str::FromStr};
+use std::str::FromStr;
 
-use crate::db::{use_event::UseScenario, use_event_batch::{BatchAndCounts, UseEventBatch}};
+use crate::{db::{use_event::UseScenario, use_event_batch::{BatchAndCounts, UseEventBatch}}, ui::components::Route};
 use dioxus::prelude::*;
 use dioxus_fullstack::prelude::*;
-use dioxus_router::routable::FromQuery;
+use dioxus_router::{components::Link, routable::FromQuery};
 
 
 #[server(GetBatches)]
@@ -31,16 +31,12 @@ async fn get_batches(
 #[component]
 pub fn BatchList (
     cx: Scope,
-    offset_state: UseState<usize>,
+    offset_state: usize,
     limit_state: UseState<usize>
 ) -> Element {
-
     let scenario_state: &UseState<Option<UseScenario>> = use_state(cx, || None);
-    // let batch_data_state: &UseState<Vec<BatchAndCounts>> = use_state(cx, || vec![]);
     let batches_fut = use_server_future(cx, (offset_state, limit_state, scenario_state), move |(offset, limit, scenario)| {
-        // to_owned![batch_data_state];
         let scenario = scenario.current().as_ref().clone();
-        let offset = offset.current().as_ref().clone();
         let limit = limit.current().as_ref().clone();
         tracing::debug!(?scenario, ?offset, ?limit, "fetching batches");
         async move {
@@ -102,8 +98,11 @@ pub fn BatchListPage(
     cx: Scope,
     page: PageQueryParams 
 ) -> Element {
-    let offset_state: &UseState<usize> = use_state(cx, || 0);
+    let page = page.page.unwrap_or(1);
+    tracing::debug!(?page, "rendering batch list page");
+
     let limit_state: &UseState<usize> = use_state(cx, || 20);
+    let offset_state: &usize = use_memo(cx, (&page, limit_state.get()), |(page, limit)| (page.saturating_sub(1)) * limit );
     cx.render(rsx! {
         div {
             class: "flex flex-col overflow-hide grow max-h-[calc(100vh-42px)]",
@@ -111,18 +110,20 @@ pub fn BatchListPage(
             div {
                 class: "h-8",
                 "Add controls here for pagination, "
-                if *offset_state.get() != 0 {
+                if *offset_state != 0 {
                     rsx!{
-                        button {
-                            class: "btn btn-blue",
+                        Link { 
+                            class: "inline-block border border-blue-500 rounded py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white",
+                            to: Route::BatchListPage{page: PageQueryParams{page: Some(page.saturating_sub(1))}},
                             "Newer" 
-                        }
+                        } 
                     }
                 }
-                button {
-                    class: "btn btn-blue",
-                    "Older"
-                }
+                Link { 
+                    class: "inline-block border border-blue-500 rounded py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white",
+                    to: Route::BatchListPage{page: PageQueryParams{page: Some(page.saturating_add(1))}},
+                    "Older" 
+                } 
             }
             // the controls
             BatchList {
