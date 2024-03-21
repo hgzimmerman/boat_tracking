@@ -2,7 +2,7 @@ use diesel::{Connection, ExpressionMethods, JoinOnDsl, NullableExpressionMethods
 
 use crate::{db::{boat::Boat, use_event::{NewUseEvent, UseEvent, UseScenario}}, schema::boat};
 
-use super::{BatchId, NewBatchArgs, UseEventBatch};
+use super::{BatchAndCounts, BatchId, NewBatchArgs, UseEventBatch};
         use crate::schema::{use_event_batch, use_event};
 
 impl UseEventBatch {
@@ -61,35 +61,32 @@ impl UseEventBatch {
         scenario: Option<UseScenario>,
         offset: usize,
         limit: usize
-    ) -> Result<Vec<(UseEventBatch, i64,)>, diesel::result::Error> {
+    ) -> Result<Vec<BatchAndCounts>, diesel::result::Error> {
         match scenario {
             Some(scenario) => {
-                // Without testing this, this inner_join should exclude batches without any events. 
+                // This inner_join should exclude batches without any events. 
+                // This is desirable because:
+                // * A we don't allow creation of empty batches based on rules in the UI.
+                // * An empty batch is useless anyways.
                 use_event_batch::table
                 .filter(use_event_batch::use_scenario.eq(scenario))
-                .inner_join(use_event::table.on(use_event::batch_id.eq(use_event_batch::id.nullable())))
+                .inner_join(use_event::table)
                 .order_by(use_event_batch::recorded_at.desc())
                 .group_by(use_event_batch::id)
-                .select((
-                    UseEventBatch::as_select(),
-                    diesel::dsl::count(use_event::batch_id.eq(use_event_batch::id.nullable())),
-                ))
+                .select(BatchAndCounts::as_select())
                 .offset(i64::try_from(offset).unwrap_or_default())
                 .limit(i64::try_from(limit).unwrap_or(20))
-                .get_results(conn)
+                .get_results::<BatchAndCounts>(conn)
             },
             None => {
                 use_event_batch::table
+                .inner_join(use_event::table.on(use_event::batch_id.eq(use_event_batch::id.nullable())))
                 .order_by(use_event_batch::recorded_at.desc())
-                .inner_join(use_event::table.on(use_event::batch_id.eq(use_event_batch::id.nullable()))) 
                 .group_by(use_event_batch::id)
-                .select((
-                    UseEventBatch::as_select(),
-                    diesel::dsl::count(use_event::batch_id.eq(use_event_batch::id.nullable())),
-                ))
+                .select(BatchAndCounts::as_select())
                 .offset(i64::try_from(offset).unwrap_or_default())
                 .limit(i64::try_from(limit).unwrap_or(20))
-                .get_results(conn)
+                .get_results::<BatchAndCounts>(conn)
             },
         }
     }

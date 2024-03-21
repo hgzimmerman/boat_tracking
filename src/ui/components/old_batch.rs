@@ -1,4 +1,4 @@
-use crate::db::{boat::{Boat, BoatAndStats}, use_event::{UseEvent, UseScenario}, use_event_batch::UseEventBatch};
+use crate::db::{boat::Boat, use_event::{UseEvent, UseScenario}, use_event_batch::UseEventBatch};
 use dioxus::prelude::*;
 use dioxus_fullstack::prelude::*;
 

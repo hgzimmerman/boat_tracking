@@ -60,3 +60,16 @@ pub struct NewBatch {
     pub use_scenario: UseScenario,
     pub recorded_at: chrono::NaiveDateTime
 }
+
+
+#[derive(Debug, Clone, PartialEq, Eq,  serde::Serialize, serde::Deserialize)]
+#[cfg_attr(feature = "ssr", derive(diesel::Selectable, diesel::Queryable))]
+#[cfg_attr(feature = "ssr", diesel(table_name = crate::schema::use_event_batch))]
+#[cfg_attr(feature = "ssr", diesel(check_for_backend(diesel::sqlite::Sqlite)))]
+pub struct BatchAndCounts {
+    #[cfg_attr(feature = "ssr", diesel(embed))]
+    pub batch: UseEventBatch,
+    #[cfg_attr(feature = "ssr", diesel(select_expression = diesel::dsl::count(crate::schema::use_event::id)))]
+    #[cfg_attr(feature = "ssr", diesel(select_expression_type = diesel::dsl::count<crate::schema::use_event::id>))]
+    pub use_counts: i64
+}

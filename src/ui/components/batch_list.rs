@@ -1,20 +1,14 @@
-use crate::db::{boat::{Boat, BoatAndStats}, use_event::{UseEvent, UseScenario}, use_event_batch::UseEventBatch};
+use crate::db::{use_event::UseScenario, use_event_batch::{BatchAndCounts, UseEventBatch}};
 use dioxus::prelude::*;
 use dioxus_fullstack::prelude::*;
-use futures::TryFutureExt;
 
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-pub struct BatchAndCount {
-    batch: UseEventBatch,
-    use_counts: i64
-}
 
 #[server(GetBatches)]
 async fn get_batches(
     scenario: Option<UseScenario>,
     offset: usize,
     limit: usize
-) -> Result<Vec<BatchAndCount>, ServerFnError> {
+) -> Result<Vec<BatchAndCounts>, ServerFnError> {
     let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu"); 
     let conn = state.pool().get().await.map_err(ServerFnError::from)?;
     conn 
@@ -28,49 +22,55 @@ async fn get_batches(
             .map_err(ServerFnError::from)
         })
         .await?
-        .map(|list| list.into_iter().map(|(batch, use_counts)| BatchAndCount{batch, use_counts}).collect::<Vec<_>>())
         .map_err(ServerFnError::from)
 }
 
 #[component]
 pub fn BatchList(cx: Scope) -> Element {
     let offset_state: &UseState<usize> = use_state(cx, || 0);
-    let limit_state: &UseState<usize> = use_state(cx, || 0);
+    let limit_state: &UseState<usize> = use_state(cx, || 20);
     let scenario_state: &UseState<Option<UseScenario>> = use_state(cx, || None);
-    let batch_data_state: &UseState<Vec<BatchAndCount>> = use_state(cx, || vec![]);
-    use_future(cx, (offset_state, limit_state, scenario_state), move |(offset, limit, scenario)| {
-        to_owned![batch_data_state];
+    // let batch_data_state: &UseState<Vec<BatchAndCounts>> = use_state(cx, || vec![]);
+    let batches_fut = use_server_future(cx, (offset_state, limit_state, scenario_state), move |(offset, limit, scenario)| {
+        // to_owned![batch_data_state];
+        let scenario = scenario.current().as_ref().clone();
+        let offset = offset.current().as_ref().clone();
+        let limit = limit.current().as_ref().clone();
+        tracing::debug!(?scenario, ?offset, ?limit, "fetching batches");
         async move {
-            let _ = get_batches(
-                scenario.current().as_ref().clone(), 
-                offset.current().as_ref().clone(),
-                limit.current().as_ref().clone(),
-            )
+            get_batches(scenario, offset, limit)
             .await
-            .map(|batch_data| batch_data_state.set(batch_data))
+            .map(|batch_data| {
+                tracing::debug!(?batch_data);
+                // batch_data_state.set(batch_data.clone());
+                batch_data
+            })
             .map_err(|error| {
                 tracing::warn!(?error, "Colud not fetch");
-            });
+                error
+            })
         }
-    });
+    })?;
     cx.render(rsx! {
         div {
-            batch_data_state.get().iter().map(|BatchAndCount { batch, use_counts }| rsx!{
-                div {
-                    class: "flex flex-row h-16 items-center",
+            batches_fut.value().as_ref().unwrap().iter().map(|BatchAndCounts { batch, use_counts }| {
+                rsx!{
                     div {
-                        class: "m-2 w-8",
-                        batch.use_scenario.to_string()
+                        class: "flex flex-row h-16 items-center",
+                        div {
+                            class: "m-2 w-20",
+                            batch.use_scenario.to_string()
+                        }
+                        div {
+                            class: "m-2 w-40",
+                            batch.recorded_at.to_string()
+                        }
+                        div {
+                            class: "m-2 w-10",
+                            format!("{use_counts} boats used")
+                        }
+                        // add button  for opening this batch. Try to reuse the batch pane, creating an edit mode for it.
                     }
-                    div {
-                        class: "m-2 w-5",
-                        batch.recorded_at.to_string()
-                    }
-                    div {
-                        class: "m-2 w-5",
-                        format!("{use_counts} uses")
-                    }
-                    // add button  for opening this batch. Try to reuse the batch pane, creating an edit mode for it.
                 }
             })
         }

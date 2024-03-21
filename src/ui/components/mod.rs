@@ -14,7 +14,7 @@ use boat::BoatPage;
 use issue_list::IssueListPage;
 use new_issue::NewIssuePage;
 use batch::BatchCreationPage;
-use old_batch::OldBatches;
+use batch_list::BatchListPage;
 
 use dioxus_router::prelude::*;
 use dioxus::prelude::*;
@@ -41,10 +41,10 @@ pub enum Route {
         NewIssuePage,
     #[end_nest]
     #[nest("/batches")]
+        #[route("/")]
+        BatchListPage,
         #[route("/new")]
         BatchCreationPage,
-        #[route("/old")]
-       OldBatches 
 }
 fn Home(cx: Scope) -> Element {
     cx.render(rsx! {
@@ -106,8 +106,8 @@ fn NavBar(cx: Scope) -> Element {
                     class: "mr-3",
                      Link { 
                         class: "inline-block border border-blue-500 rounded py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white",
-                        to: Route::OldBatches{},
-                         "Old Batches" 
+                        to: Route::BatchListPage{},
+                         "Batches" 
                     } 
                 }
             }
