@@ -1,6 +1,9 @@
+use std::{fmt::Write, str::FromStr};
+
 use crate::db::{use_event::UseScenario, use_event_batch::{BatchAndCounts, UseEventBatch}};
 use dioxus::prelude::*;
 use dioxus_fullstack::prelude::*;
+use dioxus_router::routable::FromQuery;
 
 
 #[server(GetBatches)]
@@ -26,9 +29,12 @@ async fn get_batches(
 }
 
 #[component]
-pub fn BatchList(cx: Scope) -> Element {
-    let offset_state: &UseState<usize> = use_state(cx, || 0);
-    let limit_state: &UseState<usize> = use_state(cx, || 20);
+pub fn BatchList (
+    cx: Scope,
+    offset_state: UseState<usize>,
+    limit_state: UseState<usize>
+) -> Element {
+
     let scenario_state: &UseState<Option<UseScenario>> = use_state(cx, || None);
     // let batch_data_state: &UseState<Vec<BatchAndCounts>> = use_state(cx, || vec![]);
     let batches_fut = use_server_future(cx, (offset_state, limit_state, scenario_state), move |(offset, limit, scenario)| {
@@ -69,7 +75,21 @@ pub fn BatchList(cx: Scope) -> Element {
                             class: "m-2 w-10",
                             format!("{use_counts} boats used")
                         }
-                        // add button  for opening this batch. Try to reuse the batch pane, creating an edit mode for it.
+                        // -> batch/view/:batch_id or batch/:batch_id depending on if I can make this page use ?page= parameters.
+                        button {
+                            class: "btn btn-blue",
+                            "View"
+                        }
+                        // -> batch/edit/:batch_id
+                        button {
+                            class: "btn btn-blue",
+                            "Edit"
+                        }
+                        // -> batch/new/:batch_id
+                        button {
+                            class: "btn btn-blue",
+                            "Use as Template"
+                        }
                     }
                 }
             })
@@ -78,8 +98,12 @@ pub fn BatchList(cx: Scope) -> Element {
 }
 
 #[component]
-pub fn BatchListPage(cx: Scope) -> Element {
-
+pub fn BatchListPage(
+    cx: Scope,
+    page: PageQueryParams 
+) -> Element {
+    let offset_state: &UseState<usize> = use_state(cx, || 0);
+    let limit_state: &UseState<usize> = use_state(cx, || 20);
     cx.render(rsx! {
         div {
             class: "flex flex-col overflow-hide grow max-h-[calc(100vh-42px)]",
@@ -87,13 +111,69 @@ pub fn BatchListPage(cx: Scope) -> Element {
             div {
                 class: "h-8",
                 "Add controls here for pagination, "
+                if *offset_state.get() != 0 {
+                    rsx!{
+                        button {
+                            class: "btn btn-blue",
+                            "Newer" 
+                        }
+                    }
+                }
+                button {
+                    class: "btn btn-blue",
+                    "Older"
+                }
             }
             // the controls
             BatchList {
-
+                offset_state: offset_state.clone(),
+                limit_state: limit_state.clone()
             }
         }
         
     })
 
+}
+
+#[derive(Debug, Default, PartialEq, Eq, Clone, Copy)]
+pub struct Page(usize);
+
+impl FromStr for Page {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let search = "page=";
+        if s.len() < search.len() {
+            return Err("Input to small".to_string())
+        }
+        if &s[0..search.len()] == search {
+            Ok(Page(usize::from_str(&s[search.len()..]).map_err(|e| e.to_string())?))
+        } else {
+            Err("Missing 'page='".to_string())
+        }
+    }
+}
+impl std::fmt::Display for Page {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let page = self.0;
+        f.write_fmt(format_args!("page={page}"))
+    }
+}
+
+#[derive(Debug, Default, PartialEq, Eq, Clone, Copy)]
+pub struct PageQueryParams {
+    page: Option<usize>
+}
+impl FromQuery for PageQueryParams {
+    fn from_query(query: &str) -> Self {
+        Self {
+            page: Page::from_str(query).ok().map(|x| x.0)
+        }
+    }
+}
+impl std::fmt::Display for PageQueryParams {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let page = self.page.map(Page).unwrap_or_default();
+        page.fmt(f)
+    }
 }

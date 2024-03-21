@@ -20,6 +20,8 @@ use dioxus_router::prelude::*;
 use dioxus::prelude::*;
 use crate::db::boat::types::BoatId;
 
+use self::batch_list::{Page, PageQueryParams};
+
 
 #[derive(Routable, Clone, Debug, PartialEq)]
 pub enum Route {
@@ -41,8 +43,8 @@ pub enum Route {
         NewIssuePage,
     #[end_nest]
     #[nest("/batches")]
-        #[route("/")]
-        BatchListPage,
+        #[route("/?:page")]
+        BatchListPage{page: PageQueryParams},
         #[route("/new")]
         BatchCreationPage,
 }
@@ -106,7 +108,7 @@ fn NavBar(cx: Scope) -> Element {
                     class: "mr-3",
                      Link { 
                         class: "inline-block border border-blue-500 rounded py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white",
-                        to: Route::BatchListPage{},
+                        to: Route::BatchListPage{page: PageQueryParams::default()},
                          "Batches" 
                     } 
                 }
