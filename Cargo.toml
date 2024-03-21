@@ -32,7 +32,8 @@ diesel = {version = "2.1.0", features = ["chrono", "returning_clauses_for_sqlite
 
 anyhow = "1.0.80"
 
-fermi = "0.4.3"
+#fermi = "0.4.3"
+
 # wasm-bindgen needs to be the same version as the dx tool.
 # Be careful about updating these without updating the flake too.
 # The version of the tool in nix should be the limiting factor

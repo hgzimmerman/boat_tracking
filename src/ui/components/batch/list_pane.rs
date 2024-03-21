@@ -157,7 +157,7 @@ fn SubmitRow<'a>(
                             e.stop_propagation();
                             boat_svc.send(BoatListMsg::Submit);
                         },
-                        "Save Boat Uses"
+                        "Save New Boat Uses"
                     }
                 } 
             }

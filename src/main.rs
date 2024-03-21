@@ -52,7 +52,12 @@ fn main() -> Result<(), Error> {
             .with(perf_layer)
             .init(); // Install these as subscribers to tracing events
 
-        dioxus_web::launch_cfg(boat_tracking::ui::app, dioxus_web::Config::new().hydrate(true));
+        // dioxus_web::launch_cfg(boat_tracking::ui::app, dioxus_web::Config::new().hydrate(true));
+        dioxus_web::launch_with_props(
+            boat_tracking::ui::app,
+            dioxus_fullstack::prelude::get_root_props_from_document().unwrap_or_default(),
+            dioxus_web::Config::new().hydrate(true),
+        );
     }
 
     #[cfg(feature = "ssr")]

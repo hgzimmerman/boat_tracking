@@ -20,7 +20,7 @@ use dioxus_router::prelude::*;
 use dioxus::prelude::*;
 use crate::db::boat::types::BoatId;
 
-use self::batch_list::{Page, PageQueryParams};
+use self::batch_list::PageQueryParams;
 
 
 #[derive(Routable, Clone, Debug, PartialEq)]
