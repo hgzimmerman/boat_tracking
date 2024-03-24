@@ -1,16 +1,17 @@
+use std::ops::Deref;
+
 use dioxus::prelude::*;
 use crate::db::boat::{types::{HasCox, OarConfiguration, SeatCount}, Boat, BoatFilter3};
 use super::BoatListMsg;
 
 #[component]
-pub(super) fn BoatSearchPane<'a>(
-    cx: Scope, 
-    boats: &'a [Boat], 
-    filter: &'a BoatFilter3,
-    search_name: &'a Option<String>,
-    boat_svc: &'a Coroutine<BoatListMsg>
+pub(super) fn BoatSearchPane(
+    boats: Signal<Vec<Boat>>,
+    filter: Signal<BoatFilter3>,
+    search_name: Signal<Option<String>>,
+    boat_svc: Coroutine<BoatListMsg>
 ) -> Element {
-    cx.render(rsx!{
+    rsx!{
         div {
             class: "flex flex-col w-1/2 overflow-auto divide-y-2",
             // The submission box
@@ -21,33 +22,32 @@ pub(super) fn BoatSearchPane<'a>(
             } 
             // The search results 
             SearchResults {
-                boats: boats,
+                boats: boats.read().clone(),
                 boat_svc: boat_svc
             }
         } 
-    })
+    }
 }
 
 
 #[component]
-fn SearchResults<'a>(
-    cx: Scope, 
-    boats: &'a [Boat], 
-    boat_svc: &'a Coroutine<BoatListMsg>
+fn SearchResults(
+    boats: Vec<Boat>,
+    boat_svc: Coroutine<BoatListMsg>
 ) -> Element {
-    cx.render(rsx! {
+    rsx! {
         div {
             class: "flex flex-col grow divide-y",
-            boats.iter().map(|b| rsx! {
+            {boats.into_iter().map(|b| rsx! {
                 div {
                     class: "flex flex-row h-16 items-center",
                     div {
                         class: "m-2 grow",
-                        b.name.clone()
+                        {b.name.clone()}
                     }
                     div {
                         class: "m-2",
-                        b.boat_type().as_ref().map(ToString::to_string)
+                        {b.boat_type().as_ref().map(ToString::to_string)}
                     }
                     button {
                         class: "m-2 btn btn-blue",
@@ -57,20 +57,19 @@ fn SearchResults<'a>(
                         "Add to batch"
                     }
                 }
-            }) 
+            })}
         }
-    })
+    }
 }
 
 
 #[component]
-fn FilterPane<'a>(
-    cx: Scope, 
-    filter: &'a BoatFilter3,
-    search_name: &'a Option<String>,
-    boat_svc: &'a Coroutine<BoatListMsg>
+fn FilterPane(
+    filter: Signal<BoatFilter3>,
+    search_name: Signal<Option<String>>,
+    boat_svc: Coroutine<BoatListMsg>
 ) -> Element {
-    cx.render(rsx!{
+    rsx!{
         form {
             class: "flex flex-col h-30 p-4 bg-white dark:bg-gray-500",
             onsubmit: move |e| {
@@ -90,8 +89,8 @@ fn FilterPane<'a>(
                         id: "select-oar-config",
                         class: "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500",
                         option {
-                            selected: filter.oars_config.is_none(),
-                            onclick: |e| {
+                            selected: filter.read().oars_config.is_none(),
+                            onclick: move |e| {
                                 e.stop_propagation();
                                 boat_svc.send(BoatListMsg::SetFilterOarConfig(None));
                             },
@@ -99,8 +98,8 @@ fn FilterPane<'a>(
                             "None"
                         }
                         option {
-                            selected: filter.oars_config == Some(OarConfiguration::Sweep),
-                            onclick: |e| {
+                            selected: filter.read().oars_config == Some(OarConfiguration::Sweep),
+                            onclick: move |e| {
                                 e.stop_propagation();
                                 boat_svc.send(BoatListMsg::SetFilterOarConfig(Some(OarConfiguration::Sweep)));
                             },
@@ -108,8 +107,8 @@ fn FilterPane<'a>(
                             "Sweep"
                         }
                         option {
-                            selected: filter.oars_config == Some(OarConfiguration::Scull),
-                            onclick: |e| {
+                            selected: filter.read().oars_config == Some(OarConfiguration::Scull),
+                            onclick: move |e| {
                                 e.stop_propagation();
                                 boat_svc.send(BoatListMsg::SetFilterOarConfig(Some(OarConfiguration::Scull)));
                             },
@@ -129,8 +128,8 @@ fn FilterPane<'a>(
                         id: "select-coxed",
                         class: "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500",
                         option {
-                            selected: filter.coxed.is_none(),
-                            onclick: |e| {
+                            selected: filter.read().coxed.is_none(),
+                            onclick: move |e| {
                                 e.stop_propagation();
                                 boat_svc.send(BoatListMsg::SetFilterCoxed(None));
                             },
@@ -138,8 +137,8 @@ fn FilterPane<'a>(
                             "None"
                         }
                         option {
-                            selected: filter.coxed == Some(HasCox::new(true)),
-                            onclick: |e| {
+                            selected: filter.read().coxed == Some(HasCox::new(true)),
+                            onclick: move |e| {
                                 e.stop_propagation();
                                 boat_svc.send(BoatListMsg::SetFilterCoxed(Some(HasCox::new(true))));
                             },
@@ -147,8 +146,8 @@ fn FilterPane<'a>(
                             "Coxed"
                         }
                         option {
-                            selected: filter.coxed == Some(HasCox::new(false)),
-                            onclick: |e| {
+                            selected: filter.read().coxed == Some(HasCox::new(false)),
+                            onclick: move |e| {
                                 e.stop_propagation();
                                 boat_svc.send(BoatListMsg::SetFilterCoxed(Some(HasCox::new(false))));
                             },
@@ -169,8 +168,8 @@ fn FilterPane<'a>(
                         id: "select-num-seats",
                         class: "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500",
                         option {
-                            selected: filter.num_seats.is_none(),
-                            onclick: |e| {
+                            selected: filter.read().num_seats.is_none(),
+                            onclick: move |e| {
                                 e.stop_propagation();
                                 boat_svc.send(BoatListMsg::SetFilterNumSeats(None));
                             },
@@ -178,8 +177,8 @@ fn FilterPane<'a>(
                             "None" 
                         }
                         option {
-                            selected: filter.num_seats.as_ref().map(SeatCount::count).unwrap_or_default() == 1,
-                            onclick: |e| {
+                            selected: filter.read().num_seats.as_ref().map(SeatCount::count).unwrap_or_default() == 1,
+                            onclick: move |e| {
                                 e.stop_propagation();
                                 boat_svc.send(BoatListMsg::SetFilterNumSeats(SeatCount::new(1)));
                             },
@@ -187,8 +186,8 @@ fn FilterPane<'a>(
                             "1" 
                         }
                         option {
-                            selected: filter.num_seats.as_ref().map(SeatCount::count).unwrap_or_default() == 2,
-                            onclick: |e| {
+                            selected: filter.read().num_seats.as_ref().map(SeatCount::count).unwrap_or_default() == 2,
+                            onclick: move |e| {
                                 e.stop_propagation();
                                 boat_svc.send(BoatListMsg::SetFilterNumSeats(SeatCount::new(2)));
                             },
@@ -196,8 +195,8 @@ fn FilterPane<'a>(
                             "2" 
                         }
                         option {
-                            selected: filter.num_seats.as_ref().map(SeatCount::count).unwrap_or_default() == 4,
-                            onclick: |e| {
+                            selected: filter.read().num_seats.as_ref().map(SeatCount::count).unwrap_or_default() == 4,
+                            onclick: move |e| {
                                 e.stop_propagation();
                                 boat_svc.send(BoatListMsg::SetFilterNumSeats(SeatCount::new(4)));
                             },
@@ -205,8 +204,8 @@ fn FilterPane<'a>(
                             "4"
                         }
                         option {
-                            selected: filter.num_seats.as_ref().map(SeatCount::count).unwrap_or_default() == 8,
-                            onclick: |e| {
+                            selected: filter.read().num_seats.as_ref().map(SeatCount::count).unwrap_or_default() == 8,
+                            onclick: move |e| {
                                 e.stop_propagation();
                                 boat_svc.send(BoatListMsg::SetFilterNumSeats(SeatCount::new(8)));
                             },
@@ -222,12 +221,12 @@ fn FilterPane<'a>(
                 class: "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500",
                 placeholder: "Boat Name",
                 autocomplete: "off",
-                value: search_name.as_deref(),
-                oninput: |event| {
-                    boat_svc.send(BoatListMsg::SetSearch(event.value.clone()));
+                value: search_name.read().as_deref(),
+                oninput: move |event| {
+                    boat_svc.send(BoatListMsg::SetSearch(event.value().clone()));
                 }
             }
         }
-    })
+    }
 }
 

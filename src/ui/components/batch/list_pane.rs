@@ -5,48 +5,46 @@ use super::BoatListMsg;
 
 /// The primary pane for seeing which boats will be saved, as well as controls for saving, adding, etc... 
 #[component]
-pub(super) fn BatchListPane<'a>(
-    cx: Scope, 
-    boats: &'a [Boat],
-    boat_svc: &'a Coroutine<BoatListMsg>
+pub(super) fn BatchListPane(
+    boats: Signal<Vec<Boat>>,
+    boat_svc: Coroutine<BoatListMsg>
 ) -> Element {
-    cx.render(rsx!{
+    rsx!{
         // The pane
         div {
             class: "flex flex-col grow divide-y-2 min-w-1/2",
             // The list of boats
             List {
-                boats: boats,
+                boats: boats.read().clone(),
                 boat_svc: boat_svc
             } 
             // Submission form
             SubmitRow {
-                boats: boats,
+                boats: boats.read().clone(),
                 boat_svc: boat_svc
             }
         }
-    })
+    }
 }
 
 #[component]
-fn List<'a>(
-    cx: Scope, 
-    boats: &'a [Boat],
-    boat_svc: &'a Coroutine<BoatListMsg>
+fn List(
+    boats: Vec<Boat>,
+    boat_svc: Coroutine<BoatListMsg>
 ) -> Element {
-    cx.render(rsx!{
+    rsx!{
         div {
             class: "flex flex-col grow overflow-auto divide-y",
-            boats.iter().map(|b| rsx!{
+            {boats.into_iter().map(|b| rsx!{
                 div {
                     class: "flex flex-row h-16 items-center",
                     div {
                         class: "m-2 grow",
-                        b.name.clone()
+                        {b.name.clone()}
                     }
                     div {
                         class: "m-2",
-                        b.boat_type().as_ref().map(ToString::to_string)
+                        {b.boat_type().as_ref().map(ToString::to_string)}
                     }
                     button {
                         class: "m-2 btn btn-red",
@@ -56,25 +54,24 @@ fn List<'a>(
                         "Remove"
                     }
                 }
-            }) 
+            }) }
         }
-    })
+    }
 }
 
 
 #[component]
-fn SubmitRow<'a>(
-    cx: Scope, 
-    boats: &'a [Boat],
-    boat_svc: &'a Coroutine<BoatListMsg>
+fn SubmitRow(
+    boats: Vec<Boat>,
+    boat_svc: Coroutine<BoatListMsg>
 ) -> Element {
 
     // TODO make this use the current time of day to initialize it.
-    let session_type = use_state(cx, || UseScenario::AM);
-    let show_session_type_dropdown = use_state(cx, || false); 
+    let mut session_type = use_signal(|| UseScenario::AM);
+    let mut show_session_type_dropdown = use_signal(|| false); 
 
 
-    cx.render(rsx!{
+    rsx!{
         div {
             form {
                 onclick: move |e| {
@@ -90,7 +87,8 @@ fn SubmitRow<'a>(
                         class: "btn btn-blue min-w-28 rounded-s ",
                         onclick: move |e| {
                             e.stop_propagation();
-                            show_session_type_dropdown.set(!show_session_type_dropdown.get());
+                            let inverted = !*show_session_type_dropdown.read();
+                            show_session_type_dropdown.set(inverted);
                         },
                         onmouseover: move |e| {
                             e.stop_propagation();
@@ -100,29 +98,29 @@ fn SubmitRow<'a>(
                             e.stop_propagation();
                             show_session_type_dropdown.set(false);
                         },
-                        session_type.get().to_string()
+                        {session_type.read().to_string()}
                         // the dropdown
                         div {
                             id: "session-dropdown-positioner",
                             class: "relative h-0 w-0",
                             div {
                                 id: "session-dropdown",
-                                class: if *show_session_type_dropdown.get() {
+                                class: if *show_session_type_dropdown.read() {
                                     "absolute z-10 mt-2 w-20 bottom-8 left-4 origin-bottom-right rounded-md bg-white shadow-lg divide-y p-2 text-slate-600 font-normal"
                                 } else {
                                     "hidden"
                                 },
                                 ul {
                                     li {
-                                        onclick: |e| {
+                                        onclick: move |e| {
                                             e.stop_propagation();
-                                            session_type.set(UseScenario::AM);
-                                            show_session_type_dropdown.set(false);
+                                            *session_type.write() = UseScenario::AM;
+                                            *show_session_type_dropdown.write() = false;
                                         },
                                         "AM"
                                     }
                                     li {
-                                        onclick: |e| {
+                                        onclick: move |e| {
                                             e.stop_propagation();
                                             session_type.set(UseScenario::PM);
                                             show_session_type_dropdown.set(false);
@@ -130,7 +128,7 @@ fn SubmitRow<'a>(
                                         "PM"
                                     }
                                     li {
-                                        onclick: |e| {
+                                        onclick: move |e| {
                                             e.stop_propagation();
                                             session_type.set(UseScenario::Regatta);
                                             show_session_type_dropdown.set(false);
@@ -138,7 +136,7 @@ fn SubmitRow<'a>(
                                         "Regatta"
                                     }
                                     li {
-                                        onclick: |e| {
+                                        onclick: move |e| {
                                             e.stop_propagation();
                                             session_type.set(UseScenario::Other);
                                             show_session_type_dropdown.set(false);
@@ -162,5 +160,5 @@ fn SubmitRow<'a>(
                 } 
             }
         }
-    })
+    }
 }

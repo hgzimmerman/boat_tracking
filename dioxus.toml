@@ -1,7 +1,7 @@
 [application]
 
 # App name
-name = "project_name"
+name = "Boat Tracker"
 
 # The Dioxus platform to default to
 default_platform = "web"
@@ -45,4 +45,4 @@ style = []
 script = []
 
 [[web.proxy]]
-backend = "http://localhost:8000/api/"
+backend = "http://localhost:8000/api"

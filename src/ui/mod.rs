@@ -7,11 +7,9 @@ mod components;
 use dioxus_router::prelude::*;
 
 
-pub fn app(cx: Scope) -> Element {
+pub fn app() -> Element {
     // fermi::use_init_atom_root(cx);
-    cx.render(
-        rsx!{
-            Router::<components::Route>{}
-        }
-    )
+    rsx!{
+        Router::<components::Route>{}
+    }
 }

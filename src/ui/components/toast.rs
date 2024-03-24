@@ -4,6 +4,7 @@ use dioxus::prelude::*;
 
 use crate::ui::util::sleep::sleep;
 
+#[derive(Debug, PartialEq, Clone)]
 pub enum ToastMsgMsg {
     Add(ToastData, std::time::Duration),
     Remove(usize)
@@ -12,26 +13,26 @@ pub enum ToastMsgMsg {
 
 pub async fn toast_service(
     mut rx: UnboundedReceiver<ToastMsgMsg>,
-    toasts: UseState<ToastList>
+    mut toasts: Signal<ToastList>
 ) {
     use futures::stream::StreamExt;
     while let Some(msg) = rx.next().await {
         match msg {
             ToastMsgMsg::Add(toast, duration) => {
-                let counter = toasts.add(toast);
-                toasts.needs_update();
-                let toasts = toasts.clone();
+                let counter = toasts.write().add(toast);
+                // toasts.needs_update();
+                let mut toasts = toasts.clone();
                 wasm_bindgen_futures::spawn_local(async move {
                     sleep(duration).await;
-                    toasts.toasts.lock().unwrap().shift_remove(&counter);
+                    toasts.write().toasts.lock().unwrap().shift_remove(&counter);
                     tracing::debug!("removed toast");
-                    toasts.needs_update();
+                    // toasts.needs_update();
                 });
             },
             ToastMsgMsg::Remove(id) => {
                 tracing::debug!(?id, "removed toast externally");
-                toasts.toasts.lock().unwrap().shift_remove(&id);
-                toasts.needs_update();
+                toasts.write().toasts.lock().unwrap().shift_remove(&id);
+                // toasts.needs_update();
             },
         }
     }
@@ -40,31 +41,30 @@ pub async fn toast_service(
 
 
 #[component]
-pub fn ToastCenter<'a>(
-    cx: Scope, 
-    toasts: &'a UseState<ToastList>,
-    toast_svc: &'a Coroutine<ToastMsgMsg>
-) -> Element<'a> {
+pub fn ToastCenter(
+    toasts: Signal<ToastList>,
+    toast_svc: Coroutine<ToastMsgMsg>
+) -> Element {
     let t = {
-        toasts.toasts.as_ref().lock().unwrap().clone() 
+        toasts.read().toasts.as_ref().lock().unwrap().clone() 
     };
 
 
-    cx.render(rsx!(
+    rsx!(
         div {
             class: "absolute top-8 right-8 z-20",
-            t
-                .into_iter()
+            {t.into_iter()
                 .map(|(counter, toast)| rsx!{
                     Toast {
-                        msg: toast.msg,
+                        message: toast.msg,
                         ty: toast.ty,
                         toast_svc: toast_svc,
                         counter: counter
                     }
                 })
+            }
         }
-    ))
+    )
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -117,13 +117,12 @@ impl ToastList {
 
 /// https://preline.co/docs/toasts.html
 #[component]
-pub fn Toast<'a>(
-    cx: Scope, 
-    msg: String,
+pub fn Toast(
+    message: String,
     ty: MsgType,
-    toast_svc: &'a Coroutine<ToastMsgMsg>,
+    toast_svc: Coroutine<ToastMsgMsg>,
     counter: usize
-) -> Element<'a> {
+) -> Element {
     let svg = match ty {
         MsgType::Info => rsx!{
             svg {
@@ -171,26 +170,26 @@ pub fn Toast<'a>(
         },
     };
 
-    cx.render(rsx!{
+    rsx!{
         div {
             role: "alert",
             class: "max-w-xs bg-white border border-gray-200 rounded-xl shadow-xl dark:bg-gray-800 dark:border-gray-700",
-            onclick: |_| toast_svc.send(ToastMsgMsg::Remove(*counter)),
+            onclick: move |_| toast_svc.send(ToastMsgMsg::Remove(counter)),
             div { 
                 class: "flex p-4",
                 div { 
                     class: "flex-shrink-0",
-                    svg 
+                    {svg}
                 }
                 div { class: "ms-3",
                     p { 
                         class: "text-sm text-gray-700 dark:text-gray-400",
-                        msg.as_str()
+                        {message}
                     }
                 }
             }
         }
-    })
+    }
 }
 
 #[allow(unused)]

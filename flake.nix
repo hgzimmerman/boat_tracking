@@ -24,7 +24,7 @@
           pkgs.diesel-cli 
           pkgs.openssl 
           pkgs.pkg-config
-          pkgs.dioxus-cli
+          # pkgs.dioxus-cli # currently out of date
           ];
       in
       {

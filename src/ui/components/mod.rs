@@ -5,7 +5,7 @@ pub mod new_issue;
 pub mod issue_list;
 pub mod batch;
 pub mod toast;
-mod old_batch;
+// mod old_batch;
 mod batch_list;
 
 use new_boat::NewBoatPage;
@@ -24,6 +24,7 @@ use self::batch_list::PageQueryParams;
 
 
 #[derive(Routable, Clone, Debug, PartialEq)]
+#[rustfmt::skip]
 pub enum Route {
     #[layout(NavBar)]
     #[route("/")]
@@ -48,18 +49,18 @@ pub enum Route {
         #[route("/new")]
         BatchCreationPage,
 }
-fn Home(cx: Scope) -> Element {
-    cx.render(rsx! {
+fn Home() -> Element {
+    rsx! {
         div {
             "Home Page, will remove this eventually"
         }
-    })
+    }
 }
 
 
 #[component]
-fn NavBar(cx: Scope) -> Element {
-    render! {
+fn NavBar() -> Element {
+    rsx! {
         nav {
             class: "bg-ggrc sticky top-0",
             ul {

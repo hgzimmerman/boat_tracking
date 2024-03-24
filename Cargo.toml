@@ -11,8 +11,6 @@ ssr = ["dioxus-fullstack/axum", "axum", "diesel/sqlite", "deadpool-diesel/sqlite
 web = ["dioxus-fullstack/web", "dioxus-web", "web-sys", "wasm-bindgen"]
 
 [dependencies]
-tokio = {version = "1.0.0", features = [], optional = true}
-futures = "0.3.30"
 chrono = {version = "0.4.34", features = ["serde"]}
 serde = {version= "1.0.197", features = ["derive"]}
 serde_json = "1.0.114"
@@ -20,19 +18,21 @@ getrandom = {version = "0.2.12", features = ["js"]}
 
 diesel-derive-enum = {version="2.1.0", features = ["sqlite"]}
 diesel-derive-newtype = "2.1.0"
-dioxus = "0.4.3"
-dioxus-router = { version = "0.4.3", features = [] }
-dioxus-fullstack = { version = "0.4.3", features = ["router", "dioxus-router"] }
-dioxus-web = { version = "0.4.3", optional = true }
-#dioxus-liveview = { version = "0.4.3", features = ["axum"] }
-axum = {version = "0.6.20", features = ["ws"], optional = true}
-
 deadpool-diesel = {version = "0.5.0", features = []}
 diesel = {version = "2.1.0", features = ["chrono", "returning_clauses_for_sqlite_3_35"], optional = false}
 
+dioxus = "0.5.0-alpha.2"
+dioxus-router = { version = "0.5.0-alpha.2", features = [] }
+dioxus-fullstack = { version = "0.5.0-alpha.2"}
+# features = ["router", "dioxus-router"] 
+
+dioxus-web = { version = "0.5.0-alpha.2", optional = true }
+axum = {version = "0.7.0", features = ["ws"], optional = true}
+tokio = {version = "1.0.0", features = [], optional = true}
+futures = "0.3.30"
+
 anyhow = "1.0.80"
 
-#fermi = "0.4.3"
 
 # wasm-bindgen needs to be the same version as the dx tool.
 # Be careful about updating these without updating the flake too.

@@ -21,44 +21,32 @@ mod list_pane;
 mod search_pane;
 
 #[component]
-pub fn BatchCreationPage(cx: Scope) -> Element {
-    let selected = use_state(cx, || Vec::<Boat>::new());
-    let filter = use_state(cx, BoatFilter3::default);
-    let search_name = use_state(cx, || Option::<String>::None);
-    let search_boat_state = use_state(cx,  || Vec::<Boat>::new());
+pub fn BatchCreationPage() -> Element {
+    let selected = use_signal(|| Vec::<Boat>::new());
+    let filter = use_signal(BoatFilter3::default);
+    let search_name = use_signal(|| Option::<String>::None);
+    let search_boat_state = use_signal(|| Vec::<Boat>::new());
 
-    let toasts = use_state(cx, ToastList::default);
-    let toast_svc = use_coroutine(cx, |rx| {
+    let toasts = use_signal(ToastList::default);
+    let toast_svc = use_coroutine(|rx| {
         to_owned![toasts];
         crate::ui::components::toast::toast_service(rx, toasts)
     });
-    let boat_svc = use_coroutine(cx, |rx| {
+    let boat_svc = use_coroutine(|rx| {
         to_owned![search_boat_state, filter, selected, search_name, toast_svc];
         boat_list_service(rx, search_boat_state, selected, filter, search_name, toast_svc)
     });
 
-    use_on_create(cx, || {
-        to_owned![search_boat_state, filter, selected, search_name];
+    use_future(move || {
         async move {
-            use crate::ui::util::sleep::sleep;
-            sleep(std::time::Duration::from_millis(1050)).await;
-            search_boats(
-                    filter.current().as_ref().to_owned(), 
-                    search_name.current().as_ref().to_owned(),
-                )
-                .await
-                .map(|boats| {
-                    let exclude: HashSet<BoatId> = selected.current().iter().map(|x| x.id).collect();
-                    boats.into_iter().filter(|x| !exclude.contains(&x.id)).collect()
-                })
-                .map(|x| search_boat_state.set(x))
+            boat_svc.send(BoatListMsg::Fetch);
         }
     });
 
 
-    cx.render(rsx!{
+    rsx!{
         ToastCenter {
-            toasts: &*toasts,
+            toasts: toasts,
             toast_svc: toast_svc
         }
         div {
@@ -75,7 +63,7 @@ pub fn BatchCreationPage(cx: Scope) -> Element {
                 boat_svc: boat_svc
             }
         }
-    })
+    }
 }
 
 #[server(GetBoats2)]
@@ -83,16 +71,17 @@ pub(crate) async fn search_boats(
     filter: BoatFilter3,
     search_name: Option<String>, 
 ) -> Result<Vec<Boat>, ServerFnError> {
-    let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu"); 
-    let conn = state.pool().get().await.map_err(ServerFnError::from)?;
+    // let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu"); 
+    let conn_string = "db.sql";
+    let state = crate::ui::state::AppState::new(conn_string);
+    let conn = state.pool().get().await?;
     tracing::info!(?search_name, ?filter);
     conn 
         .interact(|conn| {
             Boat::get_boats3(conn, filter, search_name)
             .map_err(ServerFnError::from)
         })
-        .await
-        .map_err(ServerFnError::from)?
+        .await?
 }
 
 #[server(SubmitBoats)]
@@ -100,21 +89,23 @@ pub(crate) async fn submit_boats(
     boat_ids: Vec<BoatId>,
     session_type: UseScenario
 ) -> Result<BatchId, ServerFnError> {
-    let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu"); 
-    let conn = state.pool().get().await.map_err(ServerFnError::from)?;
+    // let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu"); 
+    let conn_string = "db.sql";
+    let state = crate::ui::state::AppState::new(conn_string);
+    let conn = state.pool().get().await?;
     let new_batch = NewBatchArgs { boat_ids, batch: NewBatch { use_scenario: session_type, recorded_at: chrono::Utc::now().naive_utc() }};
     conn 
         .interact(|conn| {
             UseEventBatch::create_batch(conn, new_batch)
             .map_err(ServerFnError::from)
         })
-        .await
-        .map_err(ServerFnError::from)?
+        .await?
 }
 
 
 
 
+#[derive(Debug, Clone, PartialEq)]
 enum BoatListMsg {
     /// Run the fetch
     Fetch,
@@ -131,25 +122,29 @@ enum BoatListMsg {
 
 async fn boat_list_service(
     mut rx: UnboundedReceiver<BoatListMsg>,
-    searched_boats: UseState<Vec<Boat>>,
-    selected_boats: UseState<Vec<Boat>>,
-    filter: UseState<BoatFilter3>,
-    search_name: UseState<Option<String>>,
+    mut searched_boats: Signal<Vec<Boat>>,
+    mut selected_boats: Signal<Vec<Boat>>,
+    mut filter: Signal<BoatFilter3>,
+    mut search_name: Signal<Option<String>>,
     toasts: Coroutine<ToastMsgMsg>
 ) {
     use futures::stream::StreamExt;
 
-    let search = || async {
-        let _ = search_boats(
-                filter.current().as_ref().to_owned(), 
-                search_name.current().as_ref().to_owned(),
-            )
-            .await
-            .map(|boats| {
-                let exclude: HashSet<BoatId> = selected_boats.current().iter().map(|x| x.id).collect();
-                boats.into_iter().filter(|x| !exclude.contains(&x.id)).collect()
-            })
-            .map(|x| searched_boats.set(x));
+    let search = {
+        to_owned![filter, search_name];
+        move || {
+            async move {
+            let _ = search_boats(
+                    filter.read().to_owned(), 
+                    search_name.read().to_owned(),
+                )
+                .await
+                .map(|boats| {
+                    let exclude: HashSet<BoatId> = selected_boats.read().iter().map(|x| x.id).collect();
+                    boats.into_iter().filter(|x| !exclude.contains(&x.id)).collect()
+                })
+                .map(|x| searched_boats.set(x));
+        }}
     };
 
     while let Some(msg) = rx.next().await {
@@ -164,27 +159,26 @@ async fn boat_list_service(
                     search_name.set(None);
                 } else {
                     search_name.set(Some(search_str));
-                    // TODO add some debouncing if already searching
-                    search().await
                 }
+                search().await
             }
             BoatListMsg::SetFilterOarConfig(oars_config) => {
                 filter.set({
-                    let current = filter.current();
+                    let current = filter.read();
                     BoatFilter3 { _x: current._x, num_seats: current.num_seats, coxed: current.coxed, oars_config }
                 });
                 search().await;
             }
             BoatListMsg::SetFilterCoxed(coxed) => {
                 filter.set({
-                    let current = filter.current();
+                    let current = filter.read();
                     BoatFilter3 { _x: current._x, num_seats: current.num_seats, coxed, oars_config: current.oars_config }
                 });
                 search().await;
             }
             BoatListMsg::SetFilterNumSeats(num_seats) => {
                 filter.set({
-                    let current = filter.current();
+                    let current = filter.read();
                     BoatFilter3 { _x: current._x, num_seats, coxed: current.coxed, oars_config: current.oars_config }
                 });
                 search().await;
@@ -192,8 +186,8 @@ async fn boat_list_service(
             BoatListMsg::AddToBatch(id) => {
                 tracing::info!(?id,"adding to batch");
                 let mut boat_to_add = None;
-                searched_boats.modify(|boats| {
-                    boats.iter().cloned().filter_map(|boat| {
+                let new_searched_boats = {
+                    searched_boats.read().iter().cloned().filter_map(|boat| {
                         if boat.id == id {
                             boat_to_add = Some(boat);
                             None
@@ -202,16 +196,16 @@ async fn boat_list_service(
                         }
                     })
                     .collect()
-                });
+                };
+                searched_boats.set(new_searched_boats);
                 if let Some(boat) = boat_to_add{
-                    selected_boats.make_mut().push(boat);
-                    searched_boats.needs_update();
+                    selected_boats.write().push(boat);
                 }
             },
             BoatListMsg::RemoveFromBatch(id) => {
                 let mut boat_to_remove = None;
-                selected_boats.modify(|boats| {
-                    boats.iter().cloned().filter_map(|boat| {
+                let new_selected_boats = {
+                    selected_boats.read().iter().cloned().filter_map(|boat| {
                         if boat.id == id {
                             boat_to_remove = Some(boat);
                             None
@@ -220,20 +214,19 @@ async fn boat_list_service(
                         }
                     })
                     .collect()
-                });
+                };
+                selected_boats.set(new_selected_boats);
                 if let Some(boat) = boat_to_remove {
-                    searched_boats.make_mut().push(boat);
-                    selected_boats.needs_update();
+                    searched_boats.write().push(boat);
                 }
             },
             BoatListMsg::Submit => {
-                let ids: Vec<BoatId> = selected_boats.current().iter().map(|b| b.id).collect();
+                let ids: Vec<BoatId> = selected_boats.read().iter().map(|b| b.id).collect();
                 let session_type = UseScenario::AM; // TODO Get this from the actual setting
                 if !ids.is_empty() {
                     match submit_boats(ids, session_type).await {
                         Ok(id) => {
                             tracing::info!(%id, "Created batch");
-                            // In the future, toast a success message
                             searched_boats.set(Vec::new());
                             selected_boats.set(Vec::new());
                             search_name.set(None);

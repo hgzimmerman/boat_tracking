@@ -1,9 +1,9 @@
-use std::str::FromStr;
+use std::{ops::Deref, str::FromStr};
 
 use crate::{db::{use_event::UseScenario, use_event_batch::{BatchAndCounts, UseEventBatch}}, ui::components::Route};
 use dioxus::prelude::*;
 use dioxus_fullstack::prelude::*;
-use dioxus_router::{components::Link, routable::FromQuery};
+use dioxus_router::{components::Link, routable::{FromQuery, FromQueryArgument}};
 
 
 #[server(GetBatches)]
@@ -12,8 +12,11 @@ async fn get_batches(
     offset: usize,
     limit: usize
 ) -> Result<Vec<BatchAndCounts>, ServerFnError> {
-    let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu"); 
-    let conn = state.pool().get().await.map_err(ServerFnError::from)?;
+    // let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu"); 
+    let conn_string = "db.sql";
+    let state = crate::ui::state::AppState::new(conn_string);
+    let conn = state.pool().get().await?;
+
     conn 
         .interact(move |conn| {
             UseEventBatch::get_most_recent_batches_and_their_use_count(
@@ -25,114 +28,135 @@ async fn get_batches(
             .map_err(ServerFnError::from)
         })
         .await?
-        .map_err(ServerFnError::from)
+        // .map_err(ServerFnError::from)
 }
 
 #[component]
 pub fn BatchList (
-    cx: Scope,
-    offset_state: usize,
-    limit_state: UseState<usize>
+    offset: usize,
+    limit: Signal<usize>
 ) -> Element {
-    let scenario_state: &UseState<Option<UseScenario>> = use_state(cx, || None);
-    let batches_fut = use_server_future(cx, (offset_state, limit_state, scenario_state), move |(offset, limit, scenario)| {
-        let scenario = scenario.current().as_ref().clone();
-        let limit = limit.current().as_ref().clone();
-        tracing::debug!(?scenario, ?offset, ?limit, "fetching batches");
-        async move {
-            get_batches(scenario, offset, limit)
-            .await
-            .map(|batch_data| {
-                tracing::debug!(?batch_data);
-                // batch_data_state.set(batch_data.clone());
-                batch_data
-            })
-            .map_err(|error| {
-                tracing::warn!(?error, "Colud not fetch");
-                error
-            })
+    let scenario: Signal<Option<UseScenario>> = use_signal(|| None);
+    let batches_fut = use_server_future(
+        use_reactive((&offset, &*limit.read(), &*scenario.read()), 
+        move |(offset, limit, scenario)| {
+            // to_owned![offset, limit, scenario];
+            // let scenario = scenario.current().as_ref().clone();
+            // let limit = limit.current().as_ref().clone();
+            // tracing::debug!(?scenario, ?offset, ?limit, "fetching batches");
+            async move {
+                get_batches(scenario, offset, limit)
+                .await
+                .map(|batch_data| {
+                    tracing::debug!(?batch_data);
+                    // batch_data_state.set(batch_data.clone());
+                    batch_data
+                })
+                .map_err(|error| {
+                    tracing::warn!(?error, "Colud not fetch");
+                    error
+                })
+            }
         }
-    })?;
-    cx.render(rsx! {
+        )
+    )?;
+
+    let b = batches_fut.value();
+    let b = b.read();
+    let batches = b.deref().as_ref().unwrap().as_ref().unwrap();
+    rsx! {
         div {
-            batches_fut.value().as_ref().unwrap().iter().map(|BatchAndCounts { batch, use_counts }| {
-                rsx!{
-                    div {
-                        class: "flex flex-row h-16 items-center",
+            class: "divide-x-2 flex flex-col overflow-auto grow",
+            {
+                batches.iter().map(|BatchAndCounts { batch, use_counts }| {
+                    rsx!{
                         div {
-                            class: "m-2 w-20",
-                            batch.use_scenario.to_string()
-                        }
-                        div {
-                            class: "m-2 w-40",
-                            batch.recorded_at.to_string()
-                        }
-                        div {
-                            class: "m-2 w-10",
-                            format!("{use_counts} boats used")
-                        }
-                        // -> batch/view/:batch_id or batch/:batch_id depending on if I can make this page use ?page= parameters.
-                        button {
-                            class: "btn btn-blue",
-                            "View"
-                        }
-                        // -> batch/edit/:batch_id
-                        button {
-                            class: "btn btn-blue",
-                            "Edit"
-                        }
-                        // -> batch/new/:batch_id
-                        button {
-                            class: "btn btn-blue",
-                            "Use as Template"
+                            class: "flex flex-row h-16 items-center ",
+                            div {
+                                class: "m-2 w-20",
+                                {batch.use_scenario.to_string()}
+                            }
+                            div {
+                                class: "m-2 w-40",
+                                {batch.recorded_at.to_string()}
+                            }
+                            div {
+                                class: "m-2 w-28",
+                                {format!("{use_counts} boats used")}
+                            }
+                            // -> batch/view/:batch_id or batch/:batch_id depending on if I can make this page use ?page= parameters.
+                            button {
+                                class: "btn btn-blue",
+                                "View"
+                            }
+                            // -> batch/edit/:batch_id
+                            button {
+                                class: "btn btn-blue",
+                                "Edit"
+                            }
+                            // -> batch/new/:batch_id
+                            button {
+                                class: "btn btn-blue",
+                                "Use as Template"
+                            }
                         }
                     }
-                }
-            })
+                })
+            }
         }
-    })
+    }
 }
 
 #[component]
 pub fn BatchListPage(
-    cx: Scope,
     page: PageQueryParams 
 ) -> Element {
-    let page = page.page.unwrap_or(1);
+    let page = page.page;
     tracing::debug!(?page, "rendering batch list page");
 
-    let limit_state: &UseState<usize> = use_state(cx, || 20);
-    let offset_state: &usize = use_memo(cx, (&page, limit_state.get()), |(page, limit)| (page.saturating_sub(1)) * limit );
-    cx.render(rsx! {
+    let limit_state: Signal<usize> = use_signal(|| 20);
+    let offset_state: Memo<usize> = use_memo(
+        use_reactive((&page, &*limit_state.read()), 
+        |(page, limit): (usize, usize)| (page.saturating_sub(1)) * limit 
+    ));
+    rsx! {
         div {
             class: "flex flex-col overflow-hide grow max-h-[calc(100vh-42px)]",
             // page header/nav
             div {
-                class: "h-8",
-                "Add controls here for pagination, "
-                if *offset_state != 0 {
-                    rsx!{
+                class: "h-16 bg-ggrc flex flex-row",
+                div {
+                    class: "grow",
+                    if *offset_state.read() != 0 {
                         Link { 
                             class: "inline-block border border-blue-500 rounded py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white",
-                            to: Route::BatchListPage{page: PageQueryParams{page: Some(page.saturating_sub(1))}},
+                            to: Route::BatchListPage{page: PageQueryParams{page: page.saturating_sub(1)}},
                             "Newer" 
                         } 
                     }
+                    Link { 
+                        class: "inline-block border border-blue-500 rounded py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white",
+                        to: Route::BatchListPage{page: PageQueryParams{page: page.saturating_add(1)}},
+                        "Older" 
+                    }
                 }
-                Link { 
-                    class: "inline-block border border-blue-500 rounded py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white",
-                    to: Route::BatchListPage{page: PageQueryParams{page: Some(page.saturating_add(1))}},
-                    "Older" 
-                } 
+                div {
+                    Link { 
+                        class: "inline-block border border-blue-500 rounded py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white",
+                        to: Route::BatchCreationPage,
+                        "Record New Practice or Regatta" 
+                    }
+                }
+
+                 
             }
             // the controls
             BatchList {
-                offset_state: offset_state.clone(),
-                limit_state: limit_state.clone()
+                offset: offset_state.read().clone(),
+                limit: limit_state.clone()
             }
-        }
-        
-    })
+        } 
+    }
 
 }
 
@@ -161,20 +185,28 @@ impl std::fmt::Display for Page {
     }
 }
 
-#[derive(Debug, Default, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct PageQueryParams {
-    page: Option<usize>
+    page: usize
 }
-impl FromQuery for PageQueryParams {
-    fn from_query(query: &str) -> Self {
-        Self {
-            page: Page::from_str(query).ok().map(|x| x.0)
-        }
+
+impl Default for PageQueryParams {
+    fn default() -> Self {
+        // 1 indexed
+        Self { page: 1 }
+    }
+}
+impl FromQueryArgument for PageQueryParams {
+    type Err = String;
+    fn from_query_argument(query: &str) -> Result<Self, String> {
+        Ok(Self {
+            page: Page::from_str(query)?.0
+        })
     }
 }
 impl std::fmt::Display for PageQueryParams {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let page = self.page.map(Page).unwrap_or_default();
+        let page = Page(self.page);
         page.fmt(f)
     }
 }

@@ -1,15 +1,12 @@
 use deadpool_diesel::sqlite::Pool;
-use dioxus_fullstack::prelude::FromServerContext;
+use dioxus_fullstack::prelude::{server_fn::middleware::BoxedService, FromServerContext};
 use std::sync::Arc;
 use dioxus::prelude::*;
 
 pub type ArcPool = Arc<Pool>;
 
-pub type ScopeState<'a> = Scope<'a, AppState>;
-
 #[derive(Clone)]
 pub struct AppState {
-    // conn: std::sync::Arc<tokio::sync::Mutex<diesel::SqliteConnection>>,
     pool: ArcPool,
 }
 
@@ -59,7 +56,7 @@ impl<T: 'static> std::fmt::Display for NotFoundInServerContext<T> {
 impl<T: 'static> std::error::Error for NotFoundInServerContext<T> {}
 
 
-#[async_trait::async_trait(?Send)]
+#[async_trait::async_trait]
 impl FromServerContext<dioxus_fullstack::prelude::Axum> for AppState {
     type Rejection = NotFoundInServerContext<AppState>;
 
@@ -69,3 +66,93 @@ impl FromServerContext<dioxus_fullstack::prelude::Axum> for AppState {
         } )
     }
 }
+
+#[async_trait::async_trait]
+impl axum::extract::FromRequestParts<AppState> for AppState {
+    type Rejection = String;
+
+    async fn from_request_parts(_parts: &mut axum::http::request::Parts, state: &AppState) -> Result<Self, Self::Rejection> {
+        Ok(state.clone())
+    }
+}
+
+
+
+// impl<S> dioxus_fullstack::prelude::server_fn::middleware::Layer for StateProviderLayer {
+//     fn layer(&self, inner: S) -> Self::Service {
+//         BoxedService::new(inner, )
+//         // Timeout::new(inner, self.timeout)
+//     }
+// }
+
+
+// pub struct StateProviderLayer {
+//     // state: AppState
+// }
+
+// impl<S> Layer<S> for StateProviderLayer {
+//     type Service = LogService<S>;
+
+//     fn layer(&self, service: S) -> Self::Service {
+//         LogService {
+//             // target: self.target,
+//             service
+//         }
+//     }
+// }
+
+// // This service implements the Log behavior
+// pub struct StateProviderService<S> {
+//     service: S,
+//     // state: AppState
+// }
+
+// impl<S, Request> Service<Request> for LogService<S>
+// where
+//     S: Service<Request>,
+//     Request: fmt::Debug,
+// {
+//     type Response = S::Response;
+//     type Error = S::Error;
+//     type Future = S::Future;
+
+//     fn poll_ready(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
+//         self.service.poll_ready(cx)
+//     }
+
+//     fn call(&mut self, request: Request) -> Self::Future {
+//         request.extract()
+//         // Insert log statement here or other functionality
+//         // println!("request = {:?}, target = {:?}", request, self.target);
+//         self.service.call(request)
+//     }
+// }
+
+
+
+
+
+
+// pub trait Layer<Req, Res>: Send + Sync + 'static {
+//     /// Adds this layer to the inner service.
+//     fn layer(&self, inner: BoxedService<Req, Res>) -> BoxedService<Req, Res>;
+// }
+
+// /// A type-erased service, which takes an HTTP request and returns a response.
+// pub struct BoxedService<Req, Res>(pub Box<dyn Service<Req, Res> + Send>);
+
+// impl<Req, Res> BoxedService<Req, Res> {
+//     /// Constructs a type-erased service from this service.
+//     pub fn new(service: impl Service<Req, Res> + Send + 'static) -> Self {
+//         Self(Box::new(service))
+//     }
+// }
+
+// /// A service converts an HTTP request into a response.
+// pub trait Service<Request, Response> {
+//     /// Converts a request into a response.
+//     fn run(
+//         &mut self,
+//         req: Request,
+//     ) -> Pin<Box<dyn Future<Output = Response> + Send>>;
+// }
