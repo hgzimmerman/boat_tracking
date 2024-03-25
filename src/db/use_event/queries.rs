@@ -1,6 +1,7 @@
 use super::*;
 use crate::schema::use_event;
 use diesel::SqliteConnection;
+use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
 
 impl UseEvent {
     pub fn new_event(

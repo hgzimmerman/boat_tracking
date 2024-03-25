@@ -1,9 +1,7 @@
 #[cfg(feature = "ssr")]
 pub mod queries;
 
-use diesel::{BoolExpressionMethods, ExpressionMethods, QueryDsl, RunQueryDsl};
-
-use super::{boat::types::BoatId, use_event::UseEventId, DbOrdering};
+use super::{boat::types::BoatId, use_event::UseEventId};
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize)]
 #[cfg_attr(

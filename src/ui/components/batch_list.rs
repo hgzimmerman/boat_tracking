@@ -3,7 +3,7 @@ use std::{ops::Deref, str::FromStr};
 use crate::{
     db::{
         use_event::UseScenario,
-        use_event_batch::{BatchAndCounts, UseEventBatch},
+        use_event_batch::BatchAndCounts,
     },
     ui::components::Route,
 };
@@ -23,7 +23,7 @@ async fn get_batches(
     let conn = state.pool().get().await?;
 
     conn.interact(move |conn| {
-        UseEventBatch::get_most_recent_batches_and_their_use_count(conn, scenario, offset, limit)
+        crate::db::use_event_batch::UseEventBatch::get_most_recent_batches_and_their_use_count(conn, scenario, offset, limit)
             .map_err(ServerFnError::from)
     })
     .await?

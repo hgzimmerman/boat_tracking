@@ -5,6 +5,10 @@ use crate::schema::{
     issue, use_event,
 };
 use diesel::{QueryDsl, SqliteConnection, TextExpressionMethods};
+use diesel::{
+    BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, RunQueryDsl,
+    SelectableHelper,
+};
 
 impl Boat {
     pub fn new_boat(

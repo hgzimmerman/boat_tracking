@@ -1,6 +1,7 @@
 use super::*;
-use crate::schema::issue;
+use crate::{db::DbOrdering, schema::issue};
 use diesel::SqliteConnection;
+use diesel::{BoolExpressionMethods, ExpressionMethods, QueryDsl, RunQueryDsl};
 
 impl Issue {
     pub fn add_issue(

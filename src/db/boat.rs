@@ -3,10 +3,7 @@ pub mod types;
 #[cfg(feature = "ssr")]
 pub mod queries;
 
-use diesel::{
-    BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, RunQueryDsl,
-    SelectableHelper,
-};
+
 use types::{HasCox, OarsPerSeat, SeatCount, WeightClass};
 
 use self::types::{BoatAttributes, BoatId, BoatType, OarConfiguration};

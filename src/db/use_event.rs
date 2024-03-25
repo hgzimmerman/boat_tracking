@@ -1,6 +1,5 @@
 #[cfg(feature = "ssr")]
 pub mod queries;
-use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
 
 use super::{boat::types::BoatId, use_event_batch::BatchId};
 

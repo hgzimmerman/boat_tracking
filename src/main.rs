@@ -1,10 +1,8 @@
-use std::{path::PathBuf, sync::Arc};
 
 use anyhow::Error;
 
 // #[tokio::main]
 fn main() -> Result<(), Error> {
-    let conn_string = "db.sql";
 
     #[cfg(feature = "web")]
     {
@@ -36,6 +34,10 @@ fn main() -> Result<(), Error> {
         use boat_tracking::ui::state::AppState;
         use dioxus_fullstack::prelude::*;
         use tokio::net::TcpListener;
+        use std::{path::PathBuf, sync::Arc};
+
+        let conn_string = "db.sql";
+
 
         // Doesn't really work
         async fn state_populate_middleware(
