@@ -1,5 +1,5 @@
 
-use dioxus_fullstack::prelude::{server_fn::ServerFn, *};
+use dioxus_fullstack::prelude::*;
 use dioxus::prelude::*;
 
 use crate::db::{boat::{types::BoatId, BoatAndStats}, issue::Issue};

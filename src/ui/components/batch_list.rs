@@ -3,7 +3,7 @@ use std::{ops::Deref, str::FromStr};
 use crate::{db::{use_event::UseScenario, use_event_batch::{BatchAndCounts, UseEventBatch}}, ui::components::Route};
 use dioxus::prelude::*;
 use dioxus_fullstack::prelude::*;
-use dioxus_router::{components::Link, routable::{FromQuery, FromQueryArgument}};
+use dioxus_router::{components::Link, routable::{FromQueryArgument}};
 
 
 #[server(GetBatches)]

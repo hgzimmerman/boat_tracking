@@ -1,4 +1,4 @@
-use crate::{db::boat::BoatAndStats, ui::util::loadable::{Loadable, LoadableRefResult}};
+use crate::db::boat::BoatAndStats;
 
 use dioxus::prelude::*;
 use dioxus_fullstack::prelude::*;
@@ -47,7 +47,7 @@ fn BoatRow(boat: BoatAndStats) -> Element {
                 
             },
             div {
-                "style": "display:flex; flex-direction: column; flex-grow: 1; gap: 10px;",
+                "style": "display:flex; flex-direction: column; flex-grow: 1; gap: 10px ;",
                 div {
                     "style": "min-width: 160px; font-size: x-large; font-weight: 500",
                     // boat.boat.name.clone(),

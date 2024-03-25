@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use dioxus::prelude::*;
 use crate::db::boat::{types::{HasCox, OarConfiguration, SeatCount}, Boat, BoatFilter3};
 use super::BoatListMsg;

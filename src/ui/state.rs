@@ -1,7 +1,7 @@
 use deadpool_diesel::sqlite::Pool;
-use dioxus_fullstack::prelude::{server_fn::middleware::BoxedService, FromServerContext};
+use dioxus_fullstack::prelude::FromServerContext;
 use std::sync::Arc;
-use dioxus::prelude::*;
+// use dioxus::prelude::*;
 
 pub type ArcPool = Arc<Pool>;
 
