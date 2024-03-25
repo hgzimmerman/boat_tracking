@@ -84,9 +84,10 @@ pub fn BatchList (
                                 class: "m-2 w-28",
                                 {format!("{use_counts} boats used")}
                             }
-                            // -> batch/view/:batch_id or batch/:batch_id depending on if I can make this page use ?page= parameters.
-                            button {
+                            // ->  batch/:batch_id 
+                            Link {
                                 class: "btn btn-blue",
+                                to: Route::BatchViewingPage { id: batch.id },
                                 "View"
                             }
                             // -> batch/edit/:batch_id
@@ -95,8 +96,9 @@ pub fn BatchList (
                                 "Edit"
                             }
                             // -> batch/new/:batch_id
-                            button {
+                            Link {
                                 class: "btn btn-blue",
+                                to: Route::BatchTemplateCreationPage{ id: batch.id },
                                 "Use as Template"
                             }
                         }

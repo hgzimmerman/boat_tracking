@@ -7,32 +7,6 @@ use anyhow::Error;
 fn main() -> Result<(), Error> {
 
     let conn_string = "db.sql";
-    // #[cfg(feature = "ssr")]
-    // {
-    //     use diesel::Connection;
-    //     use boat_tracking::db;
-    //     let mut conn = diesel::SqliteConnection::establish(conn_string)?;
-    //     let conn = &mut conn;
-    //     let new_boat = db::boat::NewBoat::new(
-    //         "a good boat name".to_string(),
-    //         db::boat::types::WeightClass::Medium,
-    //         db::boat::types::BoatType::Eight,
-    //         Some(chrono::Utc::now().naive_utc().date()),
-    //         None,
-    //     );
-    //     let boat = db::boat::Boat::new_boat(conn, new_boat)?;
-    //     let new_event = db::use_event::NewUseEvent {
-    //         boat_id: boat.id,
-    //         recorded_at: chrono::Utc::now().naive_utc(),
-    //         use_scenario: db::use_event::UseScenario::AM,
-    //         note: Some("we had a good row".to_string()),
-    //         batch_id: None,
-    //     };
-    //     db::use_event::UseEvent::new_event(conn, new_event)?;
-    //     let boats = db::boat::BoatAndStats::get_boats(conn)?;
-    //     println!("{}", boats.len())
-    // }
-
 
     #[cfg(feature = "web")]
     {
@@ -55,11 +29,6 @@ fn main() -> Result<(), Error> {
             .init(); // Install these as subscribers to tracing events
 
         dioxus_web::launch::launch_cfg(boat_tracking::ui::app, dioxus_web::Config::new().hydrate(true));
-        // dioxus_web::launch_with_props(
-        //     boat_tracking::ui::app,
-        //     dioxus_fullstack::prelude::get_root_props_from_document().unwrap_or_default(),
-        //     dioxus_web::Config::new().hydrate(true),
-        // );
     }
 
     #[cfg(feature = "ssr")]
@@ -71,6 +40,8 @@ fn main() -> Result<(), Error> {
 
 
 
+
+        // Doesn't really work
         async fn state_populate_middleware(
             axum::extract::State(state): axum::extract::State<boat_tracking::ui::state::AppState>,
             mut request: axum::extract::Request,
@@ -90,7 +61,7 @@ fn main() -> Result<(), Error> {
         tokio::runtime::Runtime::new()
             .unwrap()
             .block_on(async move {
-                let cfg = ServeConfigBuilder::new()//boat_tracking::ui::app, ())
+                let cfg = ServeConfigBuilder::new()
                     .assets_path(PathBuf::from("dist"))
                     .build();
                 let ssr_state = SSRState::new(&cfg);
@@ -126,7 +97,6 @@ fn main() -> Result<(), Error> {
                     //     }
                     // })
                     .register_server_fns()
-                    // .fallback(get(render_handler).with_state((cfg, ssr_state)));
                     .fallback(get(render_handler_with_context).with_state((
                         move |ctx|{
                             ctx.insert::<AppState>(state.clone()).unwrap();
@@ -135,9 +105,8 @@ fn main() -> Result<(), Error> {
                         ssr_state,
                         Arc::new(dom_factory)
                     )))
-                    .route_layer(axum::middleware::from_fn_with_state(state1.clone(), state_populate_middleware))
+                    .route_layer(axum::middleware::from_fn_with_state(state1.clone(), state_populate_middleware)) // this doesn't really work
                     .with_state(state1);
-                    // dioxus_fullstack::axum_adapter::DioxusRouterExt
 
                 // run it
                 let addr = std::net::SocketAddr::from(([127, 0, 0, 1], 3000));

@@ -13,12 +13,13 @@ use boat_list::BoatListPage;
 use boat::BoatPage;
 use issue_list::IssueListPage;
 use new_issue::NewIssuePage;
-use batch::BatchCreationPage;
+use batch::{BatchCreationPage, BatchTemplateCreationPage};
 use batch_list::BatchListPage;
+use batch::BatchViewingPage;
 
 use dioxus_router::prelude::*;
 use dioxus::prelude::*;
-use crate::db::boat::types::BoatId;
+use crate::db::{boat::types::BoatId, use_event_batch::BatchId};
 
 use self::batch_list::PageQueryParams;
 
@@ -46,8 +47,13 @@ pub enum Route {
     #[nest("/batches")]
         #[route("/?:page")]
         BatchListPage{page: PageQueryParams},
-        #[route("/new")]
-        BatchCreationPage,
+        #[route("/:id")]
+        BatchViewingPage{id: BatchId},
+        #[nest("/new")]
+            #[route("/")]
+            BatchCreationPage,
+            #[route("/:id")]
+            BatchTemplateCreationPage{id: BatchId}
 }
 fn Home() -> Element {
     rsx! {
@@ -101,7 +107,7 @@ fn NavBar() -> Element {
                     class: "mr-3",
                      Link { 
                         class: "inline-block border border-blue-500 rounded py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white",
-                        to: Route::BatchCreationPage{},
+                        to: Route::BatchCreationPage,
                          "Record Boats Used" 
                     } 
                 }

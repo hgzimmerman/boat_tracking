@@ -73,6 +73,20 @@ pub struct ToastData {
     pub ty: MsgType,
 }
 
+// impl <E: std::error::Error> From<E> for ToastData {
+//     fn from(error: E) -> Self {
+//         ToastData { msg: error.to_string(), ty: MsgType::Error }
+//     }
+// }
+impl From<dioxus_fullstack::prelude::ServerFnError> for ToastData {
+    fn from(error: dioxus_fullstack::prelude::ServerFnError) -> Self {
+        ToastData { msg: error.to_string(), ty: MsgType::Error }
+    }
+}
+
+impl ToastData {
+    pub(crate) const DEFAULT_TIME: std::time::Duration = std::time::Duration::from_secs(3);
+}
 
 #[derive(Default, Clone)]
 pub struct ToastList {
@@ -114,6 +128,8 @@ impl ToastList {
         counter
     }
 }
+
+
 
 /// https://preline.co/docs/toasts.html
 #[component]
