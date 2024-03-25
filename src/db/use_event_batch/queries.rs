@@ -5,7 +5,7 @@ use diesel::{
 
 use crate::{
     db::{
-        boat::Boat,
+        boat::{types::BoatId, Boat},
         use_event::{NewUseEvent, UseEvent, UseScenario},
     },
     schema::boat,
@@ -108,5 +108,34 @@ impl UseEventBatch {
             .inner_join(boat::table.on(boat::id.eq(use_event::boat_id)))
             .select((UseEvent::as_select(), Boat::as_select()))
             .get_results(conn)
+    }
+
+    /// Removes all events in a given batch, then creates new events to replace them.
+    pub fn replace_batch_uses(
+        conn: &mut SqliteConnection,
+        batch_id: BatchId,
+        boat_ids: Vec<BoatId>
+    ) -> Result<BatchId, diesel::result::Error> {
+        conn.transaction(|conn| {
+            let target = use_event::table
+                .filter(use_event::batch_id.eq(batch_id));
+            diesel::delete(target)
+                .execute(conn)?;
+            let batch: UseEventBatch = use_event_batch::table.filter(use_event_batch::id.eq(batch_id)).get_result(conn)?;
+            let use_events = boat_ids
+                .into_iter()
+                .map(|boat_id| NewUseEvent {
+                    boat_id,
+                    batch_id: Some(batch_id),
+                    recorded_at: batch.recorded_at,
+                    use_scenario: batch.use_scenario,
+                    note: None,
+                })
+                .collect::<Vec<_>>();
+            diesel::insert_into(crate::schema::use_event::table)
+                .values(use_events)
+                .execute(conn)
+        })?;
+        Ok(batch_id)
     }
 }

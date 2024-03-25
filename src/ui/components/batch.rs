@@ -29,6 +29,7 @@ use dioxus_fullstack::prelude::*;
 mod list_pane;
 mod search_pane;
 
+/// A page that facilitates creating a batch of uses based on an existing batch.
 #[component]
 pub fn BatchTemplateCreationPage(id: BatchId) -> Element {
     rsx! {
@@ -38,6 +39,7 @@ pub fn BatchTemplateCreationPage(id: BatchId) -> Element {
     }
 }
 
+/// A page that facilitates creating a batch of uses.
 #[component]
 pub fn BatchCreationPage() -> Element {
     rsx! {
@@ -47,6 +49,7 @@ pub fn BatchCreationPage() -> Element {
     }
 }
 
+/// A page that allows viewing an existing batch of uses.
 #[component]
 pub fn BatchViewingPage(id: BatchId) -> Element {
     rsx! {
@@ -56,6 +59,7 @@ pub fn BatchViewingPage(id: BatchId) -> Element {
     }
 }
 
+/// A page that allows editing an existing batch of uses.
 #[component]
 pub fn BatchEditPage(id: BatchId) -> Element {
     rsx! {
@@ -65,11 +69,20 @@ pub fn BatchEditPage(id: BatchId) -> Element {
     }
 }
 
+/// Because of limitations of the router, we need a distinct component for each use case.
+/// In order to share code, we have one general implementation, that we pass the 'mode' 
+/// to to change aspects of the pages behavior.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum BatchPageMode {
+    /// Create a completely new batch
     Create,
+    /// View an existing batch.
     View { id: BatchId },
+    /// Create a new batch, prepopulating the list with boats from an existing batch.
+    /// The saved boats will create a new batch.
     Template { id: BatchId },
+    /// Allow editing an existing batch.
+    /// The saved boats will replace the entries in the old batch. 
     Edit { id: BatchId },
 }
 impl BatchPageMode {
@@ -213,6 +226,20 @@ pub(crate) async fn get_existing_batch(
     .await?
 }
 
+#[server(ReplaceBatch)]
+pub(crate) async fn replace_batch(
+    batch_id: BatchId,
+    boat_ids: Vec<BoatId>,
+) -> Result<(), ServerFnError> {
+    let conn_string = "db.sql";
+    let state = crate::ui::state::AppState::new(conn_string);
+    let conn = state.pool().get().await?;
+    conn.interact(move |conn| {
+        UseEventBatch::replace_batch_uses(conn, batch_id, boat_ids).map_err(ServerFnError::from).map(|_| ())
+    })
+    .await?
+}
+
 #[derive(Debug, Clone, PartialEq)]
 enum BoatListMsg {
     /// Fetch the boats according to the search criteria.
@@ -278,7 +305,10 @@ async fn boat_list_service(
             }
             BoatListMsg::SaveChanges { batch_id, boat_ids } => {
                 tracing::info!(?batch_id, ?boat_ids, "Overwriting old batch with new data");
-                // search().await
+                match replace_batch(batch_id, boat_ids).await {
+                    Ok(_) => toasts.send(ToastData::info(format!("Edited batch {batch_id}")).into()),
+                    Err(error) => toasts.send(ToastData::error(error).into()),
+                }
             }
             BoatListMsg::SetSearch(search_str) => {
                 tracing::info!(%search_str, "setting search");
