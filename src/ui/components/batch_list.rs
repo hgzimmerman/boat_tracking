@@ -56,7 +56,7 @@ pub fn BatchList(offset: usize, limit: Signal<usize>) -> Element {
     let batches = b.deref().as_ref().unwrap().as_ref().unwrap();
     rsx! {
         div {
-            class: "divide-x-2 flex flex-col overflow-auto grow",
+            class: "divide-y-2 flex flex-col overflow-auto grow",
             {
                 batches.iter().map(|BatchAndCounts { batch, use_counts }| {
                     rsx!{
@@ -115,7 +115,7 @@ pub fn BatchListPage(page: PageQueryParams) -> Element {
             class: "flex flex-col overflow-hide grow max-h-[calc(100vh-42px)]",
             // page header/nav
             div {
-                class: "h-16 bg-ggrc flex flex-row",
+                class: "h-16 bg-ggrc flex flex-row items-center",
                 div {
                     class: "grow",
                     if *offset_state.read() != 0 {

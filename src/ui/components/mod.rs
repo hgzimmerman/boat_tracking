@@ -27,8 +27,9 @@ use self::batch_list::PageQueryParams;
 #[rustfmt::skip]
 pub enum Route {
     #[layout(NavBar)]
-    #[route("/")]
-    Home, 
+    // #[route("/")]
+    #[redirect("/", || Route::BatchListPage{page: PageQueryParams::default()})]
+    // Home, 
     #[nest("/boats")]
         #[route("/")]
         BoatListPage,
@@ -71,14 +72,14 @@ fn NavBar() -> Element {
             class: "bg-ggrc sticky top-0",
             ul {
                 class: "flex items-center justify-between",
-                li {
-                    class: "mr-3",
-                    Link {
-                        class: "inline-block border border-blue-500 rounded py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white",
-                        to: Route::Home {},
-                        "Home"
-                    }
-                }
+                // li {
+                //     class: "mr-3",
+                //     Link {
+                //         class: "inline-block border border-blue-500 rounded py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white",
+                //         to: Route::Home {},
+                //         "Home"
+                //     }
+                // }
                 li {
                     class: "mr-3",
                     Link {

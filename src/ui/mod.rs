@@ -21,3 +21,9 @@ pub fn app() -> Element {
         Router::<components::Route>{}
     }
 }
+
+
+/// Use this on the ssr side to basically turn of ssr. (observing crashes in hydration routine when this was added)
+pub fn empty_app() -> Element {
+    None
+}

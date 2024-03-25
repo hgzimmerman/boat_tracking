@@ -15,16 +15,16 @@ fn main() -> Result<(), Error> {
             .without_time() // std::time is not available in browsers, see note below
             .with_writer(MakeWebConsoleWriter::new()) // write events to the console
             .with_filter(tracing::level_filters::LevelFilter::DEBUG);
-        let perf_layer = performance_layer().with_details_from_fields(Pretty::default());
+        // let perf_layer = performance_layer().with_details_from_fields(Pretty::default());
 
         tracing_subscriber::registry()
             .with(fmt_layer)
-            .with(perf_layer)
+            // .with(perf_layer)
             .init(); // Install these as subscribers to tracing events
 
         dioxus_web::launch::launch_cfg(
             boat_tracking::ui::app,
-            dioxus_web::Config::new().hydrate(true),
+            dioxus_web::Config::new().hydrate(false),
         );
     }
 
@@ -66,7 +66,7 @@ fn main() -> Result<(), Error> {
                 let state = AppState::new(conn_string);
                 let state1 = state.clone();
 
-                let dom_factory = || dioxus::dioxus_core::VirtualDom::new(boat_tracking::ui::app);
+                let dom_factory = || dioxus::dioxus_core::VirtualDom::new(boat_tracking::ui::empty_app);
 
                 // build our application with some routes
                 let app = Router::new()
