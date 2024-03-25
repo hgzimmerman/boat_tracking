@@ -35,10 +35,6 @@ pub fn BatchList(offset: usize, limit: Signal<usize>) -> Element {
     let batches_fut = use_server_future(use_reactive(
         (&offset, &*limit.read(), &*scenario.read()),
         move |(offset, limit, scenario)| {
-            // to_owned![offset, limit, scenario];
-            // let scenario = scenario.current().as_ref().clone();
-            // let limit = limit.current().as_ref().clone();
-            // tracing::debug!(?scenario, ?offset, ?limit, "fetching batches");
             async move {
                 get_batches(scenario, offset, limit)
                     .await

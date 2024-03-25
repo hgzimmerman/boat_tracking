@@ -100,11 +100,6 @@ fn GeneralBatchCreationPage(mode: BatchPageMode) -> Element {
     let search_name = use_signal(|| Option::<String>::None);
     let search_boat_state = use_signal(|| Vec::<Boat>::new());
 
-    // let toasts = use_signal(ToastList::default);
-    // let toast_svc = use_coroutine(|rx| {
-    //     to_owned![toasts];
-    //     crate::ui::components::toast::toast_service(rx, toasts)
-    // });
     let toast_svc = use_coroutine_handle::<ToastMsgMsg>();
     let boat_svc = use_coroutine(|rx| {
         to_owned![search_boat_state, filter, selected, search_name, toast_svc];

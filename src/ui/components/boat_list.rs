@@ -24,11 +24,6 @@ pub fn BoatListPage() -> Element {
     }
 }
 
-// #[derive(Props, Clone, PartialEq, Eq)]
-// struct BoatRowProps {
-//     boat: BoatAndStats
-// }
-
 #[component]
 fn BoatRow(boat: BoatAndStats) -> Element {
     rsx! {
@@ -43,7 +38,6 @@ fn BoatRow(boat: BoatAndStats) -> Element {
                 "style": "display:flex; flex-direction: column; flex-grow: 1; gap: 10px ;",
                 div {
                     "style": "min-width: 160px; font-size: x-large; font-weight: 500",
-                    // boat.boat.name.clone(),
                     dioxus_router::components::Link {
                         to: crate::ui::components::Route::BoatPage{id: boat.boat.id},
                         {boat.boat.name.clone()}
