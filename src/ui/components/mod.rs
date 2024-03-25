@@ -67,6 +67,14 @@ fn NavBar() -> Element {
                 class: "flex items-center justify-between",
                 li {
                     class: "mr-3",
+                     Link {
+                        class: "inline-block border border-blue-500 rounded py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white",
+                        to: Route::BatchListPage{page: PageQueryParams::default()},
+                         "Practices and Regattas"
+                    }
+                }
+                li {
+                    class: "mr-3",
                     Link {
                         class: "inline-block border border-blue-500 rounded py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white",
                         to: Route::BoatListPage {},
@@ -89,14 +97,7 @@ fn NavBar() -> Element {
                 //          "Issues"
                 //     }
                 // }
-                li {
-                    class: "mr-3",
-                     Link {
-                        class: "inline-block border border-blue-500 rounded py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white",
-                        to: Route::BatchListPage{page: PageQueryParams::default()},
-                         "Practices and Regattas"
-                    }
-                }
+
             }
         }
         Outlet::<Route> {}

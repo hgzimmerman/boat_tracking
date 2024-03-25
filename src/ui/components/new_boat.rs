@@ -42,10 +42,6 @@ pub fn NewBoatPage() -> Element {
     });
 
     rsx! {
-        // ToastCenter {
-        //     toasts: toasts,
-        //     toast_svc: toast_svc
-        // }
         div {
             class: "flex flex-col flex-grow bg-gray-50 dark:bg-gray-500 justify-center",
             div {
