@@ -17,12 +17,14 @@ pub(super) fn BatchListPane(
             // The list of boats
             List {
                 boats: boats.read().clone(),
-                boat_svc: boat_svc
+                boat_svc: boat_svc,
+                mode: mode
             } 
             // Submission form
             SubmitRow {
                 boats: boats.read().clone(),
-                boat_svc: boat_svc
+                boat_svc: boat_svc,
+                mode: mode
             }
         }
     }
@@ -31,7 +33,8 @@ pub(super) fn BatchListPane(
 #[component]
 fn List(
     boats: Vec<Boat>,
-    boat_svc: Coroutine<BoatListMsg>
+    boat_svc: Coroutine<BoatListMsg>,
+    mode: BatchPageMode
 ) -> Element {
     rsx!{
         div {
@@ -47,13 +50,23 @@ fn List(
                         class: "m-2",
                         {b.boat_type().as_ref().map(ToString::to_string)}
                     }
-                    button {
-                        class: "m-2 btn btn-red",
-                        onclick: move |_| {
-                            boat_svc.send(BoatListMsg::RemoveFromBatch(b.id.clone()));
-                        },
-                        "Remove"
+                    {
+                        match mode {
+                            BatchPageMode::View { .. } => {
+                                None
+                            },
+                            _ => rsx!{
+                                button {
+                                    class: "m-2 btn btn-red",
+                                    onclick: move |_| {
+                                        boat_svc.send(BoatListMsg::RemoveFromBatch(b.id.clone()));
+                                    },
+                                    "Remove"
+                                }
+                            } 
+                        }
                     }
+                    
                 }
             }) }
         }
@@ -64,7 +77,8 @@ fn List(
 #[component]
 fn SubmitRow(
     boats: Vec<Boat>,
-    boat_svc: Coroutine<BoatListMsg>
+    boat_svc: Coroutine<BoatListMsg>,
+    mode: BatchPageMode
 ) -> Element {
 
     // TODO make this use the current time of day to initialize it.
@@ -148,16 +162,34 @@ fn SubmitRow(
                             }
                         }
                     }
-                    
-                    button {
-                        class: "btn btn-blue rounded-e disabled:opacity-45 disabled:bg-blue-500",
-                        disabled: boats.is_empty(),
-                        onclick: move |e| {
-                            e.stop_propagation();
-                            boat_svc.send(BoatListMsg::Submit);
-                        },
-                        "Save New Boat Uses"
+                    {
+                        match mode {
+                            BatchPageMode::Create | BatchPageMode::Template { .. } => rsx!{
+                                button {
+                                    class: "btn btn-blue rounded-e disabled:opacity-45 disabled:bg-blue-500",
+                                    disabled: boats.is_empty(),
+                                    onclick: move |e| {
+                                        e.stop_propagation();
+                                        boat_svc.send(BoatListMsg::Submit);
+                                    },
+                                    "Save New Boat Uses"
+                                }
+                            },
+                            BatchPageMode::View { .. } => None,
+                            BatchPageMode::Edit { id } => rsx!{
+                                button {
+                                    class: "btn btn-blue rounded-e disabled:opacity-45 disabled:bg-blue-500",
+                                    disabled: boats.is_empty(),
+                                    onclick: move |e| {
+                                        e.stop_propagation();
+                                        boat_svc.send(BoatListMsg::SaveChanges { batch_id: id, boat_ids: boats.iter().map(|boat|boat.id).collect()});
+                                    },
+                                    "Save Changes"
+                                }
+                            },
+                        }
                     }
+                    
                 } 
             }
         }

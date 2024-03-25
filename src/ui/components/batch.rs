@@ -48,6 +48,15 @@ pub fn BatchViewingPage(id: BatchId) -> Element {
     }
 }
 
+#[component]
+pub fn BatchEditPage(id: BatchId) -> Element {
+    rsx!{
+        GeneralBatchCreationPage {
+            mode: BatchPageMode::Edit {id}
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum BatchPageMode {
     Create,
@@ -60,6 +69,12 @@ impl BatchPageMode {
         match self {
             BatchPageMode::Create  => None,
             BatchPageMode::Template { id } | BatchPageMode::Edit { id } | BatchPageMode::View{id} => Some(id),
+        }
+    }
+    pub fn is_view(self) -> bool {
+        match self {
+            BatchPageMode::View{..}  => true,
+            BatchPageMode::Template { .. } | BatchPageMode::Edit { .. } | BatchPageMode::Create => false,
         }
     }
 }
@@ -83,6 +98,7 @@ fn GeneralBatchCreationPage(mode: BatchPageMode) -> Element {
         boat_list_service(rx, search_boat_state, selected, filter, search_name, toast_svc)
     });
 
+    // Initialize the bage by fetching the msgs.
     use_future(move || {
         async move {
             boat_svc.send(BoatListMsg::Fetch);
@@ -97,6 +113,7 @@ fn GeneralBatchCreationPage(mode: BatchPageMode) -> Element {
                     Ok(batch) => {
                         let batch = batch.into_iter().map(|(_event, boat)| boat).collect::<Vec<_>>();
                         selected.set(batch)
+                        // TODO also set the time element (when we add one) corresponding to the batch in question.
                     },
                     Err(error) => {
                         toast_svc.send(ToastMsgMsg::Add(ToastData::from(error), ToastData::DEFAULT_TIME))
@@ -120,10 +137,10 @@ fn GeneralBatchCreationPage(mode: BatchPageMode) -> Element {
                 boat_svc: boat_svc,
                 mode: mode
             }
-            {match mode {
-                BatchPageMode::Create 
-                | BatchPageMode::Template { .. }
-                | BatchPageMode::Edit { .. } => {
+            {
+                if mode.is_view() {
+                    None
+                } else {
                     rsx!{
                         search_pane::BoatSearchPane{
                             boats: search_boat_state,
@@ -132,11 +149,8 @@ fn GeneralBatchCreationPage(mode: BatchPageMode) -> Element {
                             boat_svc: boat_svc
                         }
                     }
-                },
-                BatchPageMode::View{..}  => {
-                    None
                 }
-            }}
+            }
         }
     }
 }
@@ -196,14 +210,27 @@ pub(crate) async fn get_existing_batch(
 
 #[derive(Debug, Clone, PartialEq)]
 enum BoatListMsg {
-    /// Run the fetch
+    /// Fetch the boats according to the search criteria. 
     Fetch,
+    /// Filter the search to only boats with sweep or sculling oar configurations. 
     SetFilterOarConfig(Option<OarConfiguration>),
+    /// Filter the search to only boats with or without a coxswain. 
     SetFilterCoxed(Option<HasCox>),
+    /// Filter the search to only boats with this number of seats
     SetFilterNumSeats(Option<SeatCount>),
+    /// Set the search string used to filter boats in the right-hand-pane.
     SetSearch(String),
+    /// Remove an item from the right-hand-pane, adding it to the left-hand-pane.
+    /// This item will be saved as part of the batch.
     AddToBatch(BoatId),
+    /// Remove an item from the left-hand-pane.
+    /// This should cause it to show back up in the other pane as it is no longer filtered.
     RemoveFromBatch(BoatId),
+    /// Only used when in edit mode.
+    /// This should, in a transaction, delete the use events tied to the batch, 
+    /// and re-create new ones that reflect the boat ids passed in.
+    /// The created at time should also be set to the value provided. 
+    SaveChanges{batch_id: BatchId, boat_ids: Vec<BoatId>},
     /// Submits the selected boats, saving use events for each one.
     Submit
 }
@@ -241,6 +268,10 @@ async fn boat_list_service(
             BoatListMsg::Fetch => {
                 tracing::info!("fetching");
                 search().await
+            },
+            BoatListMsg::SaveChanges { batch_id, boat_ids }=> {
+                tracing::info!(?batch_id, ?boat_ids, "Overwriting old batch with new data");
+                // search().await
             },
             BoatListMsg::SetSearch(search_str) => {
                 tracing::info!(%search_str, "setting search");

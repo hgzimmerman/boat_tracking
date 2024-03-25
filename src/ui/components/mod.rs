@@ -13,7 +13,7 @@ use boat_list::BoatListPage;
 use boat::BoatPage;
 use issue_list::IssueListPage;
 use new_issue::NewIssuePage;
-use batch::{BatchCreationPage, BatchTemplateCreationPage};
+use batch::{BatchCreationPage, BatchTemplateCreationPage, BatchEditPage};
 use batch_list::BatchListPage;
 use batch::BatchViewingPage;
 
@@ -49,6 +49,8 @@ pub enum Route {
         BatchListPage{page: PageQueryParams},
         #[route("/:id")]
         BatchViewingPage{id: BatchId},
+        #[route("/:id")]
+        BatchEditPage{id: BatchId},
         #[nest("/new")]
             #[route("/")]
             BatchCreationPage,
