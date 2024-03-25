@@ -39,36 +39,38 @@ fn List(
     rsx!{
         div {
             class: "flex flex-col grow overflow-auto divide-y",
-            {boats.into_iter().map(|b| rsx!{
-                div {
-                    class: "flex flex-row h-16 items-center",
+            {
+                boats.into_iter().map(|b| rsx!{
                     div {
-                        class: "m-2 grow",
-                        {b.name.clone()}
-                    }
-                    div {
-                        class: "m-2",
-                        {b.boat_type().as_ref().map(ToString::to_string)}
-                    }
-                    {
-                        match mode {
-                            BatchPageMode::View { .. } => {
-                                None
-                            },
-                            _ => rsx!{
-                                button {
-                                    class: "m-2 btn btn-red",
-                                    onclick: move |_| {
-                                        boat_svc.send(BoatListMsg::RemoveFromBatch(b.id.clone()));
-                                    },
-                                    "Remove"
-                                }
-                            } 
+                        class: "flex flex-row h-16 items-center",
+                        div {
+                            class: "m-2 grow",
+                            {b.name.clone()}
                         }
+                        div {
+                            class: "m-2",
+                            {b.boat_type().as_ref().map(ToString::to_string)}
+                        }
+                        {
+                            if mode.is_view() {
+                                // We don't want a remove button when just viewing the page.
+                                None
+                            } else {
+                                rsx!{
+                                    button {
+                                        class: "m-2 btn btn-red",
+                                        onclick: move |_| {
+                                            boat_svc.send(BoatListMsg::RemoveFromBatch(b.id.clone()));
+                                        },
+                                        "Remove"
+                                    }
+                                }
+                            }
+                        }
+                        
                     }
-                    
-                }
-            }) }
+                }) 
+            }
         }
     }
 }

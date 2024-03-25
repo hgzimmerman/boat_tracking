@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
 use dioxus::prelude::*;
 use dioxus_fullstack::prelude::*;
-use crate::{db::boat::{types::{BoatType, WeightClass}, Boat, NewBoat}, ui::components::toast::{MsgType, ToastCenter, ToastData, ToastList, ToastMsgMsg}};
+use crate::{db::boat::{types::{BoatType, WeightClass}, Boat, NewBoat}, ui::components::toast::{MsgType, ToastData, ToastMsgMsg}};
 
 
 #[component]
@@ -15,13 +15,8 @@ pub fn NewBoatPage() -> Element {
     let mut boat_type = use_signal(|| Option::<BoatType>::None); 
     let mut show_weight_class_dropdown= use_signal(|| false);
     let mut weight_class = use_signal(|| Option::<WeightClass>::None); 
-    let toasts = use_signal(ToastList::default);
 
-    let toast_svc = use_coroutine(|rx| {
-        to_owned![toasts];
-        crate::ui::components::toast::toast_service(rx, toasts)
-    });
-
+    let toast_svc = use_coroutine_handle::<ToastMsgMsg>();
     let boat_svc = use_coroutine(|rx| {
         to_owned![name, boat_type, weight_class, acquired_at, manufactured_at, toast_svc];
         create_boat_service(rx, name, weight_class, boat_type, acquired_at, manufactured_at, toast_svc)
@@ -30,10 +25,10 @@ pub fn NewBoatPage() -> Element {
 
 
     rsx!{
-        ToastCenter {
-            toasts: toasts,
-            toast_svc: toast_svc
-        }
+        // ToastCenter {
+        //     toasts: toasts,
+        //     toast_svc: toast_svc
+        // }
         div {
             class: "flex flex-col flex-grow bg-gray-50 dark:bg-gray-500 justify-center",
             div {

@@ -13,8 +13,8 @@ use std::collections::HashSet;
 
 use dioxus::prelude::*;
 use dioxus_fullstack::prelude::*;
-use crate::{db::{boat::{types::{BoatId, HasCox, OarConfiguration, SeatCount}, Boat, BoatFilter3}, use_event::{UseEvent, UseScenario}, use_event_batch::{BatchId, NewBatch, NewBatchArgs, UseEventBatch}}, ui::components::toast::{ToastCenter, ToastData}};
-use super::toast::{ToastList, ToastMsgMsg};
+use crate::{db::{boat::{types::{BoatId, HasCox, OarConfiguration, SeatCount}, Boat, BoatFilter3}, use_event::{UseEvent, UseScenario}, use_event_batch::{BatchId, NewBatch, NewBatchArgs, UseEventBatch}}, ui::components::toast::ToastData};
+use super::toast::ToastMsgMsg;
 
 
 mod list_pane;
@@ -88,11 +88,12 @@ fn GeneralBatchCreationPage(mode: BatchPageMode) -> Element {
     let search_name = use_signal(|| Option::<String>::None);
     let search_boat_state = use_signal(|| Vec::<Boat>::new());
 
-    let toasts = use_signal(ToastList::default);
-    let toast_svc = use_coroutine(|rx| {
-        to_owned![toasts];
-        crate::ui::components::toast::toast_service(rx, toasts)
-    });
+    // let toasts = use_signal(ToastList::default);
+    // let toast_svc = use_coroutine(|rx| {
+    //     to_owned![toasts];
+    //     crate::ui::components::toast::toast_service(rx, toasts)
+    // });
+    let toast_svc = use_coroutine_handle::<ToastMsgMsg>();
     let boat_svc = use_coroutine(|rx| {
         to_owned![search_boat_state, filter, selected, search_name, toast_svc];
         boat_list_service(rx, search_boat_state, selected, filter, search_name, toast_svc)
@@ -125,10 +126,6 @@ fn GeneralBatchCreationPage(mode: BatchPageMode) -> Element {
 
 
     rsx!{
-        ToastCenter {
-            toasts: toasts,
-            toast_svc: toast_svc
-        }
         div {
             // I don't love the magic number (42px corresponds to the nav height)
             class: "flex flex-row overflow-hide divide-x-4 grow max-h-[calc(100vh-42px)]", 
