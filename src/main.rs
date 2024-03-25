@@ -6,16 +6,15 @@ fn main() -> Result<(), Error> {
 
     #[cfg(feature = "web")]
     {
-        use tracing_subscriber::fmt::format::Pretty;
         use tracing_subscriber::prelude::*;
-        use tracing_web::{performance_layer, MakeWebConsoleWriter};
+        use tracing_web::MakeWebConsoleWriter;
 
         let fmt_layer = tracing_subscriber::fmt::layer()
             .with_ansi(false) // Only partially supported across browsers
             .without_time() // std::time is not available in browsers, see note below
             .with_writer(MakeWebConsoleWriter::new()) // write events to the console
             .with_filter(tracing::level_filters::LevelFilter::DEBUG);
-        // let perf_layer = performance_layer().with_details_from_fields(Pretty::default());
+        // let perf_layer = tracing_web::performance_layer().with_details_from_fields(tracing_subscriber::fmt::format::Pretty::default());
 
         tracing_subscriber::registry()
             .with(fmt_layer)
