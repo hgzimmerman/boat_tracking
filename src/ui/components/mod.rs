@@ -49,7 +49,7 @@ pub enum Route {
         BatchListPage{page: PageQueryParams},
         #[route("/:id")]
         BatchViewingPage{id: BatchId},
-        #[route("/:id")]
+        #[route("/edit/:id")]
         BatchEditPage{id: BatchId},
         #[nest("/new")]
             #[route("/")]

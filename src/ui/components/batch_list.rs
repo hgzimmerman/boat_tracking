@@ -90,10 +90,10 @@ pub fn BatchList (
                                 to: Route::BatchViewingPage { id: batch.id },
                                 "View"
                             }
-
                             // -> batch/edit/:batch_id
-                            button {
+                            Link {
                                 class: "btn btn-blue",
+                                to: Route::BatchEditPage { id: batch.id },
                                 "Edit"
                             }
                             // -> batch/new/:batch_id
