@@ -5,21 +5,15 @@ use dioxus_fullstack::prelude::*;
 
 #[server(GetBoats)]
 pub(crate) async fn get_boats() -> Result<Vec<BoatAndStats>, ServerFnError> {
-
     // let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu");
     let conn_string = "db.sql";
     let state = crate::ui::state::AppState::new(conn_string);
     let conn = state.pool().get().await?;
-    conn 
-        .interact(|conn| {
-            BoatAndStats::get_boats(conn).map_err(ServerFnError::from)
-        })
+    conn.interact(|conn| BoatAndStats::get_boats(conn).map_err(ServerFnError::from))
         .await?
 }
 pub fn BoatListPage() -> Element {
-    let boats_fut= use_server_future(|| async {
-        get_boats().await
-    })?;
+    let boats_fut = use_server_future(|| async { get_boats().await })?;
     rsx! {
         div {
             class: "overflow-y-auto flex-grow max-h-[calc(100vh-42px)]",
@@ -29,7 +23,6 @@ pub fn BoatListPage() -> Element {
         }
     }
 }
-
 
 // #[derive(Props, Clone, PartialEq, Eq)]
 // struct BoatRowProps {
@@ -44,15 +37,15 @@ fn BoatRow(boat: BoatAndStats) -> Element {
             onclick: move |event| {
                 // now, outer won't be triggered
                 event.stop_propagation();
-                
+
             },
             div {
                 "style": "display:flex; flex-direction: column; flex-grow: 1; gap: 10px ;",
                 div {
                     "style": "min-width: 160px; font-size: x-large; font-weight: 500",
                     // boat.boat.name.clone(),
-                    dioxus_router::components::Link { 
-                        to: crate::ui::components::Route::BoatPage{id: boat.boat.id}, 
+                    dioxus_router::components::Link {
+                        to: crate::ui::components::Route::BoatPage{id: boat.boat.id},
                         {boat.boat.name.clone()}
                     }
                 }
@@ -62,7 +55,7 @@ fn BoatRow(boat: BoatAndStats) -> Element {
                     }
                 }
             }
-            
+
             {
                 boat.boat.acquired_at.map(|x| rsx! {
                     div {
@@ -93,11 +86,8 @@ fn BoatRow(boat: BoatAndStats) -> Element {
     }
 }
 
-
 #[component]
-pub fn BoatList(
-    boats: Result<Vec<BoatAndStats>, ServerFnError>
-) -> Element {
+pub fn BoatList(boats: Result<Vec<BoatAndStats>, ServerFnError>) -> Element {
     match boats {
         Ok(boats) => {
             rsx! {
@@ -106,14 +96,14 @@ pub fn BoatList(
                         boats.into_iter().map(|boat| rsx! {
                             BoatRow {
                                 boat: boat.clone() // maybe avoid cloning this in the future?
-                            } 
+                            }
                         })
                     }
                 }
-            } 
-        },
+            }
+        }
         Err(error) => {
-            rsx!{
+            rsx! {
                 div {
                     "error: ",
                     {error.to_string()}
@@ -122,4 +112,3 @@ pub fn BoatList(
         }
     }
 }
-

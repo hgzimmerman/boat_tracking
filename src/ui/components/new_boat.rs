@@ -1,30 +1,47 @@
+use crate::{
+    db::boat::{
+        types::{BoatType, WeightClass},
+        Boat, NewBoat,
+    },
+    ui::components::toast::{MsgType, ToastData, ToastMsgMsg},
+};
 use chrono::NaiveDate;
 use dioxus::prelude::*;
 use dioxus_fullstack::prelude::*;
-use crate::{db::boat::{types::{BoatType, WeightClass}, Boat, NewBoat}, ui::components::toast::{MsgType, ToastData, ToastMsgMsg}};
-
 
 #[component]
 pub fn NewBoatPage() -> Element {
-
     let mut name = use_signal(String::new);
     let mut acquired_at = use_signal(String::new);
     let mut manufactured_at = use_signal(String::new);
-    
-    let mut show_boat_type_dropdown= use_signal(|| false);
-    let mut boat_type = use_signal(|| Option::<BoatType>::None); 
-    let mut show_weight_class_dropdown= use_signal(|| false);
-    let mut weight_class = use_signal(|| Option::<WeightClass>::None); 
+
+    let mut show_boat_type_dropdown = use_signal(|| false);
+    let mut boat_type = use_signal(|| Option::<BoatType>::None);
+    let mut show_weight_class_dropdown = use_signal(|| false);
+    let mut weight_class = use_signal(|| Option::<WeightClass>::None);
 
     let toast_svc = use_coroutine_handle::<ToastMsgMsg>();
     let boat_svc = use_coroutine(|rx| {
-        to_owned![name, boat_type, weight_class, acquired_at, manufactured_at, toast_svc];
-        create_boat_service(rx, name, weight_class, boat_type, acquired_at, manufactured_at, toast_svc)
+        to_owned![
+            name,
+            boat_type,
+            weight_class,
+            acquired_at,
+            manufactured_at,
+            toast_svc
+        ];
+        create_boat_service(
+            rx,
+            name,
+            weight_class,
+            boat_type,
+            acquired_at,
+            manufactured_at,
+            toast_svc,
+        )
     });
 
-
-
-    rsx!{
+    rsx! {
         // ToastCenter {
         //     toasts: toasts,
         //     toast_svc: toast_svc
@@ -298,7 +315,6 @@ pub fn NewBoatPage() -> Element {
     }
 }
 
-
 #[server(GetBoats)]
 pub(crate) async fn create_boat(
     name: String,
@@ -314,17 +330,13 @@ pub(crate) async fn create_boat(
 
     let boat = NewBoat::new(name, weight, ty, acquired_at, manufactured_at);
 
-    conn 
-        .interact(|conn| {
-            Boat::new_boat(conn, boat).map_err(ServerFnError::from)
-        })
+    conn.interact(|conn| Boat::new_boat(conn, boat).map_err(ServerFnError::from))
         .await?
 }
 
 enum CreateBoatMsg {
-    Submit
+    Submit,
 }
-
 
 struct BoatArgs {
     name: String,
@@ -333,7 +345,7 @@ struct BoatArgs {
     acquired_at: Option<NaiveDate>,
     manufactured_at: Option<NaiveDate>,
 }
-#[derive(Debug,Clone, thiserror::Error)]
+#[derive(Debug, Clone, thiserror::Error)]
 enum BoatArgsError {
     #[error("Missing Name")]
     MissingName,
@@ -344,53 +356,56 @@ enum BoatArgsError {
     #[error("Could not parse Acquired date.")]
     InvalidAcquiredAt(chrono::ParseError),
     #[error("Could not parse Manufacturing date.")]
-    InvalidManufactureddAt(chrono::ParseError)
+    InvalidManufactureddAt(chrono::ParseError),
 }
 impl BoatArgs {
-    fn new(    
+    fn new(
         name: Signal<String>,
         weight: Signal<Option<WeightClass>>,
         ty: Signal<Option<BoatType>>,
         acquired_at: Signal<String>,
-        manufactured_at: Signal<String>
+        manufactured_at: Signal<String>,
     ) -> Result<Self, BoatArgsError> {
         let name: String = if name.read().is_empty() {
-            return Err(BoatArgsError::MissingName)
+            return Err(BoatArgsError::MissingName);
         } else {
             name.read().clone()
         };
-        let weight: WeightClass= if let Some(weight) = *weight.read() {
+        let weight: WeightClass = if let Some(weight) = *weight.read() {
             weight
         } else {
-            return Err(BoatArgsError::MissingWeight)
+            return Err(BoatArgsError::MissingWeight);
         };
         let ty: BoatType = if let Some(ty) = *ty.read() {
             ty
         } else {
-            return Err(BoatArgsError::MissingBoatType)
+            return Err(BoatArgsError::MissingBoatType);
         };
         let acquired_at = if acquired_at.read().is_empty() {
             None
         } else {
             tracing::info!(acquired = ?acquired_at.read());
-            chrono::NaiveDate::parse_from_str(&&acquired_at.read(), "%Y-%m-%d").map_err(BoatArgsError::InvalidAcquiredAt).map(Some)? 
+            chrono::NaiveDate::parse_from_str(&&acquired_at.read(), "%Y-%m-%d")
+                .map_err(BoatArgsError::InvalidAcquiredAt)
+                .map(Some)?
         };
-        let manufactured_at = if manufactured_at.read().is_empty(){
+        let manufactured_at = if manufactured_at.read().is_empty() {
             None
-        } else { 
+        } else {
             tracing::info!(manufactured = ?manufactured_at.read());
-            chrono::NaiveDate::parse_from_str(&&manufactured_at.read(), "%Y-%m-%d").map_err(BoatArgsError::InvalidManufactureddAt).map(Some)?
+            chrono::NaiveDate::parse_from_str(&&manufactured_at.read(), "%Y-%m-%d")
+                .map_err(BoatArgsError::InvalidManufactureddAt)
+                .map(Some)?
         };
         Ok(BoatArgs {
             name,
             weight,
             ty,
             acquired_at,
-            manufactured_at
+            manufactured_at,
         })
     }
 }
-
 
 async fn create_boat_service(
     mut rx: UnboundedReceiver<CreateBoatMsg>,
@@ -399,48 +414,64 @@ async fn create_boat_service(
     mut ty: Signal<Option<BoatType>>,
     mut acquired_at: Signal<String>,
     mut manufactured_at: Signal<String>,
-    toasts: Coroutine<ToastMsgMsg>
+    toasts: Coroutine<ToastMsgMsg>,
 ) {
     use futures::stream::StreamExt;
-
 
     while let Some(msg) = rx.next().await {
         match msg {
             CreateBoatMsg::Submit => {
                 match BoatArgs::new(name, weight, ty, acquired_at, manufactured_at) {
                     Ok(args) => {
-                        match create_boat(args.name, args.weight, args.ty, args.acquired_at, args.manufactured_at).await {
+                        match create_boat(
+                            args.name,
+                            args.weight,
+                            args.ty,
+                            args.acquired_at,
+                            args.manufactured_at,
+                        )
+                        .await
+                        {
                             Ok(_boat) => {
                                 name.set(String::new());
                                 weight.set(None);
                                 ty.set(None);
                                 acquired_at.set(String::new());
                                 manufactured_at.set(String::new());
-                                
+
                                 toasts.send(ToastMsgMsg::Add(
-                                    ToastData {msg: "Created new boat".to_string(), ty: MsgType::Normal}, 
-                                    std::time::Duration::from_secs(5)
+                                    ToastData {
+                                        msg: "Created new boat".to_string(),
+                                        ty: MsgType::Normal,
+                                    },
+                                    std::time::Duration::from_secs(5),
                                 ))
-                            },
+                            }
                             Err(error) => {
                                 tracing::warn!(?error, "Could not send request");
 
                                 toasts.send(ToastMsgMsg::Add(
-                                    ToastData {msg: "Could not send requests".to_string(), ty: MsgType::Error}, 
-                                    std::time::Duration::from_secs(2)
+                                    ToastData {
+                                        msg: "Could not send requests".to_string(),
+                                        ty: MsgType::Error,
+                                    },
+                                    std::time::Duration::from_secs(2),
                                 ))
-                            },
+                            }
                         }
                     }
                     Err(error) => {
                         tracing::warn!(?error, "failed validation");
                         toasts.send(ToastMsgMsg::Add(
-                            ToastData {msg: error.to_string(), ty: MsgType::Warn}, 
-                            std::time::Duration::from_secs(2)
+                            ToastData {
+                                msg: error.to_string(),
+                                ty: MsgType::Warn,
+                            },
+                            std::time::Duration::from_secs(2),
                         ));
-                    },
+                    }
                 }
-            },
+            }
         }
     }
 }

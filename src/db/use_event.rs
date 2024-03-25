@@ -1,4 +1,3 @@
-
 #[cfg(feature = "ssr")]
 pub mod queries;
 use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
@@ -7,7 +6,10 @@ use super::{boat::types::BoatId, use_event_batch::BatchId};
 
 /// Whenever the equipment is used, it can be recorded that it was used
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-#[cfg_attr(feature = "ssr", derive(diesel::Queryable, diesel::Selectable, diesel::Identifiable, ))]
+#[cfg_attr(
+    feature = "ssr",
+    derive(diesel::Queryable, diesel::Selectable, diesel::Identifiable,)
+)]
 #[cfg_attr(feature = "ssr", diesel(table_name = crate::schema::use_event))]
 pub struct UseEvent {
     pub id: UseEventId,
@@ -19,15 +21,7 @@ pub struct UseEvent {
 }
 
 #[derive(
-    Clone,
-    Copy,
-    Debug,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    serde::Serialize,
-    serde::Deserialize,
+    Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize,
 )]
 #[cfg_attr(feature = "ssr", derive(diesel_derive_enum::DbEnum))]
 #[cfg_attr(feature = "ssr", DbValueStyle = "verbatim")]
@@ -59,8 +53,6 @@ pub struct NewUseEvent {
     pub use_scenario: UseScenario,
     pub note: Option<String>,
 }
-
-
 
 #[derive(
     Clone,

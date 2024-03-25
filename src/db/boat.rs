@@ -4,18 +4,20 @@ pub mod types;
 pub mod queries;
 
 use diesel::{
-    BoolExpressionMethods, ExpressionMethods, JoinOnDsl,
-    NullableExpressionMethods, RunQueryDsl, SelectableHelper,
+    BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, RunQueryDsl,
+    SelectableHelper,
 };
 use types::{HasCox, OarsPerSeat, SeatCount, WeightClass};
-
 
 use self::types::{BoatAttributes, BoatId, BoatType, OarConfiguration};
 
 use super::DbOrdering;
 
-#[derive(Debug, Clone,  PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-#[cfg_attr(feature = "ssr", derive(diesel::Queryable, diesel::Selectable, diesel::Identifiable))]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[cfg_attr(
+    feature = "ssr",
+    derive(diesel::Queryable, diesel::Selectable, diesel::Identifiable)
+)]
 #[cfg_attr(feature = "ssr", diesel(table_name = crate::schema::boat))]
 pub struct Boat {
     pub id: BoatId,
@@ -73,7 +75,11 @@ impl NewBoat {
 
 impl Boat {
     pub fn boat_type(&self) -> Option<BoatType> {
-        BoatType::from_boat_attributes(BoatAttributes { has_cox: self.has_cox, seats: self.seat_count, oar_configuation: self.oars_per_seat })
+        BoatType::from_boat_attributes(BoatAttributes {
+            has_cox: self.has_cox,
+            seats: self.seat_count,
+            oar_configuation: self.oars_per_seat,
+        })
     }
 }
 
@@ -88,8 +94,9 @@ pub struct BoatFilter {
     pub oars: Option<OarsPerSeat>,
 }
 
-
-#[derive(Default, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Default, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize,
+)]
 pub struct BoatFilter3 {
     /// Currently needed by dioxus to avoid failing to deserialize when all items are empty.
     pub _x: usize,
@@ -97,8 +104,6 @@ pub struct BoatFilter3 {
     pub coxed: Option<HasCox>,
     pub oars_config: Option<OarConfiguration>,
 }
-
-
 
 #[derive(Debug, Clone, diesel::Queryable, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct BoatAndStats {
@@ -108,4 +113,3 @@ pub struct BoatAndStats {
     pub total_uses: Option<i64>,
     pub uses_last_thirty_days: Option<i64>,
 }
-

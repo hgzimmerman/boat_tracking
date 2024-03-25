@@ -1,15 +1,18 @@
-use dioxus::prelude::*;
-use crate::db::boat::{types::{HasCox, OarConfiguration, SeatCount}, Boat, BoatFilter3};
 use super::BoatListMsg;
+use crate::db::boat::{
+    types::{HasCox, OarConfiguration, SeatCount},
+    Boat, BoatFilter3,
+};
+use dioxus::prelude::*;
 
 #[component]
 pub(super) fn BoatSearchPane(
     boats: Signal<Vec<Boat>>,
     filter: Signal<BoatFilter3>,
     search_name: Signal<Option<String>>,
-    boat_svc: Coroutine<BoatListMsg>
+    boat_svc: Coroutine<BoatListMsg>,
 ) -> Element {
-    rsx!{
+    rsx! {
         div {
             class: "flex flex-col w-1/2 overflow-auto divide-y-2",
             // The submission box
@@ -17,22 +20,18 @@ pub(super) fn BoatSearchPane(
                 filter: filter,
                 search_name: search_name,
                 boat_svc: boat_svc
-            } 
-            // The search results 
+            }
+            // The search results
             SearchResults {
                 boats: boats.read().clone(),
                 boat_svc: boat_svc
             }
-        } 
+        }
     }
 }
 
-
 #[component]
-fn SearchResults(
-    boats: Vec<Boat>,
-    boat_svc: Coroutine<BoatListMsg>
-) -> Element {
+fn SearchResults(boats: Vec<Boat>, boat_svc: Coroutine<BoatListMsg>) -> Element {
     rsx! {
         div {
             class: "flex flex-col grow divide-y",
@@ -60,14 +59,13 @@ fn SearchResults(
     }
 }
 
-
 #[component]
 fn FilterPane(
     filter: Signal<BoatFilter3>,
     search_name: Signal<Option<String>>,
-    boat_svc: Coroutine<BoatListMsg>
+    boat_svc: Coroutine<BoatListMsg>,
 ) -> Element {
-    rsx!{
+    rsx! {
         form {
             class: "flex flex-col h-30 p-4 bg-white dark:bg-gray-500",
             onsubmit: move |e| {
@@ -101,7 +99,7 @@ fn FilterPane(
                                 e.stop_propagation();
                                 boat_svc.send(BoatListMsg::SetFilterOarConfig(Some(OarConfiguration::Sweep)));
                             },
-                            value: "Sweep", 
+                            value: "Sweep",
                             "Sweep"
                         }
                         option {
@@ -150,7 +148,7 @@ fn FilterPane(
                                 boat_svc.send(BoatListMsg::SetFilterCoxed(Some(HasCox::new(false))));
                             },
                             value: "Coxless",
-                            "Coxless" 
+                            "Coxless"
                         }
                     }
                 }
@@ -172,7 +170,7 @@ fn FilterPane(
                                 boat_svc.send(BoatListMsg::SetFilterNumSeats(None));
                             },
                             value: "None",
-                            "None" 
+                            "None"
                         }
                         option {
                             selected: filter.read().num_seats.as_ref().map(SeatCount::count).unwrap_or_default() == 1,
@@ -181,7 +179,7 @@ fn FilterPane(
                                 boat_svc.send(BoatListMsg::SetFilterNumSeats(SeatCount::new(1)));
                             },
                             value: "1",
-                            "1" 
+                            "1"
                         }
                         option {
                             selected: filter.read().num_seats.as_ref().map(SeatCount::count).unwrap_or_default() == 2,
@@ -190,7 +188,7 @@ fn FilterPane(
                                 boat_svc.send(BoatListMsg::SetFilterNumSeats(SeatCount::new(2)));
                             },
                             value: "2",
-                            "2" 
+                            "2"
                         }
                         option {
                             selected: filter.read().num_seats.as_ref().map(SeatCount::count).unwrap_or_default() == 4,
@@ -227,4 +225,3 @@ fn FilterPane(
         }
     }
 }
-

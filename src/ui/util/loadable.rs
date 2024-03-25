@@ -8,20 +8,20 @@ pub type LoadableRefResult<'a, T> = Loadable<std::cell::Ref<'a, Result<T, Server
 pub enum Loadable<T> {
     #[default]
     Loading,
-    Loaded(T)
+    Loaded(T),
 }
 
-impl <T> From<T> for Loadable<T> {
+impl<T> From<T> for Loadable<T> {
     fn from(value: T) -> Self {
         Self::Loaded(value)
     }
 }
 
-impl <T> Loadable<T> {
+impl<T> Loadable<T> {
     pub fn from_option(option: Option<T>) -> Self {
         match option {
             Some(x) => Self::Loaded(x),
-            None => Self::Loading
+            None => Self::Loading,
         }
     }
 
@@ -34,16 +34,13 @@ impl <T> Loadable<T> {
             Loadable::Loading => Loadable::Loading,
             Loadable::Loaded(x) => Loadable::Loaded(x),
         }
-
     }
 }
-impl <T: Deref> Loadable<T> {
-    pub fn as_deref(&self) -> Loadable<&<T as Deref>::Target>{
+impl<T: Deref> Loadable<T> {
+    pub fn as_deref(&self) -> Loadable<&<T as Deref>::Target> {
         match self {
             Loadable::Loading => Loadable::Loading,
             Loadable::Loaded(x) => Loadable::Loaded(x.deref()),
         }
     }
-    
 }
-

@@ -1,16 +1,15 @@
-use dioxus::prelude::*;
-use crate::db::{boat::Boat, use_event::UseScenario};
 use super::{BatchPageMode, BoatListMsg};
+use crate::db::{boat::Boat, use_event::UseScenario};
+use dioxus::prelude::*;
 
-
-/// The primary pane for seeing which boats will be saved, as well as controls for saving, adding, etc... 
+/// The primary pane for seeing which boats will be saved, as well as controls for saving, adding, etc...
 #[component]
 pub(super) fn BatchListPane(
     boats: Signal<Vec<Boat>>,
     boat_svc: Coroutine<BoatListMsg>,
-    mode: BatchPageMode
+    mode: BatchPageMode,
 ) -> Element {
-    rsx!{
+    rsx! {
         // The pane
         div {
             class: "flex flex-col grow divide-y-2 min-w-1/2",
@@ -19,7 +18,7 @@ pub(super) fn BatchListPane(
                 boats: boats.read().clone(),
                 boat_svc: boat_svc,
                 mode: mode
-            } 
+            }
             // Submission form
             SubmitRow {
                 boats: boats.read().clone(),
@@ -31,12 +30,8 @@ pub(super) fn BatchListPane(
 }
 
 #[component]
-fn List(
-    boats: Vec<Boat>,
-    boat_svc: Coroutine<BoatListMsg>,
-    mode: BatchPageMode
-) -> Element {
-    rsx!{
+fn List(boats: Vec<Boat>, boat_svc: Coroutine<BoatListMsg>, mode: BatchPageMode) -> Element {
+    rsx! {
         div {
             class: "flex flex-col grow overflow-auto divide-y",
             {
@@ -67,28 +62,21 @@ fn List(
                                 }
                             }
                         }
-                        
+
                     }
-                }) 
+                })
             }
         }
     }
 }
 
-
 #[component]
-fn SubmitRow(
-    boats: Vec<Boat>,
-    boat_svc: Coroutine<BoatListMsg>,
-    mode: BatchPageMode
-) -> Element {
-
+fn SubmitRow(boats: Vec<Boat>, boat_svc: Coroutine<BoatListMsg>, mode: BatchPageMode) -> Element {
     // TODO make this use the current time of day to initialize it.
     let mut session_type = use_signal(|| UseScenario::AM);
-    let mut show_session_type_dropdown = use_signal(|| false); 
+    let mut show_session_type_dropdown = use_signal(|| false);
 
-
-    rsx!{
+    rsx! {
         div {
             form {
                 onclick: move |e| {
@@ -191,8 +179,8 @@ fn SubmitRow(
                             },
                         }
                     }
-                    
-                } 
+
+                }
             }
         }
     }

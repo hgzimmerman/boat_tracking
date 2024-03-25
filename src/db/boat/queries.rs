@@ -1,11 +1,12 @@
 use super::*;
 
-use crate::schema::{boat::{self}, issue, use_event};
+use crate::schema::{
+    boat::{self},
+    issue, use_event,
+};
 use diesel::{QueryDsl, SqliteConnection, TextExpressionMethods};
 
 impl Boat {
-
-
     pub fn new_boat(
         conn: &mut SqliteConnection,
         boat: NewBoat,
@@ -15,14 +16,18 @@ impl Boat {
             .get_result(conn)
     }
 
-
     #[tracing::instrument(level = "debug", skip_all)]
     pub fn get_boats3(
         conn: &mut SqliteConnection,
         filter: BoatFilter3,
-        search: Option<String>
+        search: Option<String>,
     ) -> Result<Vec<Boat>, diesel::result::Error> {
-        let BoatFilter3 {num_seats,coxed,oars_config,.. } = filter;
+        let BoatFilter3 {
+            num_seats,
+            coxed,
+            oars_config,
+            ..
+        } = filter;
 
         let seat_count: Option<i32> = num_seats.as_ref().map(SeatCount::count);
         let oars_per_seat: Option<i32> = oars_config.as_ref().map(OarConfiguration::num_oars);
@@ -43,8 +48,7 @@ impl Boat {
             query = query.filter(boat::oars_per_seat.eq(oars_per_seat))
         };
 
-           query 
-            .get_results(conn)
+        query.get_results(conn)
     }
 
     pub fn get_boat(

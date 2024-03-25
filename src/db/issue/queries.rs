@@ -1,6 +1,6 @@
 use super::*;
-use diesel::SqliteConnection;
 use crate::schema::issue;
+use diesel::SqliteConnection;
 
 impl Issue {
     pub fn add_issue(

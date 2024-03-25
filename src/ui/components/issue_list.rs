@@ -3,10 +3,10 @@ use dioxus::prelude::*;
 
 #[component]
 pub fn IssueListPage() -> Element {
-    rsx!{
+    rsx! {
         div {
             "style": "display:flex; flex-direction: vertical; flex-grow: 1;",
-            "We should have a bunch of issues here" 
+            "We should have a bunch of issues here"
         }
 
     }

@@ -1,6 +1,6 @@
 use super::*;
-use diesel::SqliteConnection;
 use crate::schema::use_event;
+use diesel::SqliteConnection;
 
 impl UseEvent {
     pub fn new_event(

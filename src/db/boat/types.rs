@@ -164,15 +164,7 @@ pub struct BoatAttributes {
 }
 
 #[derive(
-    Clone,
-    Copy,
-    Debug,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    serde::Serialize,
-    serde::Deserialize,
+    Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize,
 )]
 #[cfg_attr(feature = "ssr", derive(diesel_derive_enum::DbEnum))]
 #[cfg_attr(feature = "ssr", DbValueStyle = "verbatim")]
@@ -278,7 +270,9 @@ impl OarsPerSeat {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize,
+)]
 pub enum OarConfiguration {
     Sweep,
     Scull,

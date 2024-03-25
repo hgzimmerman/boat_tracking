@@ -1,8 +1,10 @@
-
-use dioxus_fullstack::prelude::*;
 use dioxus::prelude::*;
+use dioxus_fullstack::prelude::*;
 
-use crate::db::{boat::{types::BoatId, BoatAndStats}, issue::Issue};
+use crate::db::{
+    boat::{types::BoatId, BoatAndStats},
+    issue::Issue,
+};
 
 #[server(GetBoat)]
 pub(crate) async fn get_boat(id: BoatId) -> Result<BoatAndStats, ServerFnError> {
@@ -11,10 +13,7 @@ pub(crate) async fn get_boat(id: BoatId) -> Result<BoatAndStats, ServerFnError> 
     let state = crate::ui::state::AppState::new(conn_string);
     let conn = state.pool().get().await?;
 
-    conn 
-        .interact(move |conn| {
-            BoatAndStats::get_boat(conn, id).map_err(ServerFnError::from)
-        })
+    conn.interact(move |conn| BoatAndStats::get_boat(conn, id).map_err(ServerFnError::from))
         .await?
 }
 
@@ -25,11 +24,10 @@ pub(crate) async fn get_open_issues_for_boat(id: BoatId) -> Result<Vec<Issue>, S
     let state = crate::ui::state::AppState::new(conn_string);
     let conn = state.pool().get().await?;
 
-    conn 
-        .interact(move |conn| {
-            Issue::get_open_issues_for_boat(conn, id).map_err(ServerFnError::from)
-        })
-        .await?
+    conn.interact(move |conn| {
+        Issue::get_open_issues_for_boat(conn, id).map_err(ServerFnError::from)
+    })
+    .await?
 }
 
 #[server(GetBoatResolvedIssues)]
@@ -37,22 +35,17 @@ pub(crate) async fn get_resolved_issues_for_boat(id: BoatId) -> Result<Vec<Issue
     let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu");
     let conn = state.pool().get().await?;
 
-    conn 
-        .interact(move |conn| {
-            Issue::get_resolved_issues_for_boat(conn, id).map_err(ServerFnError::from)
-        })
-        .await?
+    conn.interact(move |conn| {
+        Issue::get_resolved_issues_for_boat(conn, id).map_err(ServerFnError::from)
+    })
+    .await?
 }
 #[component]
 pub fn BoatPage(id: BoatId) -> Element {
-    let boat_fut= use_server_future(move || async move {
-        get_boat(id).await
-    })?;
-    let issues_fut= use_server_future(move || async move {
-        get_open_issues_for_boat(id).await
-    })?;
+    let boat_fut = use_server_future(move || async move { get_boat(id).await })?;
+    let issues_fut = use_server_future(move || async move { get_open_issues_for_boat(id).await })?;
 
-    rsx!{
+    rsx! {
         div {
             "style": "display:flex; flex-direction: vertical; flex-grow: 1;",
             BoatTitle {
@@ -71,13 +64,13 @@ pub fn BoatPage(id: BoatId) -> Element {
 #[component]
 fn BoatTitle(boat: Result<BoatAndStats, ServerFnError>) -> Element {
     match boat {
-        Ok(boat) => rsx!{
+        Ok(boat) => rsx! {
             div {
                 "style": "display:flex; flex-direction: horizontal; flex-grow: 1; padding: 6px",
                 onclick: move |event| {
                     // now, outer won't be triggered
                     event.stop_propagation();
-                    
+
                 },
                 div {
                     "style": "display:flex; flex-direction: column; flex-grow: 1; gap: 10px;",
@@ -90,14 +83,14 @@ fn BoatTitle(boat: Result<BoatAndStats, ServerFnError>) -> Element {
                             format!("{:?} {:?}",boat.boat.weight_class, boat.boat.boat_type().unwrap())
                         }
                     }
-                } 
+                }
             }
         },
-        Err(error) => rsx!{
+        Err(error) => rsx! {
             div {
                 {error.to_string()}
             }
-        }
+        },
     }
 }
 
@@ -118,16 +111,15 @@ fn BoatIssueList(issues: Result<Vec<Issue>, ServerFnError>) -> Element {
                     } else {
                         {issues.into_iter().map(|issue| rsx! {
                             BoatIssue {
-                                issue: issue 
-                            } 
+                                issue: issue
+                            }
                         })}
                     }
                 }
             }
-            
-        },
+        }
         Err(error) => {
-            rsx!{
+            rsx! {
                 div {
                     "error: ",
                     {error.to_string()}
@@ -151,7 +143,7 @@ fn BoatIssue(issue: Issue) -> Element {
                 div {
                     "Created at ",
                     {issue.recorded_at.to_string()},
-                } 
+                }
                 {issue.resolved_at.map(|time| rsx!{
                     div {
                         "Resolved at ",
@@ -162,8 +154,8 @@ fn BoatIssue(issue: Issue) -> Element {
                     "style": "min-width: 160px; font-size: x-large; font-weight: 500",
                     {issue.note.clone()}
                 }
-                 
-            } 
+
+            }
         }
     }
 }

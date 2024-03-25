@@ -7,7 +7,7 @@ use crate::ui::util::sleep::sleep;
 #[derive(Debug, PartialEq, Clone)]
 pub enum ToastMsgMsg {
     Add(ToastData, std::time::Duration),
-    Remove(usize)
+    Remove(usize),
 }
 impl From<ToastData> for ToastMsgMsg {
     fn from(value: ToastData) -> Self {
@@ -15,11 +15,7 @@ impl From<ToastData> for ToastMsgMsg {
     }
 }
 
-
-pub async fn toast_service(
-    mut rx: UnboundedReceiver<ToastMsgMsg>,
-    mut toasts: Signal<ToastList>
-) {
+pub async fn toast_service(mut rx: UnboundedReceiver<ToastMsgMsg>, mut toasts: Signal<ToastList>) {
     use futures::stream::StreamExt;
     while let Some(msg) = rx.next().await {
         match msg {
@@ -31,26 +27,18 @@ pub async fn toast_service(
                     toasts.write().toasts.lock().unwrap().shift_remove(&counter);
                     tracing::debug!("removed toast");
                 });
-            },
+            }
             ToastMsgMsg::Remove(id) => {
                 tracing::debug!(?id, "removed toast externally");
                 toasts.write().toasts.lock().unwrap().shift_remove(&id);
-            },
+            }
         }
     }
 }
 
-
-
 #[component]
-pub fn ToastCenter(
-    toasts: Signal<ToastList>,
-    toast_svc: Coroutine<ToastMsgMsg>
-) -> Element {
-    let t = {
-        toasts.read().toasts.as_ref().lock().unwrap().clone() 
-    };
-
+pub fn ToastCenter(toasts: Signal<ToastList>, toast_svc: Coroutine<ToastMsgMsg>) -> Element {
+    let t = { toasts.read().toasts.as_ref().lock().unwrap().clone() };
 
     rsx!(
         div {
@@ -84,46 +72,49 @@ impl From<dioxus_fullstack::prelude::ServerFnError> for ToastData {
 impl ToastData {
     pub(crate) const DEFAULT_TIME: std::time::Duration = std::time::Duration::from_secs(4);
     pub fn error<E: ToString>(error: E) -> Self {
-        ToastData { msg: error.to_string(), ty: MsgType::Error }
+        ToastData {
+            msg: error.to_string(),
+            ty: MsgType::Error,
+        }
     }
     #[allow(unused)]
     pub fn info<T: ToString>(msg: T) -> Self {
-        ToastData { msg: msg.to_string(), ty: MsgType::Info }
+        ToastData {
+            msg: msg.to_string(),
+            ty: MsgType::Info,
+        }
     }
     pub fn success<T: ToString>(msg: T) -> Self {
-        ToastData { msg: msg.to_string(), ty: MsgType::Normal }
+        ToastData {
+            msg: msg.to_string(),
+            ty: MsgType::Normal,
+        }
     }
     pub fn warn<T: ToString>(msg: T) -> Self {
-        ToastData { msg: msg.to_string(), ty: MsgType::Warn }
+        ToastData {
+            msg: msg.to_string(),
+            ty: MsgType::Warn,
+        }
     }
 }
 
 #[derive(Default, Clone)]
 pub struct ToastList {
     counter: Arc<std::sync::Mutex<usize>>,
-    toasts: Arc<std::sync::Mutex<indexmap::IndexMap<usize, ToastData>>>
+    toasts: Arc<std::sync::Mutex<indexmap::IndexMap<usize, ToastData>>>,
 }
 
 impl PartialEq for ToastList {
     fn eq(&self, other: &Self) -> bool {
-        let self_counter = {
-            *self.counter.lock().unwrap()
-        };
-        let other_counter = {
-            *other.counter.lock().unwrap()
-        };
-        let self_toasts = {
-            self.toasts.lock().unwrap().clone()
-        };
-        let other_toasts = {
-            other.toasts.lock().unwrap().clone()
-        };
+        let self_counter = { *self.counter.lock().unwrap() };
+        let other_counter = { *other.counter.lock().unwrap() };
+        let self_toasts = { self.toasts.lock().unwrap().clone() };
+        let other_toasts = { other.toasts.lock().unwrap().clone() };
         self_counter == other_counter && self_toasts == other_toasts
     }
 }
 
 impl ToastList {
-
     pub fn add(&self, toast: ToastData) -> usize {
         let counter = {
             let mut counter = self.counter.lock().unwrap();
@@ -131,7 +122,7 @@ impl ToastList {
             *counter += 1;
             c
         };
-        
+
         {
             self.toasts.lock().unwrap().insert(counter, toast);
         }
@@ -139,18 +130,16 @@ impl ToastList {
     }
 }
 
-
-
 /// https://preline.co/docs/toasts.html
 #[component]
 pub fn Toast(
     message: String,
     ty: MsgType,
     toast_svc: Coroutine<ToastMsgMsg>,
-    counter: usize
+    counter: usize,
 ) -> Element {
     let svg = match ty {
-        MsgType::Info => rsx!{
+        MsgType::Info => rsx! {
             svg {
                 xmlns: "http://www.w3.org/2000/svg",
                 width: "16",
@@ -161,7 +150,7 @@ pub fn Toast(
                 path { d: "M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z" }
             }
         },
-        MsgType::Normal => rsx!{ 
+        MsgType::Normal => rsx! {
             svg {
                 height: "16",
                 width: "16",
@@ -172,7 +161,7 @@ pub fn Toast(
                 path { d: "M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z" }
             }
         },
-        MsgType::Warn => rsx!{
+        MsgType::Warn => rsx! {
             svg {
                 fill: "currentColor",
                 height: "16",
@@ -181,9 +170,9 @@ pub fn Toast(
                 view_box: "0 0 16 16",
                 class: "flex-shrink-0 size-4 text-yellow-500 mt-0.5",
                 path { d: "M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z" }
-            } 
+            }
         },
-        MsgType::Error => rsx!{
+        MsgType::Error => rsx! {
             svg {
                 xmlns: "http://www.w3.org/2000/svg",
                 view_box: "0 0 16 16",
@@ -196,19 +185,19 @@ pub fn Toast(
         },
     };
 
-    rsx!{
+    rsx! {
         div {
             role: "alert",
             class: "max-w-xs bg-white border border-gray-200 rounded-xl shadow-xl dark:bg-gray-800 dark:border-gray-700",
             onclick: move |_| toast_svc.send(ToastMsgMsg::Remove(counter)),
-            div { 
+            div {
                 class: "flex p-4",
-                div { 
+                div {
                     class: "flex-shrink-0",
                     {svg}
                 }
                 div { class: "ms-3",
-                    p { 
+                    p {
                         class: "text-sm text-gray-700 dark:text-gray-400",
                         {message}
                     }
@@ -225,5 +214,5 @@ pub enum MsgType {
     Normal,
     Info,
     Warn,
-    Error
+    Error,
 }

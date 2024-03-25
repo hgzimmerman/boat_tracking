@@ -1,11 +1,13 @@
-
 use super::{boat::types::BoatId, use_event::UseScenario};
 
 #[cfg(feature = "ssr")]
 pub mod queries;
 
-#[derive(Debug, Clone,  PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-#[cfg_attr(feature = "ssr", derive(diesel::Queryable, diesel::Selectable, diesel::Identifiable))]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[cfg_attr(
+    feature = "ssr",
+    derive(diesel::Queryable, diesel::Selectable, diesel::Identifiable)
+)]
 #[cfg_attr(feature = "ssr", diesel(table_name = crate::schema::use_event_batch))]
 pub struct UseEventBatch {
     pub id: BatchId,
@@ -51,18 +53,17 @@ impl std::fmt::Display for BatchId {
 
 pub struct NewBatchArgs {
     pub boat_ids: Vec<BoatId>,
-    pub batch: NewBatch
+    pub batch: NewBatch,
 }
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "ssr", derive(diesel::Insertable))]
 #[cfg_attr(feature = "ssr", diesel(table_name = crate::schema::use_event_batch))]
 pub struct NewBatch {
     pub use_scenario: UseScenario,
-    pub recorded_at: chrono::NaiveDateTime
+    pub recorded_at: chrono::NaiveDateTime,
 }
 
-
-#[derive(Debug, Clone, PartialEq, Eq,  serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[cfg_attr(feature = "ssr", derive(diesel::Selectable, diesel::Queryable))]
 #[cfg_attr(feature = "ssr", diesel(table_name = crate::schema::use_event_batch))]
 #[cfg_attr(feature = "ssr", diesel(check_for_backend(diesel::sqlite::Sqlite)))]
@@ -71,5 +72,5 @@ pub struct BatchAndCounts {
     pub batch: UseEventBatch,
     #[cfg_attr(feature = "ssr", diesel(select_expression = diesel::dsl::count(crate::schema::use_event::id)))]
     #[cfg_attr(feature = "ssr", diesel(select_expression_type = diesel::dsl::count<crate::schema::use_event::id>))]
-    pub use_counts: i64
+    pub use_counts: i64,
 }

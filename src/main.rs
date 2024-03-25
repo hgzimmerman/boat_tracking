@@ -2,44 +2,40 @@ use std::{path::PathBuf, sync::Arc};
 
 use anyhow::Error;
 
-
 // #[tokio::main]
 fn main() -> Result<(), Error> {
-
     let conn_string = "db.sql";
 
     #[cfg(feature = "web")]
     {
-
-        use tracing_web::{MakeWebConsoleWriter, performance_layer};
         use tracing_subscriber::fmt::format::Pretty;
         use tracing_subscriber::prelude::*;
+        use tracing_web::{performance_layer, MakeWebConsoleWriter};
 
         let fmt_layer = tracing_subscriber::fmt::layer()
             .with_ansi(false) // Only partially supported across browsers
-            .without_time()   // std::time is not available in browsers, see note below
+            .without_time() // std::time is not available in browsers, see note below
             .with_writer(MakeWebConsoleWriter::new()) // write events to the console
             .with_filter(tracing::level_filters::LevelFilter::DEBUG);
-        let perf_layer = performance_layer()
-            .with_details_from_fields(Pretty::default());
+        let perf_layer = performance_layer().with_details_from_fields(Pretty::default());
 
         tracing_subscriber::registry()
             .with(fmt_layer)
             .with(perf_layer)
             .init(); // Install these as subscribers to tracing events
 
-        dioxus_web::launch::launch_cfg(boat_tracking::ui::app, dioxus_web::Config::new().hydrate(true));
+        dioxus_web::launch::launch_cfg(
+            boat_tracking::ui::app,
+            dioxus_web::Config::new().hydrate(true),
+        );
     }
 
     #[cfg(feature = "ssr")]
     {
         use axum::routing::*;
-        use dioxus_fullstack::prelude::*;
         use boat_tracking::ui::state::AppState;
+        use dioxus_fullstack::prelude::*;
         use tokio::net::TcpListener;
-
-
-
 
         // Doesn't really work
         async fn state_populate_middleware(
@@ -54,10 +50,9 @@ fn main() -> Result<(), Error> {
 
             let response = next.run(request).await;
 
-
             response
         }
-        
+
         tokio::runtime::Runtime::new()
             .unwrap()
             .block_on(async move {
@@ -98,14 +93,17 @@ fn main() -> Result<(), Error> {
                     // })
                     .register_server_fns()
                     .fallback(get(render_handler_with_context).with_state((
-                        move |ctx|{
+                        move |ctx| {
                             ctx.insert::<AppState>(state.clone()).unwrap();
                         },
                         cfg,
                         ssr_state,
-                        Arc::new(dom_factory)
+                        Arc::new(dom_factory),
                     )))
-                    .route_layer(axum::middleware::from_fn_with_state(state1.clone(), state_populate_middleware)) // this doesn't really work
+                    .route_layer(axum::middleware::from_fn_with_state(
+                        state1.clone(),
+                        state_populate_middleware,
+                    )) // this doesn't really work
                     .with_state(state1);
 
                 // run it
@@ -120,7 +118,6 @@ fn main() -> Result<(), Error> {
 
     Ok(())
 }
-
 
 // #[server]
 // #[middleware(tower_http::timeout::TimeoutLayer::new(std::time::Duration::from_secs(1)))]

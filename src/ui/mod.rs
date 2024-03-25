@@ -1,11 +1,10 @@
 #![allow(non_snake_case)]
 use dioxus::prelude::*;
+mod components;
 #[cfg(feature = "ssr")]
 pub mod state;
 pub mod util;
-mod components;
 use dioxus_router::prelude::*;
-
 
 pub fn app() -> Element {
     // fermi::use_init_atom_root(cx);
@@ -14,11 +13,11 @@ pub fn app() -> Element {
         to_owned![toasts];
         crate::ui::components::toast::toast_service(rx, toasts)
     });
-    rsx!{
+    rsx! {
         components::toast::ToastCenter {
             toasts: toasts,
             toast_svc: toast_svc
         }
         Router::<components::Route>{}
     }
- }
+}
