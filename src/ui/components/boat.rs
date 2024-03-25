@@ -47,7 +47,7 @@ pub fn BoatPage(id: BoatId) -> Element {
 
     rsx! {
         div {
-            "style": "display:flex; flex-direction: vertical; flex-grow: 1;",
+            class: "overflow-y-auto flex flex-row flex-grow max-h-[calc(100vh-42px)] divide-x-4 dark:divide-white bg-slate-50 dark:bg-slate-500",
             BoatTitle {
                 boat: boat_fut.value().read().clone()?
             }
@@ -66,16 +66,17 @@ fn BoatTitle(boat: Result<BoatAndStats, ServerFnError>) -> Element {
     match boat {
         Ok(boat) => rsx! {
             div {
-                "style": "display:flex; flex-direction: horizontal; flex-grow: 1; padding: 6px",
+                class: "flex flex-row flex-grow p-3",
                 onclick: move |event| {
                     // now, outer won't be triggered
                     event.stop_propagation();
 
                 },
                 div {
-                    "style": "display:flex; flex-direction: column; flex-grow: 1; gap: 10px;",
+                    class: "flex flex-col flex grow gap-10",
                     div {
                         "style": "min-width: 160px; font-size: x-large; font-weight: 500",
+                        
                         {boat.boat.name.clone()}
                     }
                     div {
@@ -96,11 +97,11 @@ fn BoatTitle(boat: Result<BoatAndStats, ServerFnError>) -> Element {
 
 #[component]
 fn BoatIssueList(issues: Result<Vec<Issue>, ServerFnError>) -> Element {
-    // use crate::ui::util::loadable::Loadable::*;
     match issues {
         Ok(issues) => {
             rsx! {
                 div {
+                    class: "px-4",
                     h3 {
                         "Issues"
                     }
@@ -133,13 +134,13 @@ fn BoatIssueList(issues: Result<Vec<Issue>, ServerFnError>) -> Element {
 fn BoatIssue(issue: Issue) -> Element {
     rsx! {
         div {
-            "style": "display:flex; flex-direction: column; flex-grow: 1; padding: 6px",
+            class: "flex flex-col flex-grow p-3",
             onclick: move |event| {
                 // now, outer won't be triggered
                 event.stop_propagation();
             },
             div {
-                "style": "display:flex; flex-direction: column; flex-grow: 1; gap: 10px;",
+                class: "flex flex-col flex grow gap-10",
                 div {
                     "Created at ",
                     {issue.recorded_at.to_string()},
