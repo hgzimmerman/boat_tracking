@@ -13,7 +13,7 @@ use std::collections::HashSet;
 
 use dioxus::prelude::*;
 use dioxus_fullstack::prelude::*;
-use crate::{db::{boat::{types::{BoatId, HasCox, OarConfiguration, SeatCount}, Boat, BoatFilter3}, use_event::{UseEvent, UseScenario}, use_event_batch::{BatchId, NewBatch, NewBatchArgs, UseEventBatch}}, ui::components::toast::{MsgType, ToastCenter, ToastData}};
+use crate::{db::{boat::{types::{BoatId, HasCox, OarConfiguration, SeatCount}, Boat, BoatFilter3}, use_event::{UseEvent, UseScenario}, use_event_batch::{BatchId, NewBatch, NewBatchArgs, UseEventBatch}}, ui::components::toast::{ToastCenter, ToastData}};
 use super::toast::{ToastList, ToastMsgMsg};
 
 
@@ -350,17 +350,15 @@ async fn boat_list_service(
                             searched_boats.set(Vec::new());
                             selected_boats.set(Vec::new());
                             search_name.set(None);
-                            toasts.send(ToastMsgMsg::Add(
-                                ToastData { msg: "Submitted boats".to_string(), ty: MsgType::Normal }, 
-                                std::time::Duration::from_secs(3)
-                            ));
+                            toasts.send(
+                                ToastData::success("Submitted boats").into()
+                            );
                         }
                         Err(error) => {
                             tracing::error!(?error, "Could not submit batch");
-                            toasts.send(ToastMsgMsg::Add(
-                                ToastData { msg: format!("Could not submit batch {error}"), ty: MsgType::Normal }, 
-                                std::time::Duration::from_secs(3)
-                            ));
+                            toasts.send(
+                                ToastData::warn(format!("Could not submit batch")).into()
+                            );
                         }
                     }
                 }

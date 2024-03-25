@@ -9,6 +9,11 @@ pub enum ToastMsgMsg {
     Add(ToastData, std::time::Duration),
     Remove(usize)
 }
+impl From<ToastData> for ToastMsgMsg {
+    fn from(value: ToastData) -> Self {
+        Self::Add(value, ToastData::DEFAULT_TIME)
+    }
+}
 
 
 pub async fn toast_service(
@@ -20,19 +25,16 @@ pub async fn toast_service(
         match msg {
             ToastMsgMsg::Add(toast, duration) => {
                 let counter = toasts.write().add(toast);
-                // toasts.needs_update();
                 let mut toasts = toasts.clone();
                 wasm_bindgen_futures::spawn_local(async move {
                     sleep(duration).await;
                     toasts.write().toasts.lock().unwrap().shift_remove(&counter);
                     tracing::debug!("removed toast");
-                    // toasts.needs_update();
                 });
             },
             ToastMsgMsg::Remove(id) => {
                 tracing::debug!(?id, "removed toast externally");
                 toasts.write().toasts.lock().unwrap().shift_remove(&id);
-                // toasts.needs_update();
             },
         }
     }
@@ -73,19 +75,27 @@ pub struct ToastData {
     pub ty: MsgType,
 }
 
-// impl <E: std::error::Error> From<E> for ToastData {
-//     fn from(error: E) -> Self {
-//         ToastData { msg: error.to_string(), ty: MsgType::Error }
-//     }
-// }
 impl From<dioxus_fullstack::prelude::ServerFnError> for ToastData {
     fn from(error: dioxus_fullstack::prelude::ServerFnError) -> Self {
-        ToastData { msg: error.to_string(), ty: MsgType::Error }
+        Self::error(error)
     }
 }
 
 impl ToastData {
-    pub(crate) const DEFAULT_TIME: std::time::Duration = std::time::Duration::from_secs(3);
+    pub(crate) const DEFAULT_TIME: std::time::Duration = std::time::Duration::from_secs(4);
+    pub fn error<E: ToString>(error: E) -> Self {
+        ToastData { msg: error.to_string(), ty: MsgType::Error }
+    }
+    #[allow(unused)]
+    pub fn info<T: ToString>(msg: T) -> Self {
+        ToastData { msg: msg.to_string(), ty: MsgType::Info }
+    }
+    pub fn success<T: ToString>(msg: T) -> Self {
+        ToastData { msg: msg.to_string(), ty: MsgType::Normal }
+    }
+    pub fn warn<T: ToString>(msg: T) -> Self {
+        ToastData { msg: msg.to_string(), ty: MsgType::Warn }
+    }
 }
 
 #[derive(Default, Clone)]

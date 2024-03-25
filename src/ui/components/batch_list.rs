@@ -28,7 +28,6 @@ async fn get_batches(
             .map_err(ServerFnError::from)
         })
         .await?
-        // .map_err(ServerFnError::from)
 }
 
 #[component]
