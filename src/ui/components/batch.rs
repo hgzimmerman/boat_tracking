@@ -25,7 +25,7 @@ pub fn BatchTemplateCreationPage(id: BatchId) -> Element{
 
     rsx!{
         GeneralBatchCreationPage {
-            id: Some(id)
+            mode: BatchPageMode::Template{id}
         }
     }
 }
@@ -34,7 +34,32 @@ pub fn BatchTemplateCreationPage(id: BatchId) -> Element{
 pub fn BatchCreationPage() -> Element{
     rsx!{
         GeneralBatchCreationPage {
-            id: None 
+            mode: BatchPageMode::Create 
+        }
+    }
+}
+
+#[component]
+pub fn BatchViewingPage(id: BatchId) -> Element {
+    rsx!{
+        GeneralBatchCreationPage {
+            mode: BatchPageMode::View {id}
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum BatchPageMode {
+    Create,
+    View{id: BatchId},
+    Template{id: BatchId},
+    Edit{id: BatchId},
+}
+impl BatchPageMode {
+    pub fn as_option(self) -> Option<BatchId> {
+        match self {
+            BatchPageMode::Create  => None,
+            BatchPageMode::Template { id } | BatchPageMode::Edit { id } | BatchPageMode::View{id} => Some(id),
         }
     }
 }
@@ -42,7 +67,7 @@ pub fn BatchCreationPage() -> Element{
 /// `id` is an optional argument, that if specified, will initialize 
 /// the page with boats that came from that particular batch.
 #[component]
-pub fn GeneralBatchCreationPage(id: Option<BatchId>) -> Element {
+fn GeneralBatchCreationPage(mode: BatchPageMode) -> Element {
     let mut selected = use_signal(|| Vec::<Boat>::new());
     let filter = use_signal(BoatFilter3::default);
     let search_name = use_signal(|| Option::<String>::None);
@@ -65,7 +90,7 @@ pub fn GeneralBatchCreationPage(id: Option<BatchId>) -> Element {
     });
 
     // If the ID is populated, then use it to fetch the existing set of boats for a specific batch.
-    if let Some(id) = id {
+    if let Some(id) = mode.as_option() {
         use_future(move || {
             async move {
                 match get_existing_batch(id).await {
@@ -92,14 +117,26 @@ pub fn GeneralBatchCreationPage(id: Option<BatchId>) -> Element {
             class: "flex flex-row overflow-hide divide-x-4 grow max-h-[calc(100vh-42px)]", 
             list_pane::BatchListPane {
                 boats: selected,
-                boat_svc: boat_svc
+                boat_svc: boat_svc,
+                mode: mode
             }
-            search_pane::BoatSearchPane{
-                boats: search_boat_state,
-                filter: filter,
-                search_name: search_name,
-                boat_svc: boat_svc
-            }
+            {match mode {
+                BatchPageMode::Create 
+                | BatchPageMode::Template { .. }
+                | BatchPageMode::Edit { .. } => {
+                    rsx!{
+                        search_pane::BoatSearchPane{
+                            boats: search_boat_state,
+                            filter: filter,
+                            search_name: search_name,
+                            boat_svc: boat_svc
+                        }
+                    }
+                },
+                BatchPageMode::View{..}  => {
+                    None
+                }
+            }}
         }
     }
 }
@@ -140,7 +177,20 @@ pub(crate) async fn submit_boats(
         })
         .await?
 }
-
+#[server(GetExistingBatch)]
+pub(crate) async fn get_existing_batch(
+    batch_id: BatchId,
+) -> Result<Vec<(UseEvent, Boat)>, ServerFnError> {
+    let conn_string = "db.sql";
+    let state = crate::ui::state::AppState::new(conn_string);
+    let conn = state.pool().get().await?;
+    conn 
+        .interact(move |conn| {
+            UseEventBatch::get_events_and_boats_for_batch(conn, batch_id)
+            .map_err(ServerFnError::from)
+        })
+        .await?
+}
 
 
 
@@ -288,69 +338,3 @@ async fn boat_list_service(
     }
 }
 
-
-
-#[component]
-pub fn BatchViewingPage(id: BatchId) -> Element {
-    let mut selected = use_signal(|| Vec::<Boat>::new());
-    let filter = use_signal(BoatFilter3::default);
-    let search_name = use_signal(|| Option::<String>::None);
-    let search_boat_state = use_signal(|| Vec::<Boat>::new());
-
-    let toasts = use_signal(ToastList::default);
-    let toast_svc = use_coroutine(|rx| {
-        to_owned![toasts];
-        crate::ui::components::toast::toast_service(rx, toasts)
-    });
-    let boat_svc = use_coroutine(|rx| {
-        to_owned![search_boat_state, filter, selected, search_name, toast_svc];
-        boat_list_service(rx, search_boat_state, selected, filter, search_name, toast_svc)
-    });
-
-
-    use_future(move || {
-        async move {
-            match get_existing_batch(id).await {
-                Ok(batch) => {
-                    let batch = batch.into_iter().map(|(_event, boat)| boat).collect::<Vec<_>>();
-                    selected.set(batch)
-                },
-                Err(error) => {
-                    toast_svc.send(ToastMsgMsg::Add(ToastData::from(error), ToastData::DEFAULT_TIME))
-                },
-            }
-        }
-    });
-
-    rsx!{
-        ToastCenter {
-            toasts: toasts,
-            toast_svc: toast_svc
-        }
-        div {
-            // I don't love the magic number (42px corresponds to the nav height)
-            class: "flex flex-row overflow-hide divide-x-4 grow max-h-[calc(100vh-42px)]", 
-            list_pane::BatchListPane {
-                boats: selected,
-                boat_svc: boat_svc
-            }
-        }
-    }
-}
-
-
-
-#[server(GetExistingBatch)]
-pub(crate) async fn get_existing_batch(
-    batch_id: BatchId,
-) -> Result<Vec<(UseEvent, Boat)>, ServerFnError> {
-    let conn_string = "db.sql";
-    let state = crate::ui::state::AppState::new(conn_string);
-    let conn = state.pool().get().await?;
-    conn 
-        .interact(move |conn| {
-            UseEventBatch::get_events_and_boats_for_batch(conn, batch_id)
-            .map_err(ServerFnError::from)
-        })
-        .await?
-}

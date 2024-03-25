@@ -3,7 +3,7 @@ use std::{ops::Deref, str::FromStr};
 use crate::{db::{use_event::UseScenario, use_event_batch::{BatchAndCounts, UseEventBatch}}, ui::components::Route};
 use dioxus::prelude::*;
 use dioxus_fullstack::prelude::*;
-use dioxus_router::{components::Link, routable::{FromQueryArgument}};
+use dioxus_router::{components::Link, routable::FromQueryArgument};
 
 
 #[server(GetBatches)]
@@ -90,6 +90,7 @@ pub fn BatchList (
                                 to: Route::BatchViewingPage { id: batch.id },
                                 "View"
                             }
+
                             // -> batch/edit/:batch_id
                             button {
                                 class: "btn btn-blue",

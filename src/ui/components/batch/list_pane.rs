@@ -1,13 +1,14 @@
 use dioxus::prelude::*;
 use crate::db::{boat::Boat, use_event::UseScenario};
-use super::BoatListMsg;
+use super::{BatchPageMode, BoatListMsg};
 
 
 /// The primary pane for seeing which boats will be saved, as well as controls for saving, adding, etc... 
 #[component]
 pub(super) fn BatchListPane(
     boats: Signal<Vec<Boat>>,
-    boat_svc: Coroutine<BoatListMsg>
+    boat_svc: Coroutine<BoatListMsg>,
+    mode: BatchPageMode
 ) -> Element {
     rsx!{
         // The pane
