@@ -35,8 +35,18 @@ fn main() -> Result<(), Error> {
         use dioxus_fullstack::prelude::*;
         use tokio::net::TcpListener;
         use std::{path::PathBuf, sync::Arc};
+        use tracing_subscriber::prelude::*;
 
         let conn_string = "db.sql";
+
+        let fmt_layer = tracing_subscriber::fmt::layer()
+            .with_ansi(false) 
+            .with_writer(std::io::stdout)
+            .with_filter(tracing::level_filters::LevelFilter::DEBUG);
+
+        tracing_subscriber::registry()
+            .with(fmt_layer)
+            .init(); // Install these as subscribers to tracing events
 
 
         // Doesn't really work
@@ -48,7 +58,6 @@ fn main() -> Result<(), Error> {
             let mut context = DioxusServerContext::default();
             let _ = context.insert(state.clone());
             request.extensions_mut().insert(context);
-            println!("running middleware");
 
             let response = next.run(request).await;
 
