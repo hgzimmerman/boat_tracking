@@ -81,14 +81,14 @@ fn NavBar() -> Element {
                         "New Boat"
                     }
                 }
-                li {
-                    class: "mr-3",
-                     Link {
-                        class: "inline-block border border-blue-500 rounded py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white",
-                        to: Route::IssueListPage{},
-                         "Issues"
-                    }
-                }
+                // li {
+                //     class: "mr-3",
+                //      Link {
+                //         class: "inline-block border border-blue-500 rounded py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white",
+                //         to: Route::IssueListPage{},
+                //          "Issues"
+                //     }
+                // }
                 li {
                     class: "mr-3",
                      Link {
