@@ -53,6 +53,8 @@ pub fn BoatPage(id: BoatId) -> Element {
     let issues_fut = use_server_future(move || async move { get_open_issues_for_boat(id).await })?;
     let mode = use_signal(|| BoatPageMode::View);
 
+    let day = chrono::TimeDelta::try_days(1).unwrap();
+    let now = chrono::Utc::now().naive_utc().date();
     rsx! {
         div {
             class: "overflow-y-auto flex flex-col flex-grow max-h-[calc(100vh-42px)] dark:divide-white bg-slate-50 dark:bg-slate-500",
@@ -63,7 +65,7 @@ pub fn BoatPage(id: BoatId) -> Element {
             div {
                 class: "flex flex-row flex-grow divide-x-4 dark:divide-white bg-slate-50 dark:bg-slate-500",
                 BoatUses {
-                    use_events: Ok((vec![2.0, 3.0, 2.0, 1.0], vec![1.0, 2.0, 3.0, 4.0])),
+                    use_events: Ok(vec![(2.0, now - (day * 4)), (3.0, now - (day * 3)), (2.0, now - (day * 2)), (1.0, now - day)]),
                 }
                 BoatIssueList {
                     issues: issues_fut.value().read().clone()?,
@@ -125,24 +127,24 @@ fn BoatTitle(
 
 #[component]
 fn BoatUses(
-    use_events: Result<(Vec<f32>, Vec<f32>), ServerFnError>,
+    use_events: Result<Vec<(f32, chrono::NaiveDate)>, ServerFnError>,
 ) -> Element {
     match use_events {
-        Ok((use_events, time)) => {
+        Ok(timed_counts) => {
             rsx! {
                 div {
                     class: "px-4",
                     h3 {
                         "Uses"
                     }
-                    if use_events.is_empty() {
+                    if timed_counts.is_empty() {
                         div {
                             "Boat has not been used."
                         }
                     } else {
                         dioxus_charts::LineChart {
                             height: "100%",
-                            width: "100%",
+                            width: "600px",
                             padding_top: 30,
                             padding_left: 50,
                             padding_bottom: 30,
@@ -151,10 +153,8 @@ fn BoatUses(
                             // bar_width: "10%",
                             // horizontal_bars: false,
                             label_interpolation: (|v| format!("{v}")) as fn(f32) -> String,
-                            // series: use_events.into_iter().map(|x| vec![x]).collect::<Vec<_>>(),
-                            series: vec![use_events],
-                            labels: time.into_iter().map(|x| format!("mon {x}")).collect::<Vec<_>>(),
-                            // series_labels: vec!["time".into()],
+                            series: vec![timed_counts.iter().map(|(count, _time)| *count).collect::<Vec<_>>()],
+                            labels: timed_counts.into_iter().map(|(_count, time)| time.format("%m-%d").to_string()).collect::<Vec<_>>(),
                         }
                     }
                 }
