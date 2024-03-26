@@ -6,6 +6,13 @@ use crate::db::{
     issue::Issue,
 };
 
+#[derive(Debug, Clone, Copy, Default)]
+enum BoatPageMode {
+    #[default]
+    View,
+    Edit
+}
+
 #[server(GetBoat)]
 pub(crate) async fn get_boat(id: BoatId) -> Result<BoatAndStats, ServerFnError> {
     // let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu");
@@ -44,15 +51,18 @@ pub(crate) async fn get_resolved_issues_for_boat(id: BoatId) -> Result<Vec<Issue
 pub fn BoatPage(id: BoatId) -> Element {
     let boat_fut = use_server_future(move || async move { get_boat(id).await })?;
     let issues_fut = use_server_future(move || async move { get_open_issues_for_boat(id).await })?;
+    let mode = use_signal(|| BoatPageMode::View);
 
     rsx! {
         div {
             class: "overflow-y-auto flex flex-row flex-grow max-h-[calc(100vh-42px)] divide-x-4 dark:divide-white bg-slate-50 dark:bg-slate-500",
             BoatTitle {
-                boat: boat_fut.value().read().clone()?
+                boat: boat_fut.value().read().clone()?,
+                mode: mode
             }
             BoatIssueList {
-                issues: issues_fut.value().read().clone()?
+                issues: issues_fut.value().read().clone()?,
+                mode: mode
             }
         }
 
@@ -62,7 +72,10 @@ pub fn BoatPage(id: BoatId) -> Element {
 // pub type RefResult<'a, T> = std::cell::Ref<'a, Result<T, ServerFnError>>;
 
 #[component]
-fn BoatTitle(boat: Result<BoatAndStats, ServerFnError>) -> Element {
+fn BoatTitle(
+    boat: Result<BoatAndStats, ServerFnError>,
+    mut mode: Signal<BoatPageMode>
+) -> Element {
     match boat {
         Ok(boat) => rsx! {
             div {
@@ -73,15 +86,33 @@ fn BoatTitle(boat: Result<BoatAndStats, ServerFnError>) -> Element {
 
                 },
                 div {
-                    class: "flex flex-col flex grow gap-10",
+                    class: "flex flex-row flex grow gap-10 bg-ggrc",
                     div {
-                        "style": "min-width: 160px; font-size: x-large; font-weight: 500",
+                        "style": "min-width: 160px; font-size: x-large; font-weight: 500 ",
                         
                         {boat.boat.name.clone()}
                     }
                     div {
                         {
                             format!("{:?} {:?}",boat.boat.weight_class, boat.boat.boat_type().unwrap())
+                        }
+                    }
+                    button {
+                        class: "btn btn-blue",
+                        onclick: move | event| {
+                            event.stop_propagation();
+                            let current_mode = *mode.read();
+                            match current_mode {
+                                BoatPageMode::View => mode.set(BoatPageMode::Edit),
+                                BoatPageMode::Edit => {
+                                    // TODO save changes; may want to rearchitect this into a service
+                                    mode.set(BoatPageMode::View);
+                                } 
+                            }
+                        },
+                        match *mode.read() {
+                            BoatPageMode::View => "Edit",
+                            BoatPageMode::Edit => "Save Changes"
                         }
                     }
                 }
@@ -96,7 +127,10 @@ fn BoatTitle(boat: Result<BoatAndStats, ServerFnError>) -> Element {
 }
 
 #[component]
-fn BoatIssueList(issues: Result<Vec<Issue>, ServerFnError>) -> Element {
+fn BoatIssueList(
+    issues: Result<Vec<Issue>, ServerFnError>,
+    mode: ReadOnlySignal<BoatPageMode>
+) -> Element {
     match issues {
         Ok(issues) => {
             rsx! {
