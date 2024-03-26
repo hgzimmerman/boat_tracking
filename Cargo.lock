@@ -280,6 +280,7 @@ dependencies = [
  "diesel-derive-enum",
  "diesel-derive-newtype",
  "dioxus",
+ "dioxus-charts",
  "dioxus-fullstack",
  "dioxus-router",
  "dioxus-web",
@@ -652,6 +653,15 @@ dependencies = [
  "dioxus-hot-reload",
  "dioxus-html",
  "dioxus-signals",
+]
+
+[[package]]
+name = "dioxus-charts"
+version = "0.1.3"
+source = "git+https://github.com/DogeDark/dioxus-charts?branch=0.5-support#3be584aec79bc424ceb91ea07869650f61ff6b92"
+dependencies = [
+ "dioxus",
+ "log",
 ]
 
 [[package]]
