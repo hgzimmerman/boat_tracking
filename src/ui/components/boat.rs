@@ -51,6 +51,7 @@ pub(crate) async fn get_resolved_issues_for_boat(id: BoatId) -> Result<Vec<Issue
 pub fn BoatPage(id: BoatId) -> Element {
     let boat_fut = use_server_future(move || async move { get_boat(id).await })?;
     let issues_fut = use_server_future(move || async move { get_open_issues_for_boat(id).await })?;
+    // TODO maybe do a modal, reusing the new boat logic?
     let mode = use_signal(|| BoatPageMode::View);
 
     let day = chrono::TimeDelta::try_days(1).unwrap();
