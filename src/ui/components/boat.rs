@@ -6,6 +6,7 @@ use crate::db::{
     boat::{types::BoatId, BoatAndStats},
     issue::Issue,
 };
+pub mod creation_edit_form;
 
 #[derive(Debug, Clone, Copy, Default)]
 enum BoatPageMode {

@@ -2,7 +2,7 @@ pub mod batch;
 pub mod boat;
 pub mod boat_list;
 pub mod issue_list;
-pub mod new_boat;
+// pub mod new_boat;
 pub mod new_issue;
 pub mod toast;
 // mod old_batch;
@@ -14,7 +14,8 @@ use batch_list::BatchListPage;
 use boat::BoatPage;
 use boat_list::BoatListPage;
 use issue_list::IssueListPage;
-use new_boat::NewBoatPage;
+// use new_boat::NewBoatPage;
+use boat::creation_edit_form::NewBoatPage;
 use new_issue::NewIssuePage;
 
 use crate::db::{boat::types::BoatId, use_event_batch::BatchId};
