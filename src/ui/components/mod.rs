@@ -16,12 +16,14 @@ use issue_list::IssueListPage;
 // use new_boat::NewBoatPage;
 use boat::creation_edit_form::NewBoatPage;
 use new_issue::NewIssuePage;
+use boat::BoatNav;
 
 use crate::db::{boat::types::BoatId, use_event_batch::BatchId};
 use dioxus::prelude::*;
 use dioxus_router::prelude::*;
 
 use self::batch_list::PageQueryParams;
+use self::boat_list::BoatListNav;
 
 #[derive(Routable, Clone, Debug, PartialEq)]
 #[rustfmt::skip]
@@ -29,12 +31,18 @@ pub enum Route {
     #[layout(NavBar)]
     #[redirect("/", || Route::BatchListPage{page: PageQueryParams::default()})]
     #[nest("/boats")]
+        #[layout(BoatListNav)]
         #[route("/")]
         BoatListPage,
+        #[end_layout]
+
         #[route("/new")]
         NewBoatPage,
+
+        #[layout(BoatNav)]
         #[route("/:id")]
         BoatPage{id: BoatId},
+        #[end_layout]
     #[end_nest]
     #[nest("/issues")]
         #[route("/")]
@@ -79,14 +87,14 @@ fn NavBar() -> Element {
                         "Boats"
                     }
                 }
-                li {
+                /* li {
                     class: "mr-3",
                     Link {
                         class: "inline-block border border-blue-500 rounded py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white",
                         to: Route::NewBoatPage{},
                         "New Boat"
                     }
-                }
+                } */
                 // li {
                 //     class: "mr-3",
                 //      Link {

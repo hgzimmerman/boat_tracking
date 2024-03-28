@@ -67,14 +67,22 @@ pub(crate) async fn get_resolved_issues_for_boat(id: BoatId) -> Result<Vec<Issue
 }
 
 #[component]
-pub fn BoatNav(id: BoatId) -> Element {
+pub fn BoatNav() -> Element {
+    use dioxus_router::prelude::*;
+    use crate::ui::components::Route;
+    let path: Route = use_route();
+    let id = match path {
+        Route::BoatPage { id } => Some(id),
+        _ => None
+    };
+
     rsx!{
         div { 
             ul { class: "flex flex-wrap text-sm font-medium text-center text-gray-500 border-b border-gray-200 dark:border-gray-700 dark:text-gray-400",
                 li { class: "me-2",
-                    a {
-                        href: "#",
+                    Link {
                         class: "inline-block p-4 rounded-t-lg hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 dark:hover:text-gray-300",
+                        to: crate::ui::components::Route::BoatPage{id: id.expect("should be in path where id is known")},
                         "Summary"
                     }
                 }
@@ -109,6 +117,7 @@ pub fn BoatNav(id: BoatId) -> Element {
                 }
             } 
         }   
+        dioxus_router::components::Outlet::<crate::ui::components::Route>  {}
     }
 }
 
@@ -127,9 +136,6 @@ pub fn BoatPage(id: BoatId) -> Element {
                 boat: boat_fut.value().read().clone()?,
                 mode: mode
             }
-            BoatNav {
-                id
-            } 
             div {
                 class: "flex flex-row flex-grow divide-x-4 dark:divide-white bg-slate-50 dark:bg-slate-500",
                 BoatUses {

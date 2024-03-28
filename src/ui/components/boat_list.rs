@@ -28,6 +28,29 @@ pub fn BoatListPage() -> Element {
     }
 }
 
+pub fn BoatListNav() -> Element {
+    use dioxus_router::prelude::*;
+    use crate::ui::components::Route;
+    rsx! {
+        nav {
+            class: "bg-ggrc sticky top-0",
+            ul {
+                class: "flex items-center",
+                
+                li {
+                    class: "mr-3",
+                    Link {
+                        class: "inline-block border border-blue-500 rounded py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white",
+                        to: Route::NewBoatPage{},
+                        "New Boat"
+                    }
+                }
+            }
+        }
+        Outlet::<Route> {}
+    }
+}
+
 #[component]
 fn BoatRow(boat: BoatAndStats) -> Element {
     rsx! {
