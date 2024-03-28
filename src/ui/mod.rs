@@ -18,6 +18,7 @@ pub fn app() -> Element {
             toasts: toasts,
             toast_svc: toast_svc
         }
+        // Router::<components::debug::Route2>{}
         Router::<components::Route>{}
     }
 }

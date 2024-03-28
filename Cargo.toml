@@ -7,8 +7,8 @@ edition = "2021"
 
 [features]
 default = []
-ssr = ["dioxus-fullstack/axum", "axum", "diesel/sqlite", "deadpool-diesel/sqlite", "tokio"]
-web = ["dioxus-fullstack/web", "dioxus-web", "web-sys", "wasm-bindgen"]
+ssr = ["dioxus-fullstack/axum", "dioxus-router/fullstack", "axum", "diesel/sqlite", "deadpool-diesel/sqlite", "tokio"]
+web = ["dioxus-fullstack/web", "dioxus-router/web","dioxus-web", "web-sys", "wasm-bindgen"]
 
 [dependencies]
 chrono = {version = "0.4.34", features = ["serde"]}
