@@ -152,6 +152,7 @@ fn BoatUses(
                 div {
                     class: "px-4",
                     h3 {
+                        class: "font-large",
                         "Uses"
                     }
                     if timed_counts.is_empty() {

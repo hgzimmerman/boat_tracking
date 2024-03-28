@@ -1,27 +1,47 @@
 use crate::{
     db::boat::{
-        types::{BoatType, WeightClass},
+        types::{BoatId, BoatType, WeightClass},
         Boat, NewBoat,
-    },
-    ui::components::toast::{MsgType, ToastData, ToastMsgMsg},
+    }, ui::components::toast::{MsgType, ToastData, ToastMsgMsg}
 };
 use chrono::NaiveDate;
 use dioxus::prelude::*;
 use dioxus_fullstack::prelude::*;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq,)]
+enum BoatFormMode {
+    New,
+    Edit(BoatId)
+}
+
 #[component]
-pub fn NewBoatPage() -> Element {
+pub fn EditBoatPage(id: BoatId) -> Element {
     let mut name = use_signal(String::new);
     let mut acquired_at = use_signal(String::new);
     let mut manufactured_at = use_signal(String::new);
+    let mut relinquished_at = use_signal(String::new);
 
-    let mut show_boat_type_dropdown = use_signal(|| false);
     let mut boat_type = use_signal(|| Option::<BoatType>::None);
-    let mut show_weight_class_dropdown = use_signal(|| false);
     let mut weight_class = use_signal(|| Option::<WeightClass>::None);
 
+
     let toast_svc = use_coroutine_handle::<ToastMsgMsg>();
-    let boat_svc = use_coroutine(|rx| {
+    use_future(move || {
+        to_owned![id, toast_svc];
+        async move {
+            match get_boat(id).await {
+                Ok(boat) => {
+                    name.set(boat.name.clone());
+                    acquired_at.set(boat.acquired_at.as_ref().map(ToString::to_string).unwrap_or_default());                    
+                    manufactured_at.set(boat.manufactured_at.as_ref().map(ToString::to_string).unwrap_or_default());                    
+                    relinquished_at.set(boat.relinquished_at.as_ref().map(ToString::to_string).unwrap_or_default());                    
+                    boat_type.set(boat.boat_type());
+                    weight_class.set(Some(boat.weight_class));
+                },
+                Err(error) => toast_svc.send(ToastData::error(error).into()),
+            }
+    }});
+    let _boat_svc = use_coroutine(|rx| {
         to_owned![
             name,
             boat_type,
@@ -37,6 +57,51 @@ pub fn NewBoatPage() -> Element {
             boat_type,
             acquired_at,
             manufactured_at,
+            Some(relinquished_at),
+            toast_svc,
+        )
+    });
+    rsx! {
+        BoatForm {
+            name: name,
+            acquired_at: acquired_at,
+            manufactured_at: manufactured_at,
+            relinquished_at: relinquished_at,
+            boat_type: boat_type,
+            weight_class: weight_class,
+            mode: BoatFormMode::Edit(id)
+        }
+    }
+}
+
+
+#[component]
+pub fn NewBoatPage() -> Element {
+    let name = use_signal(String::new);
+    let acquired_at = use_signal(String::new);
+    let manufactured_at = use_signal(String::new);
+
+    let boat_type = use_signal(|| Option::<BoatType>::None);
+    let weight_class = use_signal(|| Option::<WeightClass>::None);
+
+    let toast_svc = use_coroutine_handle::<ToastMsgMsg>();
+    let _boat_svc = use_coroutine(|rx| {
+        to_owned![
+            name,
+            boat_type,
+            weight_class,
+            acquired_at,
+            manufactured_at,
+            toast_svc
+        ];
+        create_boat_service(
+            rx,
+            name,
+            weight_class,
+            boat_type,
+            acquired_at,
+            manufactured_at,
+            None,
             toast_svc,
         )
     });
@@ -46,264 +111,13 @@ pub fn NewBoatPage() -> Element {
             class: "flex flex-col flex-grow bg-gray-50 dark:bg-gray-500 justify-center",
             div {
                 class: "flex flex-row flex-grow justify-center",
-                form {
-                    class: "bg-gray-100 shadow-md rounded px-8 pt-6 pb-8 mb-4 dark:bg-gray-600 min-w-96 max-w-lg w-1/2",
-                    onsubmit: move |event| {
-                        event.stop_propagation();
-                    },
-                    h2 {
-                        class: "mb-4 text-3xl font-extrabold leading-none tracking-tight text-gray-900 md:text-2xl lg:text-3xl dark:text-white",
-                        "Add a new boat"
-                    }
-                    div {
-                        class: "mb-4",
-                        label {
-                            r#for: "boat_name",
-                            class: "block mb-2 text-sm font-medium text-gray-900 dark:text-white",
-                            "Boat Name"
-                        }
-                        input {
-                            r#type: "text",
-                            id: "boat_name",
-                            class: "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500",
-                            placeholder: "Boat Name",
-                            autocomplete: "off",
-                            value: name.read().to_owned(),
-                            oninput: move |event| {
-                                event.stop_propagation();
-                                name.set(event.value())
-                            }
-                        }
-                    }
-                    div {
-                        class: "mb-4",
-                        label {
-                            r#for: "weight-class-dropdown-btn",
-                            class: "block mb-2 text-sm font-medium text-gray-900 dark:text-white",
-                            "Weight Class"
-                        }
-                        button {
-                            id: "weight-class-dropdown-btn",
-                            class: "btn btn-blue min-w-28 rounded-s",
-                            onclick: move |e| {
-                                e.stop_propagation();
-                                let inverted = !*show_weight_class_dropdown.read();
-                                show_weight_class_dropdown.set(inverted);
-                            },
-                            onmouseover: move |e| {
-                                e.stop_propagation();
-                                show_weight_class_dropdown.set(true);
-                            },
-                            onmouseout: move |e| {
-                                e.stop_propagation();
-                                show_weight_class_dropdown.set(false);
-                            },
-                            {format!("{weight_class:?}")}
-                            // the dropdown
-                            div {
-                                id: "weight-class-dropdown-positioner",
-                                class: "relative h-0 w-0",
-                                div {
-                                    id: "weight-class-dropdown",
-                                    class: if *show_weight_class_dropdown.read() {
-                                        "absolute z-10 mt-2 w-20 top-0 left-4 origin-bottom-right rounded-md bg-white shadow-lg divide-y p-2 text-slate-600 font-normal"
-                                    } else {
-                                        "hidden"
-                                    },
-                                    ul {
-                                        li {
-                                            onclick: move |e| {
-                                                e.stop_propagation();
-                                                weight_class.set(None);
-                                                show_weight_class_dropdown.set(false);
-                                            },
-                                            "None"
-                                        }
-                                        li {
-                                            onclick: move |e| {
-                                                e.stop_propagation();
-                                                weight_class.set(Some(WeightClass::Light));
-                                                show_weight_class_dropdown.set(false);
-                                            },
-                                            "Light"
-                                        }
-                                        li {
-                                            onclick: move |e| {
-                                                e.stop_propagation();
-                                                weight_class.set(Some(WeightClass::Medium));
-                                                show_weight_class_dropdown.set(false);
-                                            },
-                                            "Medium"
-                                        }
-                                        li {
-                                            onclick: move |e| {
-                                                e.stop_propagation();
-                                                weight_class.set(Some(WeightClass::Heavy));
-                                                show_weight_class_dropdown.set(false);
-                                            },
-                                            "Heavy"
-                                        }
-                                        li {
-                                            onclick: move |e| {
-                                                e.stop_propagation();
-                                                weight_class.set(Some(WeightClass::Tubby));
-                                                show_weight_class_dropdown.set(false);
-                                            },
-                                            "Tubby"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    div {
-                        class: "mb-4",
-                        label {
-                            r#for: "boat-type-dropdown-btn",
-                            class: "block mb-2 text-sm font-medium text-gray-900 dark:text-white",
-                            "Boat Type"
-                        }
-                        button {
-                            id: "boat-type-dropdown-btn",
-                            class: "btn btn-blue min-w-28 rounded-s",
-                            onclick: move |e| {
-                                e.stop_propagation();
-                                let inverted = !*show_boat_type_dropdown.read();
-                                show_boat_type_dropdown.set(inverted);
-                            },
-                            onmouseover: move |e| {
-                                e.stop_propagation();
-                                show_boat_type_dropdown.set(true);
-                            },
-                            onmouseout: move |e| {
-                                e.stop_propagation();
-                                show_boat_type_dropdown.set(false);
-                            },
-                            {format!("{boat_type:?}")}
-                            // the dropdown
-                            div {
-                                id: "boat-type-dropdown-positioner",
-                                class: "relative h-0 w-0",
-                                div {
-                                    id: "boat-type-dropdown",
-                                    class: if *show_boat_type_dropdown.read() {
-                                        "absolute z-10 mt-2 w-20 top-0 left-4 origin-bottom-right rounded-md bg-white shadow-lg divide-y p-2 text-slate-600 font-normal"
-                                    } else {
-                                        "hidden"
-                                    },
-                                    ul {
-                                        li {
-                                            onclick: move |e| {
-                                                e.stop_propagation();
-                                                boat_type.set(None);
-                                                show_boat_type_dropdown.set(false);
-                                            },
-                                            "None"
-                                        }
-                                        li {
-                                            onclick: move |e| {
-                                                e.stop_propagation();
-                                                boat_type.set(Some(BoatType::Single));
-                                                show_boat_type_dropdown.set(false);
-                                            },
-                                            "Single"
-                                        }
-                                        li {
-                                            onclick: move |e| {
-                                                e.stop_propagation();
-                                                boat_type.set(Some(BoatType::Double));
-                                                show_boat_type_dropdown.set(false);
-                                            },
-                                            "Double"
-                                        }
-                                        li {
-                                            onclick: move |e| {
-                                                e.stop_propagation();
-                                                boat_type.set(Some(BoatType::Quad));
-                                                show_boat_type_dropdown.set(false);
-                                            },
-                                            "Quad"
-                                        }
-                                        li {
-                                            onclick: move |e| {
-                                                e.stop_propagation();
-                                                boat_type.set(Some(BoatType::QuadPlus));
-                                                show_boat_type_dropdown.set(false);
-                                            },
-                                            "Quad+"
-                                        }
-                                        li {
-                                            onclick: move |e| {
-                                                e.stop_propagation();
-                                                boat_type.set(Some(BoatType::Four));
-                                                show_boat_type_dropdown.set(false);
-                                            },
-                                            "Four"
-                                        }
-                                        li {
-                                            onclick: move |e| {
-                                                e.stop_propagation();
-                                                boat_type.set(Some(BoatType::FourPlus));
-                                                show_boat_type_dropdown.set(false);
-                                            },
-                                            "Four+"
-                                        }
-                                        li {
-                                            onclick: move |e| {
-                                                e.stop_propagation();
-                                                boat_type.set(Some(BoatType::Eight));
-                                                show_boat_type_dropdown.set(false);
-                                            },
-                                            "Eight"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    div {
-                        class: "mb-4",
-                        label {
-                            r#for: "acquired-at",
-                            class: "block mb-2 text-sm font-medium text-gray-900 dark:text-white",
-                            "Acquired date"
-                        }
-                        input {
-                            r#type: "date",
-                            id: "acquired-at",
-                            class: "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500",
-                            value: acquired_at.read().to_string(),
-                            oninput: move |event| {
-                                acquired_at.set(event.value())
-                            }
-                        }
-                    }
-                    div {
-                        class: "mb-4",
-                        label {
-                            r#for: "manufactured-at",
-                            class: "block mb-2 text-sm font-medium text-gray-900 dark:text-white",
-                            "Manufactured date"
-                        }
-                        input {
-                            r#type: "date",
-                            id: "manufactured-at",
-                            class: "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500",
-                            value: manufactured_at.read().to_owned(),
-                            oninput: move |event| {
-                                manufactured_at.set(event.value())
-                            }
-                        }
-                    }
-                    button {
-                        class: "btn btn-blue rounded-e disabled:opacity-45 disabled:bg-blue-500",
-                        disabled: boat_type.read().is_none() || weight_class.read().is_none(),
-                        onclick: move |e| {
-                            e.stop_propagation();
-                            boat_svc.send(CreateBoatMsg::Submit);
-                        },
-                        "Save New Boat"
-                    }
+                BoatForm {
+                    name: name,
+                    acquired_at: acquired_at,
+                    manufactured_at: manufactured_at,
+                    boat_type: boat_type,
+                    weight_class: weight_class,
+                    mode: BoatFormMode::New
                 }
             }
         }
@@ -311,7 +125,331 @@ pub fn NewBoatPage() -> Element {
     }
 }
 
-#[server(GetBoats)]
+#[component]
+fn BoatForm(
+    name: Signal<String>,
+    acquired_at: Signal<String>,
+    manufactured_at: Signal<String>,
+    relinquished_at: Option<Signal<String>>,
+    boat_type: Signal<Option<BoatType>>,
+    weight_class: Signal<Option<WeightClass>>,
+    mode: BoatFormMode
+) -> Element {
+
+    let mut show_weight_class_dropdown = use_signal(|| false);
+    let mut show_boat_type_dropdown = use_signal(|| false);
+
+    let boat_svc = use_coroutine_handle::<CreateBoatMsg>();
+    rsx! {
+        form {
+            class: "bg-gray-100 shadow-md rounded px-8 pt-6 pb-8 mb-4 dark:bg-gray-600 min-w-96 max-w-lg w-1/2",
+            onsubmit: move |event| {
+                event.stop_propagation();
+            },
+            h2 {
+                class: "mb-4 text-3xl font-extrabold leading-none tracking-tight text-gray-900 md:text-2xl lg:text-3xl dark:text-white",
+                "Add a new boat"
+            }
+            div {
+                class: "mb-4",
+                label {
+                    r#for: "boat_name",
+                    class: "block mb-2 text-sm font-medium text-gray-900 dark:text-white",
+                    "Boat Name"
+                }
+                input {
+                    r#type: "text",
+                    id: "boat_name",
+                    class: "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500",
+                    placeholder: "Boat Name",
+                    autocomplete: "off",
+                    value: name.read().to_owned(),
+                    oninput: move |event| {
+                        event.stop_propagation();
+                        name.set(event.value())
+                    }
+                }
+            }
+            div {
+                class: "mb-4",
+                label {
+                    r#for: "weight-class-dropdown-btn",
+                    class: "block mb-2 text-sm font-medium text-gray-900 dark:text-white",
+                    "Weight Class"
+                }
+                button {
+                    id: "weight-class-dropdown-btn",
+                    class: "btn btn-blue min-w-28 rounded-s",
+                    onclick: move |e| {
+                        e.stop_propagation();
+                        let inverted = !*show_weight_class_dropdown.read();
+                        show_weight_class_dropdown.set(inverted);
+                    },
+                    onmouseover: move |e| {
+                        e.stop_propagation();
+                        show_weight_class_dropdown.set(true);
+                    },
+                    onmouseout: move |e| {
+                        e.stop_propagation();
+                        show_weight_class_dropdown.set(false);
+                    },
+                    {format!("{weight_class:?}")}
+                    // the dropdown
+                    div {
+                        id: "weight-class-dropdown-positioner",
+                        class: "relative h-0 w-0",
+                        div {
+                            id: "weight-class-dropdown",
+                            class: if *show_weight_class_dropdown.read() {
+                                "absolute z-10 mt-2 w-20 top-0 left-4 origin-bottom-right rounded-md bg-white shadow-lg divide-y p-2 text-slate-600 font-normal"
+                            } else {
+                                "hidden"
+                            },
+                            ul {
+                                li {
+                                    onclick: move |e| {
+                                        e.stop_propagation();
+                                        weight_class.set(None);
+                                        show_weight_class_dropdown.set(false);
+                                    },
+                                    "None"
+                                }
+                                li {
+                                    onclick: move |e| {
+                                        e.stop_propagation();
+                                        weight_class.set(Some(WeightClass::Light));
+                                        show_weight_class_dropdown.set(false);
+                                    },
+                                    "Light"
+                                }
+                                li {
+                                    onclick: move |e| {
+                                        e.stop_propagation();
+                                        weight_class.set(Some(WeightClass::Medium));
+                                        show_weight_class_dropdown.set(false);
+                                    },
+                                    "Medium"
+                                }
+                                li {
+                                    onclick: move |e| {
+                                        e.stop_propagation();
+                                        weight_class.set(Some(WeightClass::Heavy));
+                                        show_weight_class_dropdown.set(false);
+                                    },
+                                    "Heavy"
+                                }
+                                li {
+                                    onclick: move |e| {
+                                        e.stop_propagation();
+                                        weight_class.set(Some(WeightClass::Tubby));
+                                        show_weight_class_dropdown.set(false);
+                                    },
+                                    "Tubby"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            div {
+                class: "mb-4",
+                label {
+                    r#for: "boat-type-dropdown-btn",
+                    class: "block mb-2 text-sm font-medium text-gray-900 dark:text-white",
+                    "Boat Type"
+                }
+                button {
+                    id: "boat-type-dropdown-btn",
+                    class: "btn btn-blue min-w-28 rounded-s",
+                    onclick: move |e| {
+                        e.stop_propagation();
+                        let inverted = !*show_boat_type_dropdown.read();
+                        show_boat_type_dropdown.set(inverted);
+                    },
+                    onmouseover: move |e| {
+                        e.stop_propagation();
+                        show_boat_type_dropdown.set(true);
+                    },
+                    onmouseout: move |e| {
+                        e.stop_propagation();
+                        show_boat_type_dropdown.set(false);
+                    },
+                    {format!("{boat_type:?}")}
+                    // the dropdown
+                    div {
+                        id: "boat-type-dropdown-positioner",
+                        class: "relative h-0 w-0",
+                        div {
+                            id: "boat-type-dropdown",
+                            class: if *show_boat_type_dropdown.read() {
+                                "absolute z-10 mt-2 w-20 top-0 left-4 origin-bottom-right rounded-md bg-white shadow-lg divide-y p-2 text-slate-600 font-normal"
+                            } else {
+                                "hidden"
+                            },
+                            ul {
+                                li {
+                                    onclick: move |e| {
+                                        e.stop_propagation();
+                                        boat_type.set(None);
+                                        show_boat_type_dropdown.set(false);
+                                    },
+                                    "None"
+                                }
+                                li {
+                                    onclick: move |e| {
+                                        e.stop_propagation();
+                                        boat_type.set(Some(BoatType::Single));
+                                        show_boat_type_dropdown.set(false);
+                                    },
+                                    "Single"
+                                }
+                                li {
+                                    onclick: move |e| {
+                                        e.stop_propagation();
+                                        boat_type.set(Some(BoatType::Double));
+                                        show_boat_type_dropdown.set(false);
+                                    },
+                                    "Double"
+                                }
+                                li {
+                                    onclick: move |e| {
+                                        e.stop_propagation();
+                                        boat_type.set(Some(BoatType::Quad));
+                                        show_boat_type_dropdown.set(false);
+                                    },
+                                    "Quad"
+                                }
+                                li {
+                                    onclick: move |e| {
+                                        e.stop_propagation();
+                                        boat_type.set(Some(BoatType::QuadPlus));
+                                        show_boat_type_dropdown.set(false);
+                                    },
+                                    "Quad+"
+                                }
+                                li {
+                                    onclick: move |e| {
+                                        e.stop_propagation();
+                                        boat_type.set(Some(BoatType::Four));
+                                        show_boat_type_dropdown.set(false);
+                                    },
+                                    "Four"
+                                }
+                                li {
+                                    onclick: move |e| {
+                                        e.stop_propagation();
+                                        boat_type.set(Some(BoatType::FourPlus));
+                                        show_boat_type_dropdown.set(false);
+                                    },
+                                    "Four+"
+                                }
+                                li {
+                                    onclick: move |e| {
+                                        e.stop_propagation();
+                                        boat_type.set(Some(BoatType::Eight));
+                                        show_boat_type_dropdown.set(false);
+                                    },
+                                    "Eight"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            div {
+                class: "mb-4",
+                label {
+                    r#for: "acquired-at",
+                    class: "block mb-2 text-sm font-medium text-gray-900 dark:text-white",
+                    "Acquired date"
+                }
+                input {
+                    r#type: "date",
+                    id: "acquired-at",
+                    class: "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500",
+                    value: acquired_at.read().to_string(),
+                    oninput: move |event| {
+                        acquired_at.set(event.value())
+                    }
+                }
+            }
+            div {
+                class: "mb-4",
+                label {
+                    r#for: "manufactured-at",
+                    class: "block mb-2 text-sm font-medium text-gray-900 dark:text-white",
+                    "Manufactured date"
+                }
+                input {
+                    r#type: "date",
+                    id: "manufactured-at",
+                    class: "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500",
+                    value: manufactured_at.read().to_owned(),
+                    oninput: move |event| {
+                        manufactured_at.set(event.value())
+                    }
+                }
+            }
+            // Show the sold at date
+            {
+               if let Some(mut relinquished_at) = relinquished_at {
+                    rsx! {
+                        div {
+                            class: "mb-4",
+                            label {
+                                r#for: "relinquished-at",
+                                class: "block mb-2 text-sm font-medium text-gray-900 dark:text-white",
+                                "Sold-at date (setting this will prevent the boat from appearing in practice/regatta search queries)"
+                            }
+                            input {
+                                r#type: "date",
+                                id: "relinquished-at",
+                                class: "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500",
+                                value: relinquished_at.read().to_owned(),
+                                oninput: move |event| {
+                                    relinquished_at.set(event.value())
+                                }
+                            }
+                        }                   
+                   }   
+               } else {
+                    rsx!()
+               }
+            }
+            
+            {
+    
+                match mode {
+                    BoatFormMode::New => rsx!{
+                        button {
+                            class: "btn btn-blue rounded-e disabled:opacity-45 disabled:bg-blue-500",
+                            disabled: boat_type.read().is_none() || weight_class.read().is_none(),
+                            onclick: move |e| {
+                                e.stop_propagation();
+                                boat_svc.send(CreateBoatMsg::Create);
+                            },
+                            "Save New Boat"
+                        }
+                    },
+                    BoatFormMode::Edit(id) => rsx!{
+                        button {
+                            class: "btn btn-blue rounded-e disabled:opacity-45 disabled:bg-blue-500",
+                            disabled: boat_type.read().is_none() || weight_class.read().is_none(),
+                            onclick: move |e| {
+                                e.stop_propagation();
+                                boat_svc.send(CreateBoatMsg::Update(id));
+                            },
+                            "Edit Boat"
+                        }
+                    },
+                }
+                
+            }
+        }
+    }
+}
+
+#[server(CreateBoats)]
 pub(crate) async fn create_boat(
     name: String,
     weight: WeightClass,
@@ -330,11 +468,114 @@ pub(crate) async fn create_boat(
         .await?
 }
 
-enum CreateBoatMsg {
-    Submit,
+#[server(UpdateBoats)]
+pub(crate) async fn update_boat(
+    name: String,
+    weight: WeightClass,
+    ty: BoatType,
+    acquired_at: Option<NaiveDate>,
+    manufactured_at: Option<NaiveDate>,
+    relinquished_at: Option<NaiveDate>,
+) -> Result<Boat, ServerFnError> {
+    // let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu");
+    let conn_string = "db.sql";
+    let state = crate::ui::state::AppState::new(conn_string);
+    let conn = state.pool().get().await?;
+
+    let boat = NewBoat::new(name, weight, ty, acquired_at, manufactured_at);
+
+    conn.interact(|conn| Boat::new_boat(conn, boat).map_err(ServerFnError::from))
+        .await?
 }
 
-struct BoatArgs {
+#[server(GetBoat)]
+pub(crate) async fn get_boat(
+    boat_id: BoatId
+) -> Result<Boat, ServerFnError> {
+    // let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu");
+    let conn_string = "db.sql";
+    let state = crate::ui::state::AppState::new(conn_string);
+    let conn = state.pool().get().await?;
+
+    conn.interact(move |conn| Boat::get_boat(conn, boat_id).map_err(ServerFnError::from))
+        .await?
+}
+
+enum CreateBoatMsg {
+    Create,
+    Update(BoatId)
+}
+
+struct UpdateBoatArgs {
+    name: String,
+    weight: WeightClass,
+    ty: BoatType,
+    acquired_at: Option<NaiveDate>,
+    manufactured_at: Option<NaiveDate>,
+    relinquished_at: Option<NaiveDate>,
+}
+impl UpdateBoatArgs {
+    fn new(
+        name: Signal<String>,
+        weight: Signal<Option<WeightClass>>,
+        ty: Signal<Option<BoatType>>,
+        acquired_at: Signal<String>,
+        manufactured_at: Signal<String>,
+        relinquished_at: Option<Signal<String>>
+    ) -> Result<Self, BoatArgsError> {
+        let name: String = if name.read().is_empty() {
+            return Err(BoatArgsError::MissingName);
+        } else {
+            name.read().clone()
+        };
+        let weight: WeightClass = if let Some(weight) = *weight.read() {
+            weight
+        } else {
+            return Err(BoatArgsError::MissingWeight);
+        };
+        let ty: BoatType = if let Some(ty) = *ty.read() {
+            ty
+        } else {
+            return Err(BoatArgsError::MissingBoatType);
+        };
+        let acquired_at = if acquired_at.read().is_empty() {
+            None
+        } else {
+            tracing::info!(acquired = ?acquired_at.read());
+            chrono::NaiveDate::parse_from_str(&&acquired_at.read(), "%Y-%m-%d")
+                .map_err(BoatArgsError::InvalidAcquiredAt)
+                .map(Some)?
+        };
+        let manufactured_at = if manufactured_at.read().is_empty() {
+            None
+        } else {
+            tracing::info!(manufactured = ?manufactured_at.read());
+            chrono::NaiveDate::parse_from_str(&&manufactured_at.read(), "%Y-%m-%d")
+                .map_err(BoatArgsError::InvalidManufactureddAt)
+                .map(Some)?
+        };
+        let relinquished_at: Option<NaiveDate> = relinquished_at.map(|relinquished_at| {
+            if relinquished_at.read().is_empty() {
+                Ok(None)
+            } else {
+                tracing::info!(relinquished = ?relinquished_at.read());
+                chrono::NaiveDate::parse_from_str(&&relinquished_at.read(), "%Y-%m-%d")
+                    .map_err(BoatArgsError::InvalidSoldAt)
+                    .map(Some)
+            }
+        }).transpose()?.flatten();
+        Ok(UpdateBoatArgs {
+            name,
+            weight,
+            ty,
+            acquired_at,
+            manufactured_at,
+            relinquished_at
+        })
+    }
+}
+
+struct CreateBoatArgs {
     name: String,
     weight: WeightClass,
     ty: BoatType,
@@ -353,8 +594,10 @@ enum BoatArgsError {
     InvalidAcquiredAt(chrono::ParseError),
     #[error("Could not parse Manufacturing date.")]
     InvalidManufactureddAt(chrono::ParseError),
+    #[error("Could not parse Sold at date.")]
+    InvalidSoldAt(chrono::ParseError),
 }
-impl BoatArgs {
+impl CreateBoatArgs {
     fn new(
         name: Signal<String>,
         weight: Signal<Option<WeightClass>>,
@@ -393,7 +636,7 @@ impl BoatArgs {
                 .map_err(BoatArgsError::InvalidManufactureddAt)
                 .map(Some)?
         };
-        Ok(BoatArgs {
+        Ok(CreateBoatArgs {
             name,
             weight,
             ty,
@@ -410,14 +653,52 @@ async fn create_boat_service(
     mut ty: Signal<Option<BoatType>>,
     mut acquired_at: Signal<String>,
     mut manufactured_at: Signal<String>,
+    relinquished_at: Option<Signal<String>>,
     toasts: Coroutine<ToastMsgMsg>,
 ) {
     use futures::stream::StreamExt;
 
     while let Some(msg) = rx.next().await {
         match msg {
-            CreateBoatMsg::Submit => {
-                match BoatArgs::new(name, weight, ty, acquired_at, manufactured_at) {
+            CreateBoatMsg::Update(id) => {
+
+                match UpdateBoatArgs::new(name, weight, ty, acquired_at, manufactured_at, relinquished_at) {
+                    Ok(args) => {
+                        match update_boat(
+                            args.name.clone(),
+                            args.weight,
+                            args.ty,
+                            args.acquired_at,
+                            args.manufactured_at,
+                            args.relinquished_at,
+                        )
+                        .await {
+                            Ok(_boat) => {
+                                name.set(String::new());
+                                weight.set(None);
+                                ty.set(None);
+                                acquired_at.set(String::new());
+                                manufactured_at.set(String::new());
+                                if let Some(mut relinquished_at) = relinquished_at {
+                                    relinquished_at.set(String::new());
+                                }
+
+                                toasts.send(ToastData::info(format!("Updated boat '{}' with id {id}", args.name)).into());
+                            }
+                            Err(error) => {
+                                tracing::warn!(?error, "Could not send request");
+                                toasts.send(ToastData::error(error).into())
+                            }
+                        }
+                    },
+                    Err(error) => {
+                        tracing::warn!(?error, "failed validation");
+                        toasts.send(ToastData::error(error).into());
+                    }
+                }
+            }
+            CreateBoatMsg::Create => {
+                match CreateBoatArgs::new(name, weight, ty, acquired_at, manufactured_at) {
                     Ok(args) => {
                         match create_boat(
                             args.name,
