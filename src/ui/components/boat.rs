@@ -169,7 +169,13 @@ fn BoatUses(
                             show_grid_ticks: true,
                             bar_width: "2%",
                             horizontal_bars: true,
-                            label_interpolation: (|v| format!("{v}")) as fn(f32) -> String,
+                            label_interpolation: (|v| {
+                                if v == 0.0 {
+                                    "".to_string()
+                                } else {
+                                    format!("{v}")
+                                }
+                            }) as fn(f32) -> String,
                             series: vec![timed_counts.iter().map(|( _time, count,)| *count).collect::<Vec<_>>()],
                             labels: timed_counts.into_iter().map(|(time, _count)| time.format("%m-%d").to_string()).collect::<Vec<_>>(),
                         }
