@@ -10,7 +10,7 @@ mod modal;
 use batch::BatchViewingPage;
 use batch::{BatchCreationPage, BatchEditPage, BatchTemplateCreationPage};
 use batch_list::BatchListPage;
-use boat::BoatPage;
+use boat::{BoatSummary, BoatMonthlyUses, BoatYearlyUses, BoatEdit, BoatIssues};
 use boat_list::BoatListPage;
 use issue_list::IssueListPage;
 // use new_boat::NewBoatPage;
@@ -40,8 +40,16 @@ pub enum Route {
         NewBoatPage,
 
         #[layout(BoatNav)]
-        #[route("/:id")]
-        BoatPage{id: BoatId},
+            #[route("/:id")]
+            BoatSummary{id: BoatId},
+            #[route("/:id/monthly")]
+            BoatMonthlyUses{id: BoatId},
+            #[route("/:id/yearly")]
+            BoatYearlyUses{id: BoatId},
+            #[route("/:id/issues")]
+            BoatIssues{id: BoatId},
+            #[route("/:id/edit")]
+            BoatEdit{id: BoatId},
         #[end_layout]
     #[end_nest]
     #[nest("/issues")]
@@ -87,25 +95,11 @@ fn NavBar() -> Element {
                         "Boats"
                     }
                 }
-                /* li {
-                    class: "mr-3",
-                    Link {
-                        class: "inline-block border border-blue-500 rounded py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white",
-                        to: Route::NewBoatPage{},
-                        "New Boat"
-                    }
-                } */
-                // li {
-                //     class: "mr-3",
-                //      Link {
-                //         class: "inline-block border border-blue-500 rounded py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white",
-                //         to: Route::IssueListPage{},
-                //          "Issues"
-                //     }
-                // }
-
             }
         }
-        Outlet::<Route> {}
+        div {
+            class: "flex flex-col flex-grow max-h-[calc(100vh-42px)] bg-slate-50 dark:bg-slate-500",
+            Outlet::<Route> {}
+        }
     }
 }

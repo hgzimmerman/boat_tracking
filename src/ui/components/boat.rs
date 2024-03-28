@@ -8,12 +8,12 @@ use crate::db::{
 };
 pub mod creation_edit_form;
 
-#[derive(Debug, Clone, Copy, Default)]
+/* #[derive(Debug, Clone, Copy, Default)]
 enum BoatPageMode {
     #[default]
     View,
     Edit
-}
+} */
 
 #[server(GetBoat)]
 pub(crate) async fn get_boat(id: BoatId) -> Result<BoatAndStats, ServerFnError> {
@@ -72,46 +72,53 @@ pub fn BoatNav() -> Element {
     use crate::ui::components::Route;
     let path: Route = use_route();
     let id = match path {
-        Route::BoatPage { id } => Some(id),
+        Route::BoatSummary { id }
+        | Route::BoatMonthlyUses{ id }
+        | Route::BoatYearlyUses{ id }
+        | Route::BoatEdit{ id } 
+        | Route::BoatIssues{ id } => Some(id),
         _ => None
-    };
+    }.expect("should be in path where id is known");
+    
+    let inactive_class = "inline-block p-4 rounded-t-lg hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 dark:hover:text-gray-300";
+    let active_class = "inline-block p-4 rounded-t-lg hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 dark:hover:text-gray-300 active bg-gray-100 rounded-t-lg dark:bg-gray-800 dark:text-blue-500";
 
     rsx!{
         div { 
             ul { class: "flex flex-wrap text-sm font-medium text-center text-gray-500 border-b border-gray-200 dark:border-gray-700 dark:text-gray-400",
                 li { class: "me-2",
                     Link {
-                        class: "inline-block p-4 rounded-t-lg hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 dark:hover:text-gray-300",
-                        to: crate::ui::components::Route::BoatPage{id: id.expect("should be in path where id is known")},
+                        class: if matches!(path, Route::BoatSummary{..}) { active_class } else {inactive_class}, 
+                        to: Route::BoatSummary{id},
                         "Summary"
                     }
                 }
                 li { class: "me-2",
-                    a {
-                        "aria-current": "page",
-                        href: "#",
-                        class: "inline-block p-4 text-blue-600 bg-gray-100 rounded-t-lg active dark:bg-gray-800 dark:text-blue-500",
+                    Link {
+                        // "aria-current": "page",
+                        class: if matches!(path, Route::BoatMonthlyUses{..}) { active_class } else {inactive_class}, 
+                        to: Route::BoatMonthlyUses{id},
                         "Monthly Usage Chart"
                     }
                 }
                 li { class: "me-2",
-                    a {
-                        href: "#",
-                        class: "inline-block p-4 rounded-t-lg hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 dark:hover:text-gray-300",
+                    Link {
+                        class: if matches!(path, Route::BoatYearlyUses{..}) { active_class } else {inactive_class}, 
+                        to: Route::BoatYearlyUses{id},
                         "Yearly Usage Chart"
                     }
                 }
                 li { class: "me-2",
-                    a {
-                        href: "#",
-                        class: "inline-block p-4 rounded-t-lg hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 dark:hover:text-gray-300",
+                    Link {
+                        class: if matches!(path, Route::BoatIssues{..}) { active_class } else {inactive_class}, 
+                        to: Route::BoatIssues{id},
                         "Issues"
                     }
                 }
                 li { class: "me-2",
-                    a {
-                        href: "#",
-                        class: "inline-block p-4 rounded-t-lg hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 dark:hover:text-gray-300",
+                    Link {
+                        class: if matches!(path, Route::BoatEdit{..}) { active_class } else {inactive_class}, 
+                        to: Route::BoatEdit{id},
                         "Edit"
                     }
                 }
@@ -122,31 +129,83 @@ pub fn BoatNav() -> Element {
 }
 
 #[component]
-pub fn BoatPage(id: BoatId) -> Element {
+pub fn BoatSummary(id: BoatId) -> Element {
     let boat_fut = use_server_future(move || async move { get_boat(id).await })?;
-    let issues_fut = use_server_future(move || async move { get_open_issues_for_boat(id).await })?;
-    let uses_fut = use_server_future(move || async move { get_events_for_boat(id).await })?;
-    // TODO maybe do a modal, reusing the new boat logic?
-    let mode = use_signal(|| BoatPageMode::View);
 
     rsx! {
         div {
-            class: "overflow-y-auto flex flex-col flex-grow max-h-[calc(100vh-42px)] dark:divide-white bg-slate-50 dark:bg-slate-500",
+            class: "overflow-y-auto flex flex-col flex-grow",
             BoatTitle {
                 boat: boat_fut.value().read().clone()?,
-                mode: mode
             }
-            div {
-                class: "flex flex-row flex-grow divide-x-4 dark:divide-white bg-slate-50 dark:bg-slate-500",
-                BoatUses {
-                    use_events: uses_fut.value().read().clone()?,
-                }
-                BoatIssueList {
-                    issues: issues_fut.value().read().clone()?,
-                    mode: mode
-                }
+
+        }
+    }
+}
+
+#[component]
+pub fn BoatMonthlyUses(id: BoatId) -> Element {
+    let boat_fut = use_server_future(move || async move { get_boat(id).await })?;
+    let uses_fut = use_server_future(move || async move { get_events_for_boat(id).await })?;
+
+    rsx! {
+        div {
+            class: "overflow-y-auto flex flex-col flex-grow",
+            BoatTitle {
+                boat: boat_fut.value().read().clone()?,
             }
-            
+            BoatUses {
+                use_events: uses_fut.value().read().clone()?,
+            }
+        }
+    }
+}
+
+#[component]
+pub fn BoatYearlyUses(id: BoatId) -> Element {
+    let boat_fut = use_server_future(move || async move { get_boat(id).await })?;
+    let uses_fut = use_server_future(move || async move { get_events_for_boat(id).await })?;
+
+    rsx! {
+        div {
+            class: "overflow-y-auto flex flex-col flex-grow",
+            BoatTitle {
+                boat: boat_fut.value().read().clone()?,
+            }
+            BoatUses {
+                use_events: uses_fut.value().read().clone()?,
+            }
+        }
+    }
+}
+
+#[component]
+pub fn BoatIssues(id: BoatId) -> Element {
+    let boat_fut = use_server_future(move || async move { get_boat(id).await })?;
+    let issues_fut = use_server_future(move || async move { get_open_issues_for_boat(id).await })?;
+
+    rsx! {
+        div {
+            class: "overflow-y-auto flex flex-col flex-grow",
+            BoatTitle {
+                boat: boat_fut.value().read().clone()?, 
+            }
+            BoatIssueList {
+               issues: issues_fut.value().read().clone()? 
+            } 
+        }
+    }
+}
+
+
+#[component]
+pub fn BoatEdit(id: BoatId) -> Element {
+    rsx! {
+        div {
+            class: "overflow-y-auto flex flex-col flex-grow",
+            self::creation_edit_form::EditBoatForm {
+                id
+            }
         }
     }
 }
@@ -155,39 +214,21 @@ pub fn BoatPage(id: BoatId) -> Element {
 #[component]
 fn BoatTitle(
     boat: Result<BoatAndStats, ServerFnError>,
-    mut mode: Signal<BoatPageMode>
 ) -> Element {
     match boat {
         Ok(boat) => rsx! {
             div {
-                class: "flex flex-row  bg-ggrc",
+                class: "flex flex-row  bg-ggrc items-center",
                 div {
-                    "style": "min-width: 160px; font-size: x-large; font-weight: 500 h-20",
-                    
+                    "style": "min-width: 160px; font-size: x-large; font-weight: 500 ",
+                    class: "px-4",
                     {boat.boat.name.clone()}
                 }
                 div {
+                    class: "px-4",
                     {
                         format!("{:?} {}",boat.boat.weight_class, boat.boat.boat_type().unwrap())
                     }
-                }
-                button {
-                    class: "btn btn-blue",
-                    onclick: move | event| {
-                        event.stop_propagation();
-                        let current_mode = *mode.read();
-                        match current_mode {
-                            BoatPageMode::View => mode.set(BoatPageMode::Edit),
-                            BoatPageMode::Edit => {
-                                // TODO save changes; may want to rearchitect this into a service
-                                mode.set(BoatPageMode::View);
-                            } 
-                        }
-                    },
-                    match *mode.read() {
-                        BoatPageMode::View => "Edit",
-                        BoatPageMode::Edit => "Save Changes"
-                    } 
                 }
             }
         },
@@ -255,7 +296,6 @@ fn BoatUses(
 #[component]
 fn BoatIssueList(
     issues: Result<Vec<Issue>, ServerFnError>,
-    mode: ReadOnlySignal<BoatPageMode>
 ) -> Element {
     match issues {
         Ok(issues) => {

@@ -38,6 +38,15 @@ fn BoatForm(
     let mut show_boat_type_dropdown = use_signal(|| false);
 
     let boat_svc = use_coroutine_handle::<CreateBoatMsg>();
+
+    // let title = name.map(move |name| {
+    let title = use_memo(move || {
+         match mode {
+            BoatFormMode::New => "Add a new boat".to_string(),
+            BoatFormMode::Edit(_) => format!("Edit {name}"),
+        }       
+    });
+
     rsx! {
         form {
             class: "bg-gray-100 shadow-md rounded px-8 pt-6 pb-8 mb-4 dark:bg-gray-600 min-w-96 max-w-lg w-1/2",
@@ -46,7 +55,7 @@ fn BoatForm(
             },
             h2 {
                 class: "mb-4 text-3xl font-extrabold leading-none tracking-tight text-gray-900 md:text-2xl lg:text-3xl dark:text-white",
-                "Add a new boat"
+                {title}
             }
             div {
                 class: "mb-4",

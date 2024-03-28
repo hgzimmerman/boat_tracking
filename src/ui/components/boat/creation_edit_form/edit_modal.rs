@@ -5,7 +5,7 @@ use dioxus::prelude::*;
 use super::service::{create_boat_service, get_boat};
 
 #[component]
-pub fn EditBoatModal(id: BoatId) -> Element {
+pub fn EditBoatForm(id: BoatId) -> Element {
     let mut name = use_signal(String::new);
     let mut acquired_at = use_signal(String::new);
     let mut manufactured_at = use_signal(String::new);
