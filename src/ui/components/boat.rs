@@ -159,16 +159,16 @@ fn BoatUses(
                             "Boat has not been used."
                         }
                     } else {
-                        dioxus_charts::LineChart {
+                        dioxus_charts::BarChart {
                             height: "100%",
-                            width: "600px",
+                            width: "1000px",
                             padding_top: 30,
-                            padding_left: 50,
+                            padding_left: 40,
                             padding_bottom: 30,
-                            padding_right: 50,
+                            padding_right: 40,
                             show_grid_ticks: true,
-                            // bar_width: "10%",
-                            // horizontal_bars: false,
+                            bar_width: "2%",
+                            horizontal_bars: true,
                             label_interpolation: (|v| format!("{v}")) as fn(f32) -> String,
                             series: vec![timed_counts.iter().map(|( _time, count,)| *count).collect::<Vec<_>>()],
                             labels: timed_counts.into_iter().map(|(time, _count)| time.format("%m-%d").to_string()).collect::<Vec<_>>(),
