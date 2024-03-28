@@ -10,11 +10,11 @@ This should give the organization data to know which boats to buy, sell, maintai
 
 ## Features
 * Adding boats
-* Removing boats (WIP)
+* Editing/Removing boats 
 * Recording batches of boat uses for a practice or regatta
   * Editing old batches
   * Using an old batch as a template for faster data entry.
-* Viewing historical usage of boats (WIP)
+* Viewing historical usage of boats 
 * Issue tracking for individual boats (WIP)
 * CSV export (WIP)
   * Summary

@@ -1,8 +1,9 @@
 use crate::{
-    db::boat::types::{BoatId, BoatType, WeightClass}, ui::components::{boat::creation_edit_form::{BoatForm, BoatFormMode}, toast::{ToastData, ToastMsgMsg}}
+    db::boat::{types::{BoatId, BoatType, WeightClass}, Boat}, ui::components::{boat::creation_edit_form::{BoatForm, BoatFormMode}, toast::{ToastData, ToastMsgMsg}}
 };
 use dioxus::prelude::*;
-use super::service::{create_boat_service, get_boat};
+use super::service::{create_boat_service};
+use dioxus_fullstack::prelude::*;
 
 #[component]
 pub fn EditBoatForm(id: BoatId) -> Element {
@@ -69,4 +70,19 @@ pub fn EditBoatForm(id: BoatId) -> Element {
         }           
         
     }
+}
+
+
+#[server(GetBoat)]
+/// Gets the boat at the id. Needed when populating the form for editing
+async fn get_boat(
+    boat_id: BoatId
+) -> Result<Boat, ServerFnError> {
+    // let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu");
+    let conn_string = "db.sql";
+    let state = crate::ui::state::AppState::new(conn_string);
+    let conn = state.pool().get().await?;
+
+    conn.interact(move |conn| Boat::get_boat(conn, boat_id).map_err(ServerFnError::from))
+        .await?
 }

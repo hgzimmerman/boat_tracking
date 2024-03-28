@@ -50,18 +50,7 @@ pub(super) async fn update_boat(
         .await?
 }
 
-#[server(GetBoat)]
-pub(super) async fn get_boat(
-    boat_id: BoatId
-) -> Result<Boat, ServerFnError> {
-    // let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu");
-    let conn_string = "db.sql";
-    let state = crate::ui::state::AppState::new(conn_string);
-    let conn = state.pool().get().await?;
 
-    conn.interact(move |conn| Boat::get_boat(conn, boat_id).map_err(ServerFnError::from))
-        .await?
-}
 
 pub(super) enum CreateBoatMsg {
     Create,
@@ -236,13 +225,13 @@ pub(super) async fn create_boat_service(
                         )
                         .await {
                             Ok(boat) => {
-                                name.set(String::new());
-                                weight.set(None);
-                                ty.set(None);
-                                acquired_at.set(String::new());
-                                manufactured_at.set(String::new());
+                                name.set(boat.name.clone());
+                                weight.set(Some(boat.weight_class));
+                                ty.set(boat.boat_type());
+                                acquired_at.set(boat.acquired_at.as_ref().map(ToString::to_string).unwrap_or_default());
+                                manufactured_at.set(boat.manufactured_at.as_ref().map(ToString::to_string).unwrap_or_default());
                                 if let Some(mut relinquished_at) = relinquished_at {
-                                    relinquished_at.set(String::new());
+                                    relinquished_at.set(boat.relinquished_at.as_ref().map(ToString::to_string).unwrap_or_default());
                                 }
 
                                 toasts.send(ToastData::info(format!("Updated boat '{}' with id '{id}'.", boat.name)).into());

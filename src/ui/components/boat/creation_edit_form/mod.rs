@@ -346,7 +346,7 @@ fn BoatForm(
                                 e.stop_propagation();
                                 boat_svc.send(CreateBoatMsg::Update(id));
                             },
-                            "Edit Boat"
+                            "Save Changes to Boat"
                         }
                     },
                 } 
