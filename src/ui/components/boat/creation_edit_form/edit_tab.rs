@@ -52,14 +52,21 @@ pub fn EditBoatForm(id: BoatId) -> Element {
         )
     });
     rsx! {
-        BoatForm {
-            name: name,
-            acquired_at: acquired_at,
-            manufactured_at: manufactured_at,
-            relinquished_at: relinquished_at,
-            boat_type: boat_type,
-            weight_class: weight_class,
-            mode: BoatFormMode::Edit(id)
-        }
+        div {
+            class: "flex flex-col flex-grow justify-center overflow-y-auto",
+            div {
+                class: "flex flex-row flex-grow justify-center ",
+                BoatForm {
+                    name: name,
+                    acquired_at: acquired_at,
+                    manufactured_at: manufactured_at,
+                    relinquished_at: relinquished_at,
+                    boat_type: boat_type,
+                    weight_class: weight_class,
+                    mode: BoatFormMode::Edit(id)
+                }
+            }
+        }           
+        
     }
 }

@@ -201,11 +201,8 @@ pub fn BoatIssues(id: BoatId) -> Element {
 #[component]
 pub fn BoatEdit(id: BoatId) -> Element {
     rsx! {
-        div {
-            class: "overflow-y-auto flex flex-col flex-grow",
-            self::creation_edit_form::EditBoatForm {
-                id
-            }
+        self::creation_edit_form::EditBoatForm {
+            id
         }
     }
 }

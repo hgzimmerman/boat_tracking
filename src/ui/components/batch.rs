@@ -156,7 +156,7 @@ fn GeneralBatchCreationPage(mode: BatchPageMode) -> Element {
     rsx! {
         div {
             // I don't love the magic number (42px corresponds to the nav height)
-            class: "flex flex-row overflow-hide divide-x-4 grow max-h-[calc(100vh-42px)]",
+            class: "flex flex-row overflow-hidden divide-x-4 grow max-h-[calc(100vh-42px)]",
             list_pane::BatchListPane {
                 boats: selected,
                 boat_svc: boat_svc,

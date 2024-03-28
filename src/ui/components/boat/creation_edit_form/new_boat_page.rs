@@ -38,16 +38,19 @@ pub fn NewBoatPage() -> Element {
 
     rsx! {
         div {
-            class: "flex flex-col flex-grow bg-gray-50 dark:bg-gray-500 justify-center",
+            class: "overflow-y-hidden",
             div {
-                class: "flex flex-row flex-grow justify-center",
-                BoatForm {
-                    name: name,
-                    acquired_at: acquired_at,
-                    manufactured_at: manufactured_at,
-                    boat_type: boat_type,
-                    weight_class: weight_class,
-                    mode: BoatFormMode::New
+                class: "flex flex-col flex-grow justify-center overflow-y-auto",
+                div {
+                    class: "flex flex-row flex-grow justify-center",
+                    BoatForm {
+                        name: name,
+                        acquired_at: acquired_at,
+                        manufactured_at: manufactured_at,
+                        boat_type: boat_type,
+                        weight_class: weight_class,
+                        mode: BoatFormMode::New
+                    }
                 }
             }
         }

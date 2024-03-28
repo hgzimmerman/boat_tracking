@@ -4,8 +4,8 @@ use crate::{
 use dioxus::prelude::*;
 
 
-mod edit_modal;
-pub use edit_modal::*;
+mod edit_tab;
+pub use edit_tab::*;
 mod new_boat_page;
 pub use new_boat_page::*;
 mod service;

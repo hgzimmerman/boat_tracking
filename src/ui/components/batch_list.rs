@@ -112,7 +112,7 @@ pub fn BatchListPage(page: PageQueryParams) -> Element {
     ));
     rsx! {
         div {
-            class: "flex flex-col overflow-hide grow",
+            class: "flex flex-col overflow-hidden grow",
             // page header/nav
             div {
                 class: "h-16 bg-ggrc flex flex-row items-center",
