@@ -13,7 +13,7 @@ use super::DbOrdering;
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[cfg_attr(
     feature = "ssr",
-    derive(diesel::Queryable, diesel::Selectable, diesel::Identifiable)
+    derive(diesel::Queryable, diesel::Selectable, diesel::Identifiable, diesel::AsChangeset)
 )]
 #[cfg_attr(feature = "ssr", diesel(table_name = crate::schema::boat))]
 pub struct Boat {

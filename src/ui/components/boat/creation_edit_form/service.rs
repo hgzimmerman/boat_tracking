@@ -35,15 +35,18 @@ pub(super) async fn update_boat(
     acquired_at: Option<NaiveDate>,
     manufactured_at: Option<NaiveDate>,
     relinquished_at: Option<NaiveDate>,
+    id: BoatId
 ) -> Result<Boat, ServerFnError> {
     // let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu");
     let conn_string = "db.sql";
     let state = crate::ui::state::AppState::new(conn_string);
     let conn = state.pool().get().await?;
 
-    let boat = NewBoat::new(name, weight, ty, acquired_at, manufactured_at);
+    let (has_cox,seat_count,oars_per_seat) = ty.into_values();
 
-    conn.interact(|conn| Boat::new_boat(conn, boat).map_err(ServerFnError::from))
+    let boat = Boat { id, name, weight_class: weight, seat_count, has_cox, oars_per_seat, acquired_at, manufactured_at, relinquished_at };
+
+    conn.interact(move |conn| Boat::update_boat(conn, &boat).map_err(ServerFnError::from))
         .await?
 }
 
@@ -229,6 +232,7 @@ pub(super) async fn create_boat_service(
                             args.acquired_at,
                             args.manufactured_at,
                             args.relinquished_at,
+                            id
                         )
                         .await {
                             Ok(boat) => {

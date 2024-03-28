@@ -2,11 +2,10 @@ pub mod batch;
 pub mod boat;
 pub mod boat_list;
 pub mod issue_list;
-// pub mod new_boat;
 pub mod new_issue;
 pub mod toast;
-// mod old_batch;
 mod batch_list;
+mod modal;
 
 use batch::BatchViewingPage;
 use batch::{BatchCreationPage, BatchEditPage, BatchTemplateCreationPage};
@@ -28,9 +27,7 @@ use self::batch_list::PageQueryParams;
 #[rustfmt::skip]
 pub enum Route {
     #[layout(NavBar)]
-    // #[route("/")]
     #[redirect("/", || Route::BatchListPage{page: PageQueryParams::default()})]
-    // Home, 
     #[nest("/boats")]
         #[route("/")]
         BoatListPage,
@@ -65,7 +62,7 @@ fn NavBar() -> Element {
         nav {
             class: "bg-ggrc sticky top-0",
             ul {
-                class: "flex items-center justify-between",
+                class: "flex items-center",
                 li {
                     class: "mr-3",
                      Link {

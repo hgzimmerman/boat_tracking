@@ -2,3 +2,4 @@
 db.sql
 .direnv
 /dist
+.dioxus/

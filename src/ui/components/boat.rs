@@ -65,6 +65,53 @@ pub(crate) async fn get_resolved_issues_for_boat(id: BoatId) -> Result<Vec<Issue
     })
     .await?
 }
+
+#[component]
+pub fn BoatNav(id: BoatId) -> Element {
+    rsx!{
+        div { 
+            ul { class: "flex flex-wrap text-sm font-medium text-center text-gray-500 border-b border-gray-200 dark:border-gray-700 dark:text-gray-400",
+                li { class: "me-2",
+                    a {
+                        href: "#",
+                        class: "inline-block p-4 rounded-t-lg hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 dark:hover:text-gray-300",
+                        "Summary"
+                    }
+                }
+                li { class: "me-2",
+                    a {
+                        "aria-current": "page",
+                        href: "#",
+                        class: "inline-block p-4 text-blue-600 bg-gray-100 rounded-t-lg active dark:bg-gray-800 dark:text-blue-500",
+                        "Monthly Usage Chart"
+                    }
+                }
+                li { class: "me-2",
+                    a {
+                        href: "#",
+                        class: "inline-block p-4 rounded-t-lg hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 dark:hover:text-gray-300",
+                        "Yearly Usage Chart"
+                    }
+                }
+                li { class: "me-2",
+                    a {
+                        href: "#",
+                        class: "inline-block p-4 rounded-t-lg hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 dark:hover:text-gray-300",
+                        "Issues"
+                    }
+                }
+                li { class: "me-2",
+                    a {
+                        href: "#",
+                        class: "inline-block p-4 rounded-t-lg hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 dark:hover:text-gray-300",
+                        "Edit"
+                    }
+                }
+            } 
+        }   
+    }
+}
+
 #[component]
 pub fn BoatPage(id: BoatId) -> Element {
     let boat_fut = use_server_future(move || async move { get_boat(id).await })?;
@@ -80,6 +127,9 @@ pub fn BoatPage(id: BoatId) -> Element {
                 boat: boat_fut.value().read().clone()?,
                 mode: mode
             }
+            BoatNav {
+                id
+            } 
             div {
                 class: "flex flex-row flex-grow divide-x-4 dark:divide-white bg-slate-50 dark:bg-slate-500",
                 BoatUses {
@@ -112,7 +162,7 @@ fn BoatTitle(
                 }
                 div {
                     {
-                        format!("{:?} {:?}",boat.boat.weight_class, boat.boat.boat_type().unwrap())
+                        format!("{:?} {}",boat.boat.weight_class, boat.boat.boat_type().unwrap())
                     }
                 }
                 button {
@@ -164,9 +214,9 @@ fn BoatUses(
                         dioxus_charts::BarChart {
                             height: "100%",
                             width: "1000px",
-                            padding_top: 30,
+                            padding_top: 10,
                             padding_left: 40,
-                            padding_bottom: 30,
+                            padding_bottom: 20,
                             padding_right: 40,
                             show_grid_ticks: true,
                             bar_width: "2%",

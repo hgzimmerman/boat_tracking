@@ -19,6 +19,17 @@ impl Boat {
             .values(boat)
             .get_result(conn)
     }
+    
+    /// Replaces the old boat with a new one.
+    /// No selective updates (double-optional) or anything.
+    pub fn update_boat(
+        conn: &mut SqliteConnection,
+        boat: &Boat,
+    ) -> Result<Boat, diesel::result::Error> {
+        diesel::update(boat)
+            .set(boat)
+            .get_result(conn)
+    }
 
     #[tracing::instrument(level = "debug", skip_all)]
     pub fn get_boats3(
