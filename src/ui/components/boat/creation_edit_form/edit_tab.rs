@@ -53,9 +53,9 @@ pub fn EditBoatForm(id: BoatId) -> Element {
     });
     rsx! {
         div {
-            class: "flex flex-col flex-grow justify-center overflow-y-auto",
+            class: "flex flex-col flex-grow justify-center",
             div {
-                class: "flex flex-row flex-grow justify-center ",
+                class: "flex flex-row flex-grow justify-center",
                 BoatForm {
                     name: name,
                     acquired_at: acquired_at,

@@ -73,7 +73,7 @@ fn BoatRow(boat: BoatAndStats) -> Element {
                 }
                 div {
                     {
-                        format!("{:?} {:?}",boat.boat.weight_class, boat.boat.boat_type().unwrap())
+                        format!("{:?} {}",boat.boat.weight_class, boat.boat.boat_type().unwrap())
                     }
                 }
             }

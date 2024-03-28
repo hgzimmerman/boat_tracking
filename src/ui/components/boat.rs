@@ -200,9 +200,16 @@ pub fn BoatIssues(id: BoatId) -> Element {
 
 #[component]
 pub fn BoatEdit(id: BoatId) -> Element {
+    let boat_fut = use_server_future(move || async move { get_boat(id).await })?;
     rsx! {
-        self::creation_edit_form::EditBoatForm {
-            id
+        div {
+            class: "overflow-y-auto flex flex-col flex-grow",
+            BoatTitle {
+                boat: boat_fut.value().read().clone()?, 
+            }
+            self::creation_edit_form::EditBoatForm {
+                id
+            }
         }
     }
 }
