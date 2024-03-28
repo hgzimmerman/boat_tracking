@@ -1,3 +1,4 @@
+use chrono::NaiveDate;
 use dioxus::prelude::*;
 use dioxus_fullstack::prelude::*;
 
@@ -37,6 +38,22 @@ pub(crate) async fn get_open_issues_for_boat(id: BoatId) -> Result<Vec<Issue>, S
     .await?
 }
 
+#[server(GetBoatEvents)]
+pub(crate) async fn get_events_for_boat(id: BoatId) -> Result<Vec<(NaiveDate, f32)>, ServerFnError> {
+    // let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu");
+    let conn_string = "db.sql";
+    let state = crate::ui::state::AppState::new(conn_string);
+    let conn = state.pool().get().await?;
+
+    conn.interact(move |conn| {
+        let start = chrono::Utc::now().naive_local() - chrono::TimeDelta::try_days(30).unwrap();
+        crate::db::use_event::UseEvent::timeseries_for_boat(conn, id, start, None)
+        .map_err(ServerFnError::from)
+        .map(|x| x.into_iter().map(|(date, count)|(date, count as f32)).collect())
+    })
+    .await?
+}
+
 #[server(GetBoatResolvedIssues)]
 pub(crate) async fn get_resolved_issues_for_boat(id: BoatId) -> Result<Vec<Issue>, ServerFnError> {
     let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu");
@@ -51,11 +68,10 @@ pub(crate) async fn get_resolved_issues_for_boat(id: BoatId) -> Result<Vec<Issue
 pub fn BoatPage(id: BoatId) -> Element {
     let boat_fut = use_server_future(move || async move { get_boat(id).await })?;
     let issues_fut = use_server_future(move || async move { get_open_issues_for_boat(id).await })?;
+    let uses_fut = use_server_future(move || async move { get_events_for_boat(id).await })?;
     // TODO maybe do a modal, reusing the new boat logic?
     let mode = use_signal(|| BoatPageMode::View);
 
-    let day = chrono::TimeDelta::try_days(1).unwrap();
-    let now = chrono::Utc::now().naive_utc().date();
     rsx! {
         div {
             class: "overflow-y-auto flex flex-col flex-grow max-h-[calc(100vh-42px)] dark:divide-white bg-slate-50 dark:bg-slate-500",
@@ -66,7 +82,7 @@ pub fn BoatPage(id: BoatId) -> Element {
             div {
                 class: "flex flex-row flex-grow divide-x-4 dark:divide-white bg-slate-50 dark:bg-slate-500",
                 BoatUses {
-                    use_events: Ok(vec![(2.0, now - (day * 4)), (3.0, now - (day * 3)), (2.0, now - (day * 2)), (1.0, now - day)]),
+                    use_events: uses_fut.value().read().clone()?,
                 }
                 BoatIssueList {
                     issues: issues_fut.value().read().clone()?,
@@ -128,7 +144,7 @@ fn BoatTitle(
 
 #[component]
 fn BoatUses(
-    use_events: Result<Vec<(f32, chrono::NaiveDate)>, ServerFnError>,
+    use_events: Result<Vec<(NaiveDate, f32)>, ServerFnError>,
 ) -> Element {
     match use_events {
         Ok(timed_counts) => {
@@ -154,8 +170,8 @@ fn BoatUses(
                             // bar_width: "10%",
                             // horizontal_bars: false,
                             label_interpolation: (|v| format!("{v}")) as fn(f32) -> String,
-                            series: vec![timed_counts.iter().map(|(count, _time)| *count).collect::<Vec<_>>()],
-                            labels: timed_counts.into_iter().map(|(_count, time)| time.format("%m-%d").to_string()).collect::<Vec<_>>(),
+                            series: vec![timed_counts.iter().map(|( _time, count,)| *count).collect::<Vec<_>>()],
+                            labels: timed_counts.into_iter().map(|(time, _count)| time.format("%m-%d").to_string()).collect::<Vec<_>>(),
                         }
                     }
                 }

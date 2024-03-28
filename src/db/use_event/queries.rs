@@ -27,6 +27,8 @@ impl UseEvent {
     }
 
     /// Gets the counts per day of uses for a specified boat.
+    /// 
+    /// The returned list will have empty 0s for dates
      pub fn timeseries_for_boat(
         conn: &mut SqliteConnection,
         boat_id: BoatId,
@@ -46,22 +48,21 @@ impl UseEvent {
             .order_by(use_event::recorded_at.asc()) // oldest first
             .select(use_event::recorded_at)
             .get_results::<NaiveDateTime>(conn)?;
-
-        // Not the most effecient algorithm, but it'll do for now.
-        // Could use a faster hashmap, or an effecient sorted map,
-        // or a custom iter combinator that stores the counts
-        // and takes advantage of the sorted data to only store one date-count at a time;
-        // It would emit events when the date changes, and have a way of flushing the item at the end.
-        let mut ts = datetimes.into_iter()
+        
+        let ts_map = datetimes.into_iter()
         .map(|datetime: NaiveDateTime| datetime.date())
         .fold(HashMap::new(), |mut acc, next| {
             *acc.entry(next).or_default() += 1usize;
             acc
-        })
-        .into_iter()
-        .collect::<Vec<_>>();
-        ts.sort_unstable_by_key(|(date, _count)| *date);
-        
-        Ok(ts)
+        });
+
+        let start = date_start.date();
+        let end = date_end.as_ref().map(chrono::NaiveDateTime::date).unwrap_or_else(|| chrono::Utc::now().naive_utc().date());
+
+        let list = start.iter_days().take_while(|d| d <= &end)
+            .map(|date| (date, ts_map.get(&date).cloned().unwrap_or(0)))
+            .collect::<Vec<_>>();
+
+        Ok(list)
     }
 }
