@@ -118,6 +118,14 @@ pub fn BoatNav() -> Element {
                         "Edit"
                     }
                 }
+                li {
+                    class: "me-2",
+                    a {
+                        class: "inline-block p-4",
+                        href: format!("/export.csv?id={id}"),
+                        "Export to CSV"
+                    }
+                }
             } 
         }   
         dioxus_router::components::Outlet::<crate::ui::components::Route>  {}

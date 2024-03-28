@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 
 use super::*;
-use crate::schema::use_event;
+use crate::api::wire::CsvRow;
+use crate::schema::{boat, use_event};
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::SqliteConnection;
 use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
@@ -64,5 +65,52 @@ impl UseEvent {
             .collect::<Vec<_>>();
 
         Ok(list)
+    }
+     
+
+    pub fn export_events(
+        conn: &mut SqliteConnection,
+        date_start: Option<NaiveDateTime>,
+        date_end: Option<NaiveDateTime>,
+        boat_ids: Option<Vec<BoatId>>
+    ) -> Result<Vec<CsvRow>, diesel::result::Error> {
+        let mut query = use_event::table
+            .inner_join(boat::table)
+            .into_boxed();
+        if let Some(date_start) = date_start {
+            query = query.filter(use_event::recorded_at.ge(date_start));
+        }
+        if let Some(date_end) = date_end {
+            query = query.filter(use_event::recorded_at.lt(date_end));
+        }
+        if let Some(boats) = boat_ids {
+            query = query.filter(use_event::boat_id.eq_any(boats));
+        }
+
+        query
+            .order_by(use_event::recorded_at.desc()) // newest first
+            .get_results::<(UseEvent, crate::db::boat::Boat)>(conn)
+            .map(|results| {
+                results.into_iter().filter_map(|(event, boat)| {
+                    let boat_type = {
+                        let bt = boat.boat_type();
+                        if bt.is_none() {
+                            tracing::error!(?boat.name, ?boat.id, "boat type cant be known, filtering events") 
+                        }
+                        bt?
+                    };
+                    Some(CsvRow{
+                        boat_name: boat.name,
+                        boat_type,
+                        boat_weight_class: boat.weight_class,
+                        acquired_at: boat.acquired_at,
+                        used_at: event.recorded_at,
+                        use_scenario: event.use_scenario,
+                        boat_id: boat.id,
+                        batch_id: event.batch_id,
+                    })
+                })
+                .collect()
+            })
     }
 }

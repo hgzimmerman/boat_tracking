@@ -130,6 +130,11 @@ pub fn BatchListPage(page: PageQueryParams) -> Element {
                         to: Route::BatchListPage{page: PageQueryParams{page: page.saturating_add(1)}},
                         "Older"
                     }
+                    a {
+                        class: "inline-block p-4",
+                        href: format!("/export.csv"),
+                        "Export all to CSV"
+                    }
                 }
                 div {
                     Link {

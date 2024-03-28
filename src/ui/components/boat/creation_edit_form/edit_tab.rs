@@ -2,7 +2,7 @@ use crate::{
     db::boat::{types::{BoatId, BoatType, WeightClass}, Boat}, ui::components::{boat::creation_edit_form::{BoatForm, BoatFormMode}, toast::{ToastData, ToastMsgMsg}}
 };
 use dioxus::prelude::*;
-use super::service::{create_boat_service};
+use super::service::create_boat_service;
 use dioxus_fullstack::prelude::*;
 
 #[component]
