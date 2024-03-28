@@ -16,9 +16,9 @@ This should give the organization data to know which boats to buy, sell, maintai
   * Using an old batch as a template for faster data entry.
 * Viewing historical usage of boats 
 * Issue tracking for individual boats (WIP)
-* CSV export (WIP)
-  * Summary
-  * Per-boat usage history
+* CSV export 
+  * Summary (WIP)
+  * Per-boat usage history 
   * All boats usage history
 
 

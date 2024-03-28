@@ -112,6 +112,7 @@ fn GeneralBatchCreationPage(mode: BatchPageMode) -> Element {
     let filter = use_signal(BoatFilter3::default);
     let search_name = use_signal(|| Option::<String>::None);
     let search_boat_state = use_signal(|| Vec::<Boat>::new());
+    let session_type = use_signal(|| UseScenario::AM);
 
     let toast_svc = use_coroutine_handle::<ToastMsgMsg>();
     let boat_svc = use_coroutine(|rx| {
@@ -122,6 +123,7 @@ fn GeneralBatchCreationPage(mode: BatchPageMode) -> Element {
             selected,
             filter,
             search_name,
+            session_type,
             toast_svc,
         )
     });
@@ -159,8 +161,9 @@ fn GeneralBatchCreationPage(mode: BatchPageMode) -> Element {
             class: "flex flex-row overflow-hidden divide-x-4 grow max-h-[calc(100vh-42px)]",
             list_pane::BatchListPane {
                 boats: selected,
-                boat_svc: boat_svc,
-                mode: mode
+                boat_svc,
+                mode,
+                session_type
             }
             {
                 if mode.is_view() {
@@ -169,9 +172,9 @@ fn GeneralBatchCreationPage(mode: BatchPageMode) -> Element {
                     rsx!{
                         search_pane::BoatSearchPane{
                             boats: search_boat_state,
-                            filter: filter,
-                            search_name: search_name,
-                            boat_svc: boat_svc
+                            filter,
+                            search_name,
+                            boat_svc,
                         }
                     }
                 }
@@ -230,12 +233,14 @@ pub(crate) async fn get_existing_batch(
 pub(crate) async fn replace_batch(
     batch_id: BatchId,
     boat_ids: Vec<BoatId>,
+    use_type: Option<UseScenario>
 ) -> Result<(), ServerFnError> {
     let conn_string = "db.sql";
     let state = crate::ui::state::AppState::new(conn_string);
     let conn = state.pool().get().await?;
     conn.interact(move |conn| {
-        UseEventBatch::replace_batch_uses(conn, batch_id, boat_ids).map_err(ServerFnError::from).map(|_| ())
+        // currently don't overwrite the recorded at field, because we don't support customizing it in the first place
+        UseEventBatch::replace_batch_uses(conn, batch_id, boat_ids, use_type, None).map_err(ServerFnError::from).map(|_| ())
     })
     .await?
 }
@@ -276,6 +281,7 @@ async fn boat_list_service(
     mut selected_boats: Signal<Vec<Boat>>,
     mut filter: Signal<BoatFilter3>,
     mut search_name: Signal<Option<String>>,
+    session_type: Signal<UseScenario>,
     toasts: Coroutine<ToastMsgMsg>,
 ) {
     use futures::stream::StreamExt;
@@ -303,9 +309,10 @@ async fn boat_list_service(
                 tracing::info!("fetching");
                 search().await
             }
-            BoatListMsg::SaveChanges { batch_id, boat_ids } => {
+            BoatListMsg::SaveChanges { batch_id, boat_ids,  } => {
+                let session_type = *session_type.read();
                 tracing::info!(?batch_id, ?boat_ids, "Overwriting old batch with new data");
-                match replace_batch(batch_id, boat_ids).await {
+                match replace_batch(batch_id, boat_ids, Some(session_type)).await {
                     Ok(_) => toasts.send(ToastData::info(format!("Edited batch {batch_id}")).into()),
                     Err(error) => toasts.send(ToastData::error(error).into()),
                 }
@@ -402,7 +409,7 @@ async fn boat_list_service(
             }
             BoatListMsg::Submit => {
                 let ids: Vec<BoatId> = selected_boats.read().iter().map(|b| b.id).collect();
-                let session_type = UseScenario::AM; // TODO Get this from the actual setting
+                let session_type = *session_type.read(); 
                 if !ids.is_empty() {
                     match submit_boats(ids, session_type).await {
                         Ok(id) => {

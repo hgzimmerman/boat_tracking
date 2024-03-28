@@ -48,7 +48,8 @@ impl Boat {
         let oars_per_seat: Option<i32> = oars_config.as_ref().map(OarConfiguration::num_oars);
         let cox = coxed.as_ref().map(HasCox::as_value);
 
-        let mut query = boat::table.filter(boat::relinquished_at.is_not_null()).into_boxed();
+        // let mut query = boat::table.filter(boat::relinquished_at.is_not_null()).into_boxed();
+        let mut query = boat::table.into_boxed();
 
         if let Some(search) = search.map(|x| format!("%{x}%")) {
             query = query.filter(boat::name.like(search))

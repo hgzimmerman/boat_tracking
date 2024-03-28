@@ -8,6 +8,7 @@ pub(super) fn BatchListPane(
     boats: Signal<Vec<Boat>>,
     boat_svc: Coroutine<BoatListMsg>,
     mode: BatchPageMode,
+    session_type: Signal<UseScenario>
 ) -> Element {
     rsx! {
         // The pane
@@ -22,15 +23,20 @@ pub(super) fn BatchListPane(
             // Submission form
             SubmitRow {
                 boats: boats.read().clone(),
-                boat_svc: boat_svc,
-                mode: mode
+                boat_svc, 
+                mode
+                session_type
             }
         }
     }
 }
 
 #[component]
-fn List(boats: Vec<Boat>, boat_svc: Coroutine<BoatListMsg>, mode: BatchPageMode) -> Element {
+fn List(
+    boats: Vec<Boat>, 
+    boat_svc: Coroutine<BoatListMsg>, 
+    mode: BatchPageMode
+) -> Element {
     rsx! {
         div {
             class: "flex flex-col grow overflow-auto divide-y",
@@ -71,9 +77,13 @@ fn List(boats: Vec<Boat>, boat_svc: Coroutine<BoatListMsg>, mode: BatchPageMode)
 }
 
 #[component]
-fn SubmitRow(boats: Vec<Boat>, boat_svc: Coroutine<BoatListMsg>, mode: BatchPageMode) -> Element {
+fn SubmitRow(
+    boats: Vec<Boat>, 
+    boat_svc: Coroutine<BoatListMsg>, 
+    mode: BatchPageMode,
+    session_type: Signal<UseScenario>
+) -> Element {
     // TODO make this use the current time of day to initialize it.
-    let mut session_type = use_signal(|| UseScenario::AM);
     let mut show_session_type_dropdown = use_signal(|| false);
 
     rsx! {

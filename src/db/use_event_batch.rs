@@ -15,6 +15,18 @@ pub struct UseEventBatch {
     pub use_scenario: UseScenario,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "ssr",
+    derive(diesel::AsChangeset, diesel::Identifiable, diesel::Queryable,)
+)]
+#[cfg_attr(feature = "ssr", diesel(table_name = crate::schema::use_event_batch))]
+pub struct UseEventBatchChangeset {
+    pub id: BatchId,
+    pub recorded_at: Option<chrono::NaiveDateTime>,
+    pub use_scenario: Option<UseScenario>,
+}
+
 #[derive(
     Clone,
     Copy,

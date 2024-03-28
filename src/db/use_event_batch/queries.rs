@@ -11,7 +11,7 @@ use crate::{
     schema::boat,
 };
 
-use super::{BatchAndCounts, BatchId, NewBatchArgs, UseEventBatch};
+use super::{BatchAndCounts, BatchId, NewBatchArgs, UseEventBatch, UseEventBatchChangeset};
 use crate::schema::{use_event, use_event_batch};
 
 impl UseEventBatch {
@@ -114,21 +114,31 @@ impl UseEventBatch {
     pub fn replace_batch_uses(
         conn: &mut SqliteConnection,
         batch_id: BatchId,
-        boat_ids: Vec<BoatId>
+        boat_ids: Vec<BoatId>,
+        use_type: Option<UseScenario>,
+        recorded_at: Option<chrono::NaiveDateTime>
     ) -> Result<BatchId, diesel::result::Error> {
         conn.transaction(|conn| {
             let target = use_event::table
                 .filter(use_event::batch_id.eq(batch_id));
             diesel::delete(target)
                 .execute(conn)?;
-            let batch: UseEventBatch = use_event_batch::table.filter(use_event_batch::id.eq(batch_id)).get_result(conn)?;
+
+            let batch: UseEventBatch = if use_type.is_some() || recorded_at.is_some() {
+                let changeset = UseEventBatchChangeset { id: batch_id, recorded_at, use_scenario: use_type };
+                diesel::update(&changeset)
+                    .set(&changeset)
+                    .get_result(conn)?
+            } else {
+                use_event_batch::table.filter(use_event_batch::id.eq(batch_id)).get_result(conn)?
+            };
             let use_events = boat_ids
                 .into_iter()
                 .map(|boat_id| NewUseEvent {
                     boat_id,
                     batch_id: Some(batch_id),
-                    recorded_at: batch.recorded_at,
-                    use_scenario: batch.use_scenario,
+                    recorded_at: recorded_at.unwrap_or(batch.recorded_at),
+                    use_scenario: use_type.unwrap_or(batch.use_scenario),
                     note: None,
                 })
                 .collect::<Vec<_>>();
