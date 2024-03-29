@@ -33,6 +33,8 @@ pub(crate) async fn get_open_issues_for_boat(id: BoatId) -> Result<Vec<Issue>, S
     .await?
 }
 
+
+/// Currently gets a month's worth of data, by day
 #[server(GetBoatEvents)]
 pub(crate) async fn get_events_for_boat(id: BoatId) -> Result<Vec<(NaiveDate, f32)>, ServerFnError> {
     // let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu");
@@ -42,7 +44,23 @@ pub(crate) async fn get_events_for_boat(id: BoatId) -> Result<Vec<(NaiveDate, f3
 
     conn.interact(move |conn| {
         let start = chrono::Utc::now().naive_local() - chrono::TimeDelta::try_days(30).unwrap();
-        crate::db::use_event::UseEvent::timeseries_for_boat(conn, id, start, None)
+        crate::db::use_event::UseEvent::daily_timeseries_for_boat(conn, id, start, None)
+        .map_err(ServerFnError::from)
+        .map(|x| x.into_iter().map(|(date, count)|(date, count as f32)).collect())
+    })
+    .await?
+}
+/// Gets a year's worth of data for the boat
+#[server(GetYearBoatEvents)]
+pub(crate) async fn get_monthly_events_for_boat(id: BoatId) -> Result<Vec<(NaiveDate, f32)>, ServerFnError> {
+    // let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu");
+    let conn_string = "db.sql";
+    let state = crate::ui::state::AppState::new(conn_string);
+    let conn = state.pool().get().await?;
+
+    conn.interact(move |conn| {
+        let start = chrono::Utc::now().naive_local() - chrono::TimeDelta::try_days(365).unwrap();
+        crate::db::use_event::UseEvent::monthly_timeseries_for_boat(conn, id, start, None)
         .map_err(ServerFnError::from)
         .map(|x| x.into_iter().map(|(date, count)|(date, count as f32)).collect())
     })
@@ -168,7 +186,7 @@ pub fn BoatMonthlyUses(id: BoatId) -> Element {
 #[component]
 pub fn BoatYearlyUses(id: BoatId) -> Element {
     let boat_fut = use_server_future(use_reactive!(|id| async move { get_boat(id).await }))?;
-    let uses_fut = use_server_future(use_reactive!(|id| async move { get_events_for_boat(id).await }))?;
+    let uses_fut = use_server_future(use_reactive!(|id| async move { get_monthly_events_for_boat(id).await }))?;
 
     rsx! {
         div {
@@ -178,6 +196,7 @@ pub fn BoatYearlyUses(id: BoatId) -> Element {
             }
             BoatUses {
                 use_events: uses_fut.value().read().clone()?,
+                date_formatting: BoatUsesDateFormatting::Monthly
             }
         }
     }
@@ -248,10 +267,23 @@ fn BoatTitle(
     }
 }
 
+
+#[derive(Debug, Clone, Copy, Default, PartialEq)]
+pub enum BoatUsesDateFormatting {
+    #[default]
+    Daily,
+    Monthly
+}
+
 #[component]
 fn BoatUses(
     use_events: Result<Vec<(NaiveDate, f32)>, ServerFnError>,
+    date_formatting: Option<BoatUsesDateFormatting>
 ) -> Element {
+    let date_format: Box<dyn Fn(NaiveDate) -> String> = match date_formatting.unwrap_or_default() {
+        BoatUsesDateFormatting::Daily => Box::new(|time: NaiveDate| time.format("%m-%d").to_string()),
+        BoatUsesDateFormatting::Monthly => Box::new(|time: NaiveDate| time.format("%y-%m").to_string()),
+    };
     match use_events {
         Ok(timed_counts) => {
             rsx! {
@@ -284,7 +316,7 @@ fn BoatUses(
                                 }
                             }) as fn(f32) -> String,
                             series: vec![timed_counts.iter().map(|( _time, count,)| *count).collect::<Vec<_>>()],
-                            labels: timed_counts.into_iter().map(|(time, _count)| time.format("%m-%d").to_string()).collect::<Vec<_>>(),
+                            labels: timed_counts.into_iter().map(|(time, _count)| date_format(time)).collect::<Vec<_>>(),
                         }
                     }
                 }

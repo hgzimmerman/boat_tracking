@@ -11,7 +11,7 @@ pub struct CsvExportParams {
 
 
 #[derive(Debug, Clone, serde::Serialize)]
-pub struct CsvRow {
+pub struct BoatUseCsvRow {
     pub boat_id: BoatId,
     pub boat_name: String,
     pub boat_type: BoatType,

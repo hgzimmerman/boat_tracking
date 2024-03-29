@@ -1,13 +1,13 @@
 use crate::{db::use_event::UseEvent, ui::state::AppState};
 
-use self::wire::{CsvExportParams, CsvRow};
+use self::wire::{CsvExportParams, BoatUseCsvRow};
 
 pub mod wire;
 
 pub async fn export_csv_handler(
     state: AppState,
     axum::extract::Query(params): axum::extract::Query<CsvExportParams>
-) -> Result<CsvRows<CsvRow>, String> {
+) -> Result<CsvRows<BoatUseCsvRow>, String> {
     let conn = state.pool().get().await.map_err(|e| e.to_string())?;
     let rows = conn.interact(move |conn| {
         UseEvent::export_events(conn, params.start, params.end, params.id.map(|x| vec![x]))

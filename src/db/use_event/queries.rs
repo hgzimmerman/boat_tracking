@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
 use super::*;
-use crate::api::wire::CsvRow;
+use crate::api::wire::BoatUseCsvRow;
 use crate::schema::{boat, use_event};
-use chrono::{NaiveDate, NaiveDateTime};
+use chrono::{Datelike, NaiveDate, NaiveDateTime};
 use diesel::SqliteConnection;
 use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
 
@@ -30,7 +30,7 @@ impl UseEvent {
     /// Gets the counts per day of uses for a specified boat.
     /// 
     /// The returned list will have empty 0s for dates
-     pub fn timeseries_for_boat(
+    pub fn daily_timeseries_for_boat(
         conn: &mut SqliteConnection,
         boat_id: BoatId,
         date_start: NaiveDateTime,
@@ -66,6 +66,49 @@ impl UseEvent {
 
         Ok(list)
     }
+    
+    /// Sums uses over a month for a specified boat
+    pub fn monthly_timeseries_for_boat(
+        conn: &mut SqliteConnection,
+        boat_id: BoatId,
+        date_start: NaiveDateTime,
+        date_end: Option<NaiveDateTime>,
+    ) -> Result<Vec<(NaiveDate, usize)>, diesel::result::Error> {
+        let mut filter = use_event::table
+            .filter(use_event::boat_id.eq(boat_id))
+            .filter(use_event::recorded_at.ge(date_start))
+            .into_boxed();
+        if let Some(date_end) = date_end {
+            filter = filter.filter(use_event::recorded_at.lt(date_end));
+        }
+
+        // kind of a lame strategy, but the idea is to grab the dates, and then do the correlation server-side 
+        let datetimes: Vec<NaiveDateTime> = filter
+            .order_by(use_event::recorded_at.asc()) // oldest first
+            .select(use_event::recorded_at)
+            .get_results::<NaiveDateTime>(conn)?;
+        
+        let ts_map = datetimes.into_iter()
+        .map(|datetime: NaiveDateTime| datetime.date())
+        .fold(HashMap::new(), |mut acc, next| {
+            let key = NaiveDate::from_ymd_opt(next.year(), next.month(), 1).expect("Should be valid date");
+            *acc.entry(key).or_default() += 1usize;
+            acc
+        });
+
+        let start = date_start.date();
+        let start = NaiveDate::from_ymd_opt(start.year(), start.month(), 1).unwrap();
+        let end = date_end.as_ref().map(chrono::NaiveDateTime::date).unwrap_or_else(|| chrono::Utc::now().naive_utc().date());
+        let end = NaiveDate::from_ymd_opt(end.year(), end.month(), 1).unwrap();
+
+        let list = start.iter_days()
+            .take_while(|d| d <= &end)
+            .filter(|d| d.day() == 1)
+            .map(|date| (date, ts_map.get(&date).cloned().unwrap_or(0)))
+            .collect::<Vec<_>>();
+
+        Ok(list)
+    }
      
 
     pub fn export_events(
@@ -73,7 +116,7 @@ impl UseEvent {
         date_start: Option<NaiveDateTime>,
         date_end: Option<NaiveDateTime>,
         boat_ids: Option<Vec<BoatId>>
-    ) -> Result<Vec<CsvRow>, diesel::result::Error> {
+    ) -> Result<Vec<BoatUseCsvRow>, diesel::result::Error> {
         let mut query = use_event::table
             .inner_join(boat::table)
             .into_boxed();
@@ -99,7 +142,7 @@ impl UseEvent {
                         }
                         bt?
                     };
-                    Some(CsvRow{
+                    Some(BoatUseCsvRow{
                         boat_name: boat.name,
                         boat_type,
                         boat_weight_class: boat.weight_class,
