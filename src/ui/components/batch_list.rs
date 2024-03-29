@@ -6,6 +6,7 @@ use crate::{
     },
     ui::components::Route,
 };
+use chrono::TimeZone;
 use dioxus::prelude::*;
 use dioxus_fullstack::prelude::*;
 use dioxus_router::{components::Link, routable::FromQueryArgument};
@@ -104,6 +105,13 @@ fn BatchListRow(batch_and_counts: BatchAndCounts) -> Element {
         }
     });
     
+    let local_recorded_at = {
+        let local =  chrono::Local::now();
+        let local_tz = local.timezone();
+        let date = local_tz.from_utc_datetime(&batch.recorded_at);
+        date.format("%Y-%m-%d %H:%M").to_string()
+    };
+    
     rsx!{
         div {
             class: "flex flex-row h-16 items-center py-1",
@@ -116,7 +124,7 @@ fn BatchListRow(batch_and_counts: BatchAndCounts) -> Element {
             }
             div {
                 class: "m-2 w-40",
-                {batch.recorded_at.format("%Y-%m-%d %H:%M").to_string()}
+                {local_recorded_at}
             }
             div {
                 class: "m-2 w-28",
