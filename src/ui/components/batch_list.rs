@@ -106,7 +106,7 @@ fn BatchListRow(batch_and_counts: BatchAndCounts) -> Element {
     
     rsx!{
         div {
-            class: "flex flex-row h-16 items-center ",
+            class: "flex flex-row h-16 items-center py-1",
             onmouseout: move |_event| {
                 id.set(None);
             },
@@ -116,7 +116,7 @@ fn BatchListRow(batch_and_counts: BatchAndCounts) -> Element {
             }
             div {
                 class: "m-2 w-40",
-                {batch.recorded_at.to_string()}
+                {batch.recorded_at.format("%Y-%m-%d %H:%M").to_string()}
             }
             div {
                 class: "m-2 w-28",
@@ -131,17 +131,20 @@ fn BatchListRow(batch_and_counts: BatchAndCounts) -> Element {
                         match x.as_ref() {
                             Some(Ok(boats)) => rsx!{
                                 div {
-                                    class: "absolute bg-slate-100 dark:bg-slate-600 rounded border-2 border-slate-200 dark:border-white z-50 p-2 mt-3 min-w-48",
-                                    ul {
-                                        class: "",
-                                        {
-                                            boats.iter().map(|boat| rsx! {
-                                                li {
-                                                    {boat.name.clone()}
-                                                }
-                                            })
-                                        }
-                                    },
+                                    class: "relative",
+                                    div {
+                                        class: "absolute top-1 bg-slate-100 dark:bg-slate-600 rounded border-2 border-slate-200 dark:border-white z-50 p-2 min-w-48",
+                                        ul {
+                                            class: "",
+                                            {
+                                                boats.iter().map(|boat| rsx! {
+                                                    li {
+                                                        {boat.name.clone()}
+                                                    }
+                                                })
+                                            }
+                                        },
+                                    }
                                 }
                             },
                             Some(Err(error)) => rsx!{
