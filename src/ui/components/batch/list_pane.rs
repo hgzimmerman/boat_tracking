@@ -121,7 +121,7 @@ fn SubmitRow(
                             div {
                                 id: "session-dropdown",
                                 class: if *show_session_type_dropdown.read() {
-                                    "absolute z-10 mt-2 w-20 bottom-8 left-4 origin-bottom-right rounded-md bg-white shadow-lg divide-y p-2 text-slate-600 font-normal"
+                                    "absolute z-10 mt-2 w-40 bottom-8 left-4 origin-bottom-right rounded-md bg-white shadow-lg divide-y p-2 text-slate-600 font-normal"
                                 } else {
                                     "hidden"
                                 },
@@ -129,18 +129,42 @@ fn SubmitRow(
                                     li {
                                         onclick: move |e| {
                                             e.stop_propagation();
-                                            *session_type.write() = UseScenario::AM;
+                                            *session_type.write() = UseScenario::Youth;
                                             *show_session_type_dropdown.write() = false;
                                         },
-                                        "AM"
+                                        {UseScenario::Youth.to_string()} 
                                     }
                                     li {
                                         onclick: move |e| {
                                             e.stop_propagation();
-                                            session_type.set(UseScenario::PM);
+                                            session_type.set(UseScenario::Adult);
                                             show_session_type_dropdown.set(false);
                                         },
-                                        "PM"
+                                        {UseScenario::Adult.to_string()} 
+                                    }
+                                    li {
+                                        onclick: move |e| {
+                                            e.stop_propagation();
+                                            session_type.set(UseScenario::LearnToRow);
+                                            show_session_type_dropdown.set(false);
+                                        },
+                                        {UseScenario::LearnToRow.to_string()} 
+                                    }
+                                    li {
+                                        onclick: move |e| {
+                                            e.stop_propagation();
+                                            session_type.set(UseScenario::ScullingSaturday);
+                                            show_session_type_dropdown.set(false);
+                                        },
+                                        {UseScenario::ScullingSaturday.to_string()} 
+                                    }
+                                    li {
+                                        onclick: move |e| {
+                                            e.stop_propagation();
+                                            session_type.set(UseScenario::PrivateSession);
+                                            show_session_type_dropdown.set(false);
+                                        },
+                                        {UseScenario::PrivateSession.to_string()} 
                                     }
                                     li {
                                         onclick: move |e| {

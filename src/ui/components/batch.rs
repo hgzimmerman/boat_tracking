@@ -112,7 +112,7 @@ fn GeneralBatchCreationPage(mode: BatchPageMode) -> Element {
     let filter = use_signal(BoatFilter3::default);
     let search_name = use_signal(|| Option::<String>::None);
     let search_boat_state = use_signal(|| Vec::<Boat>::new());
-    let session_type = use_signal(|| UseScenario::AM);
+    let session_type = use_signal(|| UseScenario::Adult);
 
     let toast_svc = use_coroutine_handle::<ToastMsgMsg>();
     let boat_svc = use_coroutine(|rx| {

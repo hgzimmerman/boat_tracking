@@ -119,7 +119,7 @@ fn BatchListRow(batch_and_counts: BatchAndCounts) -> Element {
                 id.set(None);
             },
             div {
-                class: "m-2 w-20",
+                class: "m-2 w-32",
                 {batch.use_scenario.to_string()}
             }
             div {
