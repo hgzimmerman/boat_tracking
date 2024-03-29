@@ -2,8 +2,7 @@ use std::{ops::Deref, str::FromStr};
 
 use crate::{
     db::{
-        use_event::UseScenario,
-        use_event_batch::BatchAndCounts,
+        boat::Boat, use_event::UseScenario, use_event_batch::{BatchAndCounts, BatchId}
     },
     ui::components::Route,
 };
@@ -25,6 +24,23 @@ async fn get_batches(
     conn.interact(move |conn| {
         crate::db::use_event_batch::UseEventBatch::get_most_recent_batches_and_their_use_count(conn, scenario, offset, limit)
             .map_err(ServerFnError::from)
+    })
+    .await?
+}
+
+#[server(GetBoatsForBatch)]
+async fn get_boats_for_batch(
+    batch_id: BatchId
+) -> Result<Vec<Boat>, ServerFnError> {
+    // let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu");
+    let conn_string = "db.sql";
+    let state = crate::ui::state::AppState::new(conn_string);
+    let conn = state.pool().get().await?;
+
+    conn.interact(move |conn| {
+        crate::db::use_event_batch::UseEventBatch::get_events_and_boats_for_batch(conn, batch_id)
+            .map_err(ServerFnError::from)
+            .map(|list| list.into_iter().map(|(_event, boat)| boat).collect())
     })
     .await?
 }
@@ -58,9 +74,12 @@ pub fn BatchList(offset: usize, limit: Signal<usize>) -> Element {
         div {
             class: "divide-y-2 flex flex-col overflow-auto grow",
             {
-                batches.iter().map(|BatchAndCounts { batch, use_counts }| {
+                batches.iter().map(|batch_and_counts| {
                     rsx!{
-                        div {
+                        BatchListRow {
+                            batch_and_counts: batch_and_counts.clone()
+                        }
+                        /* div {
                             class: "flex flex-row h-16 items-center ",
                             div {
                                 class: "m-2 w-20",
@@ -72,6 +91,9 @@ pub fn BatchList(offset: usize, limit: Signal<usize>) -> Element {
                             }
                             div {
                                 class: "m-2 w-28",
+                                onmouseover: |_event| {
+                                    
+                                },
                                 {format!("{use_counts} boats used")}
                             }
                             // ->  batch/:batch_id
@@ -92,9 +114,99 @@ pub fn BatchList(offset: usize, limit: Signal<usize>) -> Element {
                                 to: Route::BatchTemplateCreationPage{ id: batch.id },
                                 "Use as Template"
                             }
-                        }
+                        } */
                     }
                 })
+            }
+        }
+    }
+}
+
+#[component]
+fn BatchListRow(batch_and_counts: BatchAndCounts) -> Element {
+    let BatchAndCounts { batch, use_counts } = batch_and_counts;
+    let mut id: Signal<Option<BatchId>> = use_signal(|| None);
+
+    let boats_in_the_batch = use_resource(use_reactive!(|id| async move {
+        let id = id();
+        tracing::info!(?id, "getting boats for batch");
+        if let Some(id) = id {
+            let x = Some(get_boats_for_batch(id).await);
+            tracing::debug!(?x);
+            x
+        } else {
+            None
+        }
+    }));
+    
+    rsx!{
+        div {
+            class: "flex flex-row h-16 items-center ",
+            onmouseout: move |_event| {
+                id.set(None);
+            },
+            div {
+                class: "m-2 w-20",
+                {batch.use_scenario.to_string()}
+            }
+            div {
+                class: "m-2 w-40",
+                {batch.recorded_at.to_string()}
+            }
+            div {
+                class: "m-2 w-28",
+                onmouseover: move |_event| {
+                    tracing::debug!(?batch.id, "mouseover");
+                    id.set(Some(batch.id));
+                },
+                {format!("{use_counts} boats used")}
+
+                match boats_in_the_batch.value().as_ref() {
+                    Some(x) => {
+                        match x.as_ref() {
+                            Some(Ok(boats)) => rsx!{
+                                div {
+                                    class: "absolute bg-slate-100 dark:bg-slate-600 rounded border-2 border-slate-200 dark:border-white z-50 p-2",
+                                    ul {
+                                        class: "",
+                                        {
+                                            boats.iter().map(|boat| rsx! {
+                                                li {
+                                                    {boat.name.clone()}
+                                                }
+                                            })
+                                        }
+                                    },
+                                }
+                            },
+                            Some(Err(error)) => rsx!{
+                                div {
+                                    {error.to_string()}
+                                }
+                            },
+                            None => rsx!{} 
+                        }
+                    },
+                    None => rsx!{}
+                }
+            }
+            // ->  batch/:batch_id
+            Link {
+                class: "btn btn-blue",
+                to: Route::BatchViewingPage { id: batch.id },
+                "View"
+            }
+            // -> batch/edit/:batch_id
+            Link {
+                class: "btn btn-blue",
+                to: Route::BatchEditPage { id: batch.id },
+                "Edit"
+            }
+            // -> batch/new/:batch_id
+            Link {
+                class: "btn btn-blue",
+                to: Route::BatchTemplateCreationPage{ id: batch.id },
+                "Use as Template"
             }
         }
     }

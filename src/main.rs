@@ -75,6 +75,7 @@ fn main() -> Result<(), Error> {
                 let state1 = state.clone();
 
                 let dom_factory = || dioxus::dioxus_core::VirtualDom::new(boat_tracking::ui::empty_app);
+                // let dom_factory = || dioxus::dioxus_core::VirtualDom::new(boat_tracking::ui::app);
 
                 // build our application with some routes
                 let app = Router::new()
