@@ -79,42 +79,6 @@ pub fn BatchList(offset: usize, limit: Signal<usize>) -> Element {
                         BatchListRow {
                             batch_and_counts: batch_and_counts.clone()
                         }
-                        /* div {
-                            class: "flex flex-row h-16 items-center ",
-                            div {
-                                class: "m-2 w-20",
-                                {batch.use_scenario.to_string()}
-                            }
-                            div {
-                                class: "m-2 w-40",
-                                {batch.recorded_at.to_string()}
-                            }
-                            div {
-                                class: "m-2 w-28",
-                                onmouseover: |_event| {
-                                    
-                                },
-                                {format!("{use_counts} boats used")}
-                            }
-                            // ->  batch/:batch_id
-                            Link {
-                                class: "btn btn-blue",
-                                to: Route::BatchViewingPage { id: batch.id },
-                                "View"
-                            }
-                            // -> batch/edit/:batch_id
-                            Link {
-                                class: "btn btn-blue",
-                                to: Route::BatchEditPage { id: batch.id },
-                                "Edit"
-                            }
-                            // -> batch/new/:batch_id
-                            Link {
-                                class: "btn btn-blue",
-                                to: Route::BatchTemplateCreationPage{ id: batch.id },
-                                "Use as Template"
-                            }
-                        } */
                     }
                 })
             }
@@ -127,7 +91,8 @@ fn BatchListRow(batch_and_counts: BatchAndCounts) -> Element {
     let BatchAndCounts { batch, use_counts } = batch_and_counts;
     let mut id: Signal<Option<BatchId>> = use_signal(|| None);
 
-    let boats_in_the_batch = use_resource(use_reactive!(|id| async move {
+    // Some reason this won't fire for the first element on dioxus 0.5.0-alpha.2
+    let boats_in_the_batch = use_resource(move || async move {
         let id = id();
         tracing::info!(?id, "getting boats for batch");
         if let Some(id) = id {
@@ -137,7 +102,7 @@ fn BatchListRow(batch_and_counts: BatchAndCounts) -> Element {
         } else {
             None
         }
-    }));
+    });
     
     rsx!{
         div {
@@ -166,7 +131,7 @@ fn BatchListRow(batch_and_counts: BatchAndCounts) -> Element {
                         match x.as_ref() {
                             Some(Ok(boats)) => rsx!{
                                 div {
-                                    class: "absolute bg-slate-100 dark:bg-slate-600 rounded border-2 border-slate-200 dark:border-white z-50 p-2",
+                                    class: "absolute bg-slate-100 dark:bg-slate-600 rounded border-2 border-slate-200 dark:border-white z-50 p-2 mt-3 min-w-48",
                                     ul {
                                         class: "",
                                         {
@@ -190,24 +155,30 @@ fn BatchListRow(batch_and_counts: BatchAndCounts) -> Element {
                     None => rsx!{}
                 }
             }
-            // ->  batch/:batch_id
-            Link {
-                class: "btn btn-blue",
-                to: Route::BatchViewingPage { id: batch.id },
-                "View"
+            div {
+                class: "grow"
             }
-            // -> batch/edit/:batch_id
-            Link {
-                class: "btn btn-blue",
-                to: Route::BatchEditPage { id: batch.id },
-                "Edit"
-            }
-            // -> batch/new/:batch_id
-            Link {
-                class: "btn btn-blue",
-                to: Route::BatchTemplateCreationPage{ id: batch.id },
-                "Use as Template"
-            }
+            div {
+                class: "",
+                // ->  batch/:batch_id
+                Link {
+                    class: "btn btn-blue",
+                    to: Route::BatchViewingPage { id: batch.id },
+                    "View"
+                }
+                // -> batch/edit/:batch_id
+                Link {
+                    class: "btn btn-blue",
+                    to: Route::BatchEditPage { id: batch.id },
+                    "Edit"
+                }
+                // -> batch/new/:batch_id
+                Link {
+                    class: "btn btn-blue",
+                    to: Route::BatchTemplateCreationPage{ id: batch.id },
+                    "Use as Template"
+                }               
+            } 
         }
     }
 }

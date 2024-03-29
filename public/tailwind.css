@@ -580,6 +580,10 @@ video {
   top: 2rem;
 }
 
+.bottom-2 {
+  bottom: 0.5rem;
+}
+
 .z-10 {
   z-index: 10;
 }
@@ -630,6 +634,14 @@ video {
 
 .mt-2 {
   margin-top: 0.5rem;
+}
+
+.mt-4 {
+  margin-top: 1rem;
+}
+
+.mt-3 {
+  margin-top: 0.75rem;
 }
 
 .block {
@@ -703,6 +715,10 @@ video {
 
 .min-w-96 {
   min-width: 24rem;
+}
+
+.min-w-48 {
+  min-width: 12rem;
 }
 
 .max-w-lg {
@@ -792,6 +808,14 @@ video {
   --tw-divide-y-reverse: 0;
   border-top-width: calc(2px * calc(1 - var(--tw-divide-y-reverse)));
   border-bottom-width: calc(2px * var(--tw-divide-y-reverse));
+}
+
+.place-self-end {
+  place-self: end;
+}
+
+.justify-self-end {
+  justify-self: end;
 }
 
 .overflow-auto {
