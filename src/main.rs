@@ -20,6 +20,8 @@ fn main() -> Result<(), Error> {
             .with(fmt_layer)
             // .with(perf_layer)
             .init(); // Install these as subscribers to tracing events
+        
+        tracing::info!(dev_version = 1, "Starting app");
 
         dioxus_web::launch::launch_cfg(
             boat_tracking::ui::app,

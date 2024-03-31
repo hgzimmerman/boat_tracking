@@ -1,4 +1,4 @@
-use std::{ops::Deref, str::FromStr};
+use std::{ops::Deref};
 
 use crate::{
     db::{
@@ -195,8 +195,8 @@ fn BatchListRow(batch_and_counts: BatchAndCounts) -> Element {
 }
 
 #[component]
-pub fn BatchListPage(page: PageQueryParams) -> Element {
-    let page = page.page;
+pub fn BatchListPage(page: ReadOnlySignal<Page>) -> Element {
+    let page = page.read().0;
     tracing::debug!(?page, "rendering batch list page");
 
     let limit_state: Signal<usize> = use_signal(|| 20);
@@ -215,13 +215,13 @@ pub fn BatchListPage(page: PageQueryParams) -> Element {
                     if *offset_state.read() != 0 {
                         Link {
                             class: "inline-block border border-blue-500 rounded py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white",
-                            to: Route::BatchListPage{page: PageQueryParams{page: page.saturating_sub(1)}},
+                            to: Route::BatchListPage{page: Page{0: page.saturating_sub(1)}},
                             "Newer"
                         }
                     }
                     Link {
                         class: "inline-block border border-blue-500 rounded py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white",
-                        to: Route::BatchListPage{page: PageQueryParams{page: page.saturating_add(1)}},
+                        to: Route::BatchListPage{page: Page{0: page.saturating_add(1)}},
                         "Older"
                     }
                     a {
@@ -249,55 +249,29 @@ pub fn BatchListPage(page: PageQueryParams) -> Element {
     }
 }
 
-#[derive(Debug, Default, PartialEq, Eq, Clone, Copy)]
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy, serde::Serialize, serde::Deserialize)]
 pub struct Page(usize);
 
-impl FromStr for Page {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let search = "page=";
-        if s.len() < search.len() {
-            return Err("Input to small".to_string());
-        }
-        if &s[0..search.len()] == search {
-            Ok(Page(
-                usize::from_str(&s[search.len()..]).map_err(|e| e.to_string())?,
-            ))
-        } else {
-            Err("Missing 'page='".to_string())
-        }
+impl Default for Page {
+    fn default() -> Self {
+        // 1 indexed
+        Self (1) 
+    }
+}
+impl FromQueryArgument for Page {
+    type Err = std::num::ParseIntError;
+    fn from_query_argument(query: &str) -> Result<Self, Self::Err> {
+        use std::str::FromStr;
+        usize::from_str(query).map(Page)
+        
     }
 }
 impl std::fmt::Display for Page {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let page = self.0;
-        f.write_fmt(format_args!("page={page}"))
+        f.write_fmt(format_args!("{}", self.0))?;
+
+        Ok(())
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub struct PageQueryParams {
-    page: usize,
-}
-
-impl Default for PageQueryParams {
-    fn default() -> Self {
-        // 1 indexed
-        Self { page: 1 }
-    }
-}
-impl FromQueryArgument for PageQueryParams {
-    type Err = String;
-    fn from_query_argument(query: &str) -> Result<Self, String> {
-        Ok(Self {
-            page: Page::from_str(query)?.0,
-        })
-    }
-}
-impl std::fmt::Display for PageQueryParams {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let page = Page(self.page);
-        page.fmt(f)
-    }
-}

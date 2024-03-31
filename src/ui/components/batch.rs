@@ -134,26 +134,26 @@ fn GeneralBatchCreationPage(mode: BatchPageMode) -> Element {
     });
 
     // If the ID is populated, then use it to fetch the existing set of boats for a specific batch.
-    if let Some(id) = mode.as_option() {
         use_future(move || {
             async move {
-                match get_existing_batch(id).await {
-                    Ok(batch) => {
-                        let batch = batch
-                            .into_iter()
-                            .map(|(_event, boat)| boat)
-                            .collect::<Vec<_>>();
-                        selected.set(batch)
-                        // TODO also set the time element (when we add one) corresponding to the batch in question.
+                if let Some(id) = mode.as_option() {
+                    match get_existing_batch(id).await {
+                        Ok(batch) => {
+                            let batch = batch
+                                .into_iter()
+                                .map(|(_event, boat)| boat)
+                                .collect::<Vec<_>>();
+                            selected.set(batch)
+                            // TODO also set the time element (when we add one) corresponding to the batch in question.
+                        }
+                        Err(error) => toast_svc.send(ToastMsgMsg::Add(
+                            ToastData::from(error),
+                            ToastData::DEFAULT_TIME,
+                        )),
                     }
-                    Err(error) => toast_svc.send(ToastMsgMsg::Add(
-                        ToastData::from(error),
-                        ToastData::DEFAULT_TIME,
-                    )),
                 }
             }
         });
-    }
 
     rsx! {
         div {

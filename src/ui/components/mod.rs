@@ -22,14 +22,14 @@ use crate::db::{boat::types::BoatId, use_event_batch::BatchId};
 use dioxus::prelude::*;
 use dioxus_router::prelude::*;
 
-use self::batch_list::PageQueryParams;
+use self::batch_list::{Page};
 use self::boat_list::BoatListNav;
 
 #[derive(Routable, Clone, Debug, PartialEq)]
 #[rustfmt::skip]
 pub enum Route {
     #[layout(NavBar)]
-    #[redirect("/", || Route::BatchListPage{page: PageQueryParams::default()})]
+    #[redirect("/", || Route::BatchListPage{page: Page::default()})]
     #[nest("/boats")]
         #[layout(BoatListNav)]
         #[route("/")]
@@ -60,7 +60,7 @@ pub enum Route {
     #[end_nest]
     #[nest("/batches")]
         #[route("/?:page")]
-        BatchListPage{page: PageQueryParams},
+        BatchListPage{page: Page},
         #[route("/:id")]
         BatchViewingPage{id: BatchId},
         #[route("/edit/:id")]
@@ -84,7 +84,7 @@ fn NavBar() -> Element {
                     class: "mr-3",
                      Link {
                         class: "inline-block border border-blue-500 rounded py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white",
-                        to: Route::BatchListPage{page: PageQueryParams::default()},
+                        to: Route::BatchListPage{page: Page::default()},
                          "Practices and Regattas"
                     }
                 }
