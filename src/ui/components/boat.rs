@@ -11,8 +11,7 @@ pub mod creation_edit_form;
 #[server(GetBoat)]
 pub(crate) async fn get_boat(id: BoatId) -> Result<BoatAndStats, ServerFnError> {
     // let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu");
-    let conn_string = "db.sql";
-    let state = crate::ui::state::AppState::new(conn_string);
+    let state = crate::ui::state::AppState::singleton();
     let conn = state.pool().get().await?;
 
     conn.interact(move |conn| BoatAndStats::get_boat(conn, id).map_err(ServerFnError::from))
@@ -22,8 +21,7 @@ pub(crate) async fn get_boat(id: BoatId) -> Result<BoatAndStats, ServerFnError> 
 #[server(GetBoatOpenIssues)]
 pub(crate) async fn get_open_issues_for_boat(id: BoatId) -> Result<Vec<Issue>, ServerFnError> {
     // let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu");
-    let conn_string = "db.sql";
-    let state = crate::ui::state::AppState::new(conn_string);
+    let state = crate::ui::state::AppState::singleton();
     let conn = state.pool().get().await?;
 
     conn.interact(move |conn| {
@@ -38,8 +36,7 @@ pub(crate) async fn get_events_for_boat(
     id: BoatId,
 ) -> Result<Vec<(NaiveDate, f32)>, ServerFnError> {
     // let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu");
-    let conn_string = "db.sql";
-    let state = crate::ui::state::AppState::new(conn_string);
+    let state = crate::ui::state::AppState::singleton();
     let conn = state.pool().get().await?;
 
     conn.interact(move |conn| {
@@ -60,8 +57,7 @@ pub(crate) async fn get_monthly_events_for_boat(
     id: BoatId,
 ) -> Result<Vec<(NaiveDate, f32)>, ServerFnError> {
     // let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu");
-    let conn_string = "db.sql";
-    let state = crate::ui::state::AppState::new(conn_string);
+    let state = crate::ui::state::AppState::singleton();
     let conn = state.pool().get().await?;
 
     conn.interact(move |conn| {

@@ -19,8 +19,7 @@ async fn get_batches(
     limit: usize,
 ) -> Result<Vec<BatchAndCounts>, ServerFnError> {
     // let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu");
-    let conn_string = "db.sql";
-    let state = crate::ui::state::AppState::new(conn_string);
+    let state = crate::ui::state::AppState::singleton();
     let conn = state.pool().get().await?;
 
     conn.interact(move |conn| {
@@ -35,8 +34,7 @@ async fn get_batches(
 #[server(GetBoatsForBatch)]
 async fn get_boats_for_batch(batch_id: BatchId) -> Result<Vec<Boat>, ServerFnError> {
     // let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu");
-    let conn_string = "db.sql";
-    let state = crate::ui::state::AppState::new(conn_string);
+    let state = crate::ui::state::AppState::singleton();
     let conn = state.pool().get().await?;
 
     conn.interact(move |conn| {
@@ -69,7 +67,6 @@ pub fn BatchList(offset: usize, limit: Signal<usize>) -> Element {
         },
     ));
 
-    // let batches = b.deref().as_ref().unwrap().as_ref().unwrap();
     match batches_fut.value().read().as_ref()? {
         Ok(batches) => {
             rsx! {

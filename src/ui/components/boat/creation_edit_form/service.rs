@@ -18,8 +18,7 @@ pub(super) async fn create_boat(
     manufactured_at: Option<NaiveDate>,
 ) -> Result<Boat, ServerFnError> {
     // let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu");
-    let conn_string = "db.sql";
-    let state = crate::ui::state::AppState::new(conn_string);
+    let state = crate::ui::state::AppState::singleton();
     let conn = state.pool().get().await?;
 
     let boat = crate::db::boat::NewBoat::new(name, weight, ty, acquired_at, manufactured_at);
@@ -39,8 +38,7 @@ pub(super) async fn update_boat(
     id: BoatId,
 ) -> Result<Boat, ServerFnError> {
     // let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu");
-    let conn_string = "db.sql";
-    let state = crate::ui::state::AppState::new(conn_string);
+    let state = crate::ui::state::AppState::singleton();
     let conn = state.pool().get().await?;
 
     let (has_cox, seat_count, oars_per_seat) = ty.into_values();

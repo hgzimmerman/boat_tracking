@@ -1,7 +1,9 @@
 use deadpool_diesel::sqlite::Pool;
 use dioxus_fullstack::prelude::FromServerContext;
 use std::sync::Arc;
-// use dioxus::prelude::*;
+
+
+static STATE: std::sync::OnceLock<AppState >= std::sync::OnceLock::new();
 
 pub type ArcPool = Arc<Pool>;
 
@@ -17,6 +19,7 @@ impl std::fmt::Debug for AppState {
 }
 
 impl AppState {
+    const DB_STR: &'static str = "db.sql";
     pub fn new(conn_str: &str) -> Self {
         let manager =
             deadpool_diesel::sqlite::Manager::new(conn_str, deadpool_diesel::Runtime::Tokio1);
@@ -28,6 +31,14 @@ impl AppState {
         let pool = Arc::new(pool);
         Self { pool }
     }
+
+    pub fn singleton() -> &'static Self {
+        Self::custom_singleton(Self::DB_STR)
+    }
+    fn custom_singleton(conn_str: &'static str) -> &'static Self {
+        STATE.get_or_init(|| Self::new(conn_str)) 
+    }
+
     pub async fn conn(&self) -> Result<deadpool_diesel::sqlite::Connection, anyhow::Error> {
         self.pool.get().await.map_err(From::from)
     }

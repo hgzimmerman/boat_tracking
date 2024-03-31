@@ -189,8 +189,7 @@ pub(crate) async fn search_boats(
     search_name: Option<String>,
 ) -> Result<Vec<Boat>, ServerFnError> {
     // let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu");
-    let conn_string = "db.sql";
-    let state = crate::ui::state::AppState::new(conn_string);
+    let state = crate::ui::state::AppState::singleton();
     let conn = state.pool().get().await?;
     tracing::info!(?search_name, ?filter);
     conn.interact(|conn| Boat::get_boats3(conn, filter, search_name).map_err(ServerFnError::from))
@@ -203,8 +202,7 @@ pub(crate) async fn submit_boats(
     session_type: UseScenario,
 ) -> Result<BatchId, ServerFnError> {
     // let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu");
-    let conn_string = "db.sql";
-    let state = crate::ui::state::AppState::new(conn_string);
+    let state = crate::ui::state::AppState::singleton();
     let conn = state.pool().get().await?;
     let new_batch = crate::db::use_event_batch::NewBatchArgs {
         boat_ids,
@@ -220,8 +218,7 @@ pub(crate) async fn submit_boats(
 pub(crate) async fn get_existing_batch(
     batch_id: BatchId,
 ) -> Result<Vec<(UseEvent, Boat)>, ServerFnError> {
-    let conn_string = "db.sql";
-    let state = crate::ui::state::AppState::new(conn_string);
+    let state = crate::ui::state::AppState::singleton();
     let conn = state.pool().get().await?;
     conn.interact(move |conn| {
         crate::db::use_event_batch::UseEventBatch::get_events_and_boats_for_batch(conn, batch_id).map_err(ServerFnError::from)
@@ -235,8 +232,7 @@ pub(crate) async fn replace_batch(
     boat_ids: Vec<BoatId>,
     use_type: Option<UseScenario>,
 ) -> Result<(), ServerFnError> {
-    let conn_string = "db.sql";
-    let state = crate::ui::state::AppState::new(conn_string);
+    let state = crate::ui::state::AppState::singleton();
     let conn = state.pool().get().await?;
     conn.interact(move |conn| {
         // currently don't overwrite the recorded at field, because we don't support customizing it in the first place

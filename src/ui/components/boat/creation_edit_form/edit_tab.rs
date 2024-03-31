@@ -98,8 +98,7 @@ pub fn EditBoatForm(id: BoatId) -> Element {
 /// Gets the boat at the id. Needed when populating the form for editing
 async fn get_boat(boat_id: BoatId) -> Result<Boat, ServerFnError> {
     // let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu");
-    let conn_string = "db.sql";
-    let state = crate::ui::state::AppState::new(conn_string);
+    let state = crate::ui::state::AppState::singleton();
     let conn = state.pool().get().await?;
 
     conn.interact(move |conn| Boat::get_boat(conn, boat_id).map_err(ServerFnError::from))

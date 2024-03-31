@@ -6,8 +6,7 @@ use dioxus_fullstack::prelude::*;
 #[server(GetBoats)]
 pub(crate) async fn get_boats() -> Result<Vec<BoatAndStats>, ServerFnError> {
     // let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu");
-    let conn_string = "db.sql";
-    let state = crate::ui::state::AppState::new(conn_string);
+    let state = crate::ui::state::AppState::singleton();
     let conn = state.pool().get().await?;
     conn.interact(|conn| BoatAndStats::get_boats(conn).map_err(ServerFnError::from))
         .await?
