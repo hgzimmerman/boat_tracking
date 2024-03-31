@@ -68,7 +68,7 @@
               tailwindcss -i ./input.css -o ./public/tailwind.css --watch
             '')
             (writeShellScriptBin "watch-dx" ''
-              dx serve --features web 
+              dx serve --platform=fullstack --server-feature=ssr
             '')
             (writeShellScriptBin "run-server" ''
               cargo run --features ssr
