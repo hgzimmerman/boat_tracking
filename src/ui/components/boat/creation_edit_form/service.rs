@@ -2,7 +2,8 @@ use crate::{
     db::boat::{
         types::{BoatId, BoatType, WeightClass},
         Boat, NewBoat,
-    }, ui::components::toast::{MsgType, ToastData, ToastMsgMsg}
+    },
+    ui::components::toast::{MsgType, ToastData, ToastMsgMsg},
 };
 use chrono::NaiveDate;
 use dioxus::prelude::*;
@@ -35,26 +36,34 @@ pub(super) async fn update_boat(
     acquired_at: Option<NaiveDate>,
     manufactured_at: Option<NaiveDate>,
     relinquished_at: Option<NaiveDate>,
-    id: BoatId
+    id: BoatId,
 ) -> Result<Boat, ServerFnError> {
     // let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu");
     let conn_string = "db.sql";
     let state = crate::ui::state::AppState::new(conn_string);
     let conn = state.pool().get().await?;
 
-    let (has_cox,seat_count,oars_per_seat) = ty.into_values();
+    let (has_cox, seat_count, oars_per_seat) = ty.into_values();
 
-    let boat = Boat { id, name, weight_class: weight, seat_count, has_cox, oars_per_seat, acquired_at, manufactured_at, relinquished_at };
+    let boat = Boat {
+        id,
+        name,
+        weight_class: weight,
+        seat_count,
+        has_cox,
+        oars_per_seat,
+        acquired_at,
+        manufactured_at,
+        relinquished_at,
+    };
 
     conn.interact(move |conn| Boat::update_boat(conn, &boat).map_err(ServerFnError::from))
         .await?
 }
 
-
-
 pub(super) enum CreateBoatMsg {
     Create,
-    Update(BoatId)
+    Update(BoatId),
 }
 
 struct UpdateBoatArgs {
@@ -72,7 +81,7 @@ impl UpdateBoatArgs {
         ty: Signal<Option<BoatType>>,
         acquired_at: Signal<String>,
         manufactured_at: Signal<String>,
-        relinquished_at: Option<Signal<String>>
+        relinquished_at: Option<Signal<String>>,
     ) -> Result<Self, BoatArgsError> {
         let name: String = if name.read().is_empty() {
             return Err(BoatArgsError::MissingName);
@@ -105,23 +114,26 @@ impl UpdateBoatArgs {
                 .map_err(BoatArgsError::InvalidManufactureddAt)
                 .map(Some)?
         };
-        let relinquished_at: Option<NaiveDate> = relinquished_at.map(|relinquished_at| {
-            if relinquished_at.read().is_empty() {
-                Ok(None)
-            } else {
-                tracing::info!(relinquished = ?relinquished_at.read());
-                chrono::NaiveDate::parse_from_str(&&relinquished_at.read(), "%Y-%m-%d")
-                    .map_err(BoatArgsError::InvalidSoldAt)
-                    .map(Some)
-            }
-        }).transpose()?.flatten();
+        let relinquished_at: Option<NaiveDate> = relinquished_at
+            .map(|relinquished_at| {
+                if relinquished_at.read().is_empty() {
+                    Ok(None)
+                } else {
+                    tracing::info!(relinquished = ?relinquished_at.read());
+                    chrono::NaiveDate::parse_from_str(&&relinquished_at.read(), "%Y-%m-%d")
+                        .map_err(BoatArgsError::InvalidSoldAt)
+                        .map(Some)
+                }
+            })
+            .transpose()?
+            .flatten();
         Ok(UpdateBoatArgs {
             name,
             weight,
             ty,
             acquired_at,
             manufactured_at,
-            relinquished_at
+            relinquished_at,
         })
     }
 }
@@ -212,7 +224,14 @@ pub(super) async fn create_boat_service(
     while let Some(msg) = rx.next().await {
         match msg {
             CreateBoatMsg::Update(id) => {
-                match UpdateBoatArgs::new(name, weight, ty, acquired_at, manufactured_at, relinquished_at) {
+                match UpdateBoatArgs::new(
+                    name,
+                    weight,
+                    ty,
+                    acquired_at,
+                    manufactured_at,
+                    relinquished_at,
+                ) {
                     Ok(args) => {
                         match update_boat(
                             args.name,
@@ -221,27 +240,49 @@ pub(super) async fn create_boat_service(
                             args.acquired_at,
                             args.manufactured_at,
                             args.relinquished_at,
-                            id
+                            id,
                         )
-                        .await {
+                        .await
+                        {
                             Ok(boat) => {
                                 name.set(boat.name.clone());
                                 weight.set(Some(boat.weight_class));
                                 ty.set(boat.boat_type());
-                                acquired_at.set(boat.acquired_at.as_ref().map(ToString::to_string).unwrap_or_default());
-                                manufactured_at.set(boat.manufactured_at.as_ref().map(ToString::to_string).unwrap_or_default());
+                                acquired_at.set(
+                                    boat.acquired_at
+                                        .as_ref()
+                                        .map(ToString::to_string)
+                                        .unwrap_or_default(),
+                                );
+                                manufactured_at.set(
+                                    boat.manufactured_at
+                                        .as_ref()
+                                        .map(ToString::to_string)
+                                        .unwrap_or_default(),
+                                );
                                 if let Some(mut relinquished_at) = relinquished_at {
-                                    relinquished_at.set(boat.relinquished_at.as_ref().map(ToString::to_string).unwrap_or_default());
+                                    relinquished_at.set(
+                                        boat.relinquished_at
+                                            .as_ref()
+                                            .map(ToString::to_string)
+                                            .unwrap_or_default(),
+                                    );
                                 }
 
-                                toasts.send(ToastData::info(format!("Updated boat '{}' with id '{id}'.", boat.name)).into());
+                                toasts.send(
+                                    ToastData::info(format!(
+                                        "Updated boat '{}' with id '{id}'.",
+                                        boat.name
+                                    ))
+                                    .into(),
+                                );
                             }
                             Err(error) => {
                                 tracing::warn!(?error, "Could not send request");
                                 toasts.send(ToastData::error(error).into())
                             }
                         }
-                    },
+                    }
                     Err(error) => {
                         tracing::warn!(?error, "failed validation");
                         toasts.send(ToastData::error(error).into());

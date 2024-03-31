@@ -1,9 +1,7 @@
-
 use anyhow::Error;
 
 // #[tokio::main]
 fn main() -> Result<(), Error> {
-
     #[cfg(feature = "web")]
     {
         use tracing_subscriber::prelude::*;
@@ -20,7 +18,7 @@ fn main() -> Result<(), Error> {
             .with(fmt_layer)
             // .with(perf_layer)
             .init(); // Install these as subscribers to tracing events
-        
+
         tracing::info!(dev_version = 1, "Starting app");
 
         dioxus_web::launch::launch_cfg(
@@ -34,21 +32,18 @@ fn main() -> Result<(), Error> {
         use axum::routing::*;
         use boat_tracking::ui::state::AppState;
         use dioxus_fullstack::prelude::*;
-        use tokio::net::TcpListener;
         use std::{path::PathBuf, sync::Arc};
+        use tokio::net::TcpListener;
         use tracing_subscriber::prelude::*;
 
         let conn_string = "db.sql";
 
         let fmt_layer = tracing_subscriber::fmt::layer()
-            .with_ansi(false) 
+            .with_ansi(false)
             .with_writer(std::io::stdout)
             .with_filter(tracing::level_filters::LevelFilter::DEBUG);
 
-        tracing_subscriber::registry()
-            .with(fmt_layer)
-            .init(); // Install these as subscribers to tracing events
-
+        tracing_subscriber::registry().with(fmt_layer).init(); // Install these as subscribers to tracing events
 
         // Doesn't really work
         async fn state_populate_middleware(
@@ -76,7 +71,8 @@ fn main() -> Result<(), Error> {
                 let state = AppState::new(conn_string);
                 let state1 = state.clone();
 
-                let dom_factory = || dioxus::dioxus_core::VirtualDom::new(boat_tracking::ui::empty_app);
+                let dom_factory =
+                    || dioxus::dioxus_core::VirtualDom::new(boat_tracking::ui::empty_app);
                 // let dom_factory = || dioxus::dioxus_core::VirtualDom::new(boat_tracking::ui::app);
 
                 // build our application with some routes

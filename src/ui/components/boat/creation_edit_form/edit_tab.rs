@@ -1,8 +1,15 @@
+use super::service::create_boat_service;
 use crate::{
-    db::boat::{types::{BoatId, BoatType, WeightClass}, Boat}, ui::components::{boat::creation_edit_form::{BoatForm, BoatFormMode}, toast::{ToastData, ToastMsgMsg}}
+    db::boat::{
+        types::{BoatId, BoatType, WeightClass},
+        Boat,
+    },
+    ui::components::{
+        boat::creation_edit_form::{BoatForm, BoatFormMode},
+        toast::{ToastData, ToastMsgMsg},
+    },
 };
 use dioxus::prelude::*;
-use super::service::create_boat_service;
 use dioxus_fullstack::prelude::*;
 
 #[component]
@@ -15,23 +22,38 @@ pub fn EditBoatForm(id: BoatId) -> Element {
     let mut boat_type = use_signal(|| Option::<BoatType>::None);
     let mut weight_class = use_signal(|| Option::<WeightClass>::None);
 
-
     let toast_svc = use_coroutine_handle::<ToastMsgMsg>();
     use_future(move || {
         to_owned![id, toast_svc];
         async move {
             match get_boat(id).await {
                 Ok(boat) => {
-                    name.set(boat.name.clone());                    
-                    acquired_at.set(boat.acquired_at.as_ref().map(ToString::to_string).unwrap_or_default());                    
-                    manufactured_at.set(boat.manufactured_at.as_ref().map(ToString::to_string).unwrap_or_default());                    
-                    relinquished_at.set(boat.relinquished_at.as_ref().map(ToString::to_string).unwrap_or_default());                    
+                    name.set(boat.name.clone());
+                    acquired_at.set(
+                        boat.acquired_at
+                            .as_ref()
+                            .map(ToString::to_string)
+                            .unwrap_or_default(),
+                    );
+                    manufactured_at.set(
+                        boat.manufactured_at
+                            .as_ref()
+                            .map(ToString::to_string)
+                            .unwrap_or_default(),
+                    );
+                    relinquished_at.set(
+                        boat.relinquished_at
+                            .as_ref()
+                            .map(ToString::to_string)
+                            .unwrap_or_default(),
+                    );
                     boat_type.set(boat.boat_type());
                     weight_class.set(Some(boat.weight_class));
-                },
+                }
                 Err(error) => toast_svc.send(ToastData::error(error).into()),
             }
-    }});
+        }
+    });
     let _boat_svc = use_coroutine(|rx| {
         to_owned![
             name,
@@ -67,17 +89,14 @@ pub fn EditBoatForm(id: BoatId) -> Element {
                     mode: BoatFormMode::Edit(id)
                 }
             }
-        }           
-        
+        }
+
     }
 }
 
-
 #[server(GetBoat)]
 /// Gets the boat at the id. Needed when populating the form for editing
-async fn get_boat(
-    boat_id: BoatId
-) -> Result<Boat, ServerFnError> {
+async fn get_boat(boat_id: BoatId) -> Result<Boat, ServerFnError> {
     // let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu");
     let conn_string = "db.sql";
     let state = crate::ui::state::AppState::new(conn_string);

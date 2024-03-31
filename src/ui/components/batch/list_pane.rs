@@ -8,7 +8,7 @@ pub(super) fn BatchListPane(
     boats: Signal<Vec<Boat>>,
     boat_svc: Coroutine<BoatListMsg>,
     mode: BatchPageMode,
-    session_type: Signal<UseScenario>
+    session_type: Signal<UseScenario>,
 ) -> Element {
     rsx! {
         // The pane
@@ -23,7 +23,7 @@ pub(super) fn BatchListPane(
             // Submission form
             SubmitRow {
                 boats: boats.read().clone(),
-                boat_svc, 
+                boat_svc,
                 mode
                 session_type
             }
@@ -32,11 +32,7 @@ pub(super) fn BatchListPane(
 }
 
 #[component]
-fn List(
-    boats: Vec<Boat>, 
-    boat_svc: Coroutine<BoatListMsg>, 
-    mode: BatchPageMode
-) -> Element {
+fn List(boats: Vec<Boat>, boat_svc: Coroutine<BoatListMsg>, mode: BatchPageMode) -> Element {
     rsx! {
         div {
             class: "flex flex-col grow overflow-auto divide-y",
@@ -78,10 +74,10 @@ fn List(
 
 #[component]
 fn SubmitRow(
-    boats: Vec<Boat>, 
-    boat_svc: Coroutine<BoatListMsg>, 
+    boats: Vec<Boat>,
+    boat_svc: Coroutine<BoatListMsg>,
     mode: BatchPageMode,
-    session_type: Signal<UseScenario>
+    session_type: Signal<UseScenario>,
 ) -> Element {
     // TODO make this use the current time of day to initialize it.
     let mut show_session_type_dropdown = use_signal(|| false);
@@ -132,7 +128,7 @@ fn SubmitRow(
                                             *session_type.write() = UseScenario::Youth;
                                             *show_session_type_dropdown.write() = false;
                                         },
-                                        {UseScenario::Youth.to_string()} 
+                                        {UseScenario::Youth.to_string()}
                                     }
                                     li {
                                         onclick: move |e| {
@@ -140,7 +136,7 @@ fn SubmitRow(
                                             session_type.set(UseScenario::Adult);
                                             show_session_type_dropdown.set(false);
                                         },
-                                        {UseScenario::Adult.to_string()} 
+                                        {UseScenario::Adult.to_string()}
                                     }
                                     li {
                                         onclick: move |e| {
@@ -148,7 +144,7 @@ fn SubmitRow(
                                             session_type.set(UseScenario::LearnToRow);
                                             show_session_type_dropdown.set(false);
                                         },
-                                        {UseScenario::LearnToRow.to_string()} 
+                                        {UseScenario::LearnToRow.to_string()}
                                     }
                                     li {
                                         onclick: move |e| {
@@ -156,7 +152,7 @@ fn SubmitRow(
                                             session_type.set(UseScenario::ScullingSaturday);
                                             show_session_type_dropdown.set(false);
                                         },
-                                        {UseScenario::ScullingSaturday.to_string()} 
+                                        {UseScenario::ScullingSaturday.to_string()}
                                     }
                                     li {
                                         onclick: move |e| {
@@ -164,7 +160,7 @@ fn SubmitRow(
                                             session_type.set(UseScenario::PrivateSession);
                                             show_session_type_dropdown.set(false);
                                         },
-                                        {UseScenario::PrivateSession.to_string()} 
+                                        {UseScenario::PrivateSession.to_string()}
                                     }
                                     li {
                                         onclick: move |e| {

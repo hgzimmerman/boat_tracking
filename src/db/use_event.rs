@@ -19,7 +19,6 @@ pub struct UseEvent {
     pub note: Option<String>,
 }
 
-
 // use_scenario TEXT CHECK( use_scenario IN ('Youth', 'Adult', 'LearnToRow', 'ScullingSaturday', 'PrivateSession', 'Regatta', 'Other') ) NOT NULL
 #[derive(
     Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize,
@@ -41,7 +40,7 @@ impl std::fmt::Display for UseScenario {
             UseScenario::Youth => "Youth",
             UseScenario::Adult => "Adult",
             UseScenario::LearnToRow => "Learn To Row",
-            UseScenario::ScullingSaturday=> "Sculling Saturday",
+            UseScenario::ScullingSaturday => "Sculling Saturday",
             UseScenario::PrivateSession => "Private Session",
             UseScenario::Regatta => "Regatta",
             UseScenario::Other => "Other",

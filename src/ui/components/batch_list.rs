@@ -1,8 +1,10 @@
-use std::{ops::Deref};
+use std::ops::Deref;
 
 use crate::{
     db::{
-        boat::Boat, use_event::UseScenario, use_event_batch::{BatchAndCounts, BatchId}
+        boat::Boat,
+        use_event::UseScenario,
+        use_event_batch::{BatchAndCounts, BatchId},
     },
     ui::components::Route,
 };
@@ -23,16 +25,16 @@ async fn get_batches(
     let conn = state.pool().get().await?;
 
     conn.interact(move |conn| {
-        crate::db::use_event_batch::UseEventBatch::get_most_recent_batches_and_their_use_count(conn, scenario, offset, limit)
-            .map_err(ServerFnError::from)
+        crate::db::use_event_batch::UseEventBatch::get_most_recent_batches_and_their_use_count(
+            conn, scenario, offset, limit,
+        )
+        .map_err(ServerFnError::from)
     })
     .await?
 }
 
 #[server(GetBoatsForBatch)]
-async fn get_boats_for_batch(
-    batch_id: BatchId
-) -> Result<Vec<Boat>, ServerFnError> {
+async fn get_boats_for_batch(batch_id: BatchId) -> Result<Vec<Boat>, ServerFnError> {
     // let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu");
     let conn_string = "db.sql";
     let state = crate::ui::state::AppState::new(conn_string);
@@ -104,15 +106,15 @@ fn BatchListRow(batch_and_counts: BatchAndCounts) -> Element {
             None
         }
     });
-    
+
     let local_recorded_at = {
-        let local =  chrono::Local::now();
+        let local = chrono::Local::now();
         let local_tz = local.timezone();
         let date = local_tz.from_utc_datetime(&batch.recorded_at);
         date.format("%Y-%m-%d %H:%M").to_string()
     };
-    
-    rsx!{
+
+    rsx! {
         div {
             class: "flex flex-row h-16 items-center py-1",
             onmouseout: move |_event| {
@@ -160,7 +162,7 @@ fn BatchListRow(batch_and_counts: BatchAndCounts) -> Element {
                                     {error.to_string()}
                                 }
                             },
-                            None => rsx!{} 
+                            None => rsx!{}
                         }
                     },
                     None => rsx!{}
@@ -188,8 +190,8 @@ fn BatchListRow(batch_and_counts: BatchAndCounts) -> Element {
                     class: "btn btn-blue",
                     to: Route::BatchTemplateCreationPage{ id: batch.id },
                     "Use as Template"
-                }               
-            } 
+                }
+            }
         }
     }
 }
@@ -249,14 +251,13 @@ pub fn BatchListPage(page: ReadOnlySignal<Page>) -> Element {
     }
 }
 
-
 #[derive(Debug, PartialEq, Eq, Clone, Copy, serde::Serialize, serde::Deserialize)]
 pub struct Page(usize);
 
 impl Default for Page {
     fn default() -> Self {
         // 1 indexed
-        Self (1) 
+        Self(1)
     }
 }
 impl FromQueryArgument for Page {
@@ -264,7 +265,6 @@ impl FromQueryArgument for Page {
     fn from_query_argument(query: &str) -> Result<Self, Self::Err> {
         use std::str::FromStr;
         usize::from_str(query).map(Page)
-        
     }
 }
 impl std::fmt::Display for Page {
@@ -274,4 +274,3 @@ impl std::fmt::Display for Page {
         Ok(())
     }
 }
-

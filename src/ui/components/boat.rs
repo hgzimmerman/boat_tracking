@@ -8,7 +8,6 @@ use crate::db::{
 };
 pub mod creation_edit_form;
 
-
 #[server(GetBoat)]
 pub(crate) async fn get_boat(id: BoatId) -> Result<BoatAndStats, ServerFnError> {
     // let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu");
@@ -33,10 +32,11 @@ pub(crate) async fn get_open_issues_for_boat(id: BoatId) -> Result<Vec<Issue>, S
     .await?
 }
 
-
 /// Currently gets a month's worth of data, by day
 #[server(GetBoatEvents)]
-pub(crate) async fn get_events_for_boat(id: BoatId) -> Result<Vec<(NaiveDate, f32)>, ServerFnError> {
+pub(crate) async fn get_events_for_boat(
+    id: BoatId,
+) -> Result<Vec<(NaiveDate, f32)>, ServerFnError> {
     // let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu");
     let conn_string = "db.sql";
     let state = crate::ui::state::AppState::new(conn_string);
@@ -45,14 +45,20 @@ pub(crate) async fn get_events_for_boat(id: BoatId) -> Result<Vec<(NaiveDate, f3
     conn.interact(move |conn| {
         let start = chrono::Utc::now().naive_local() - chrono::TimeDelta::try_days(30).unwrap();
         crate::db::use_event::UseEvent::daily_timeseries_for_boat(conn, id, start, None)
-        .map_err(ServerFnError::from)
-        .map(|x| x.into_iter().map(|(date, count)|(date, count as f32)).collect())
+            .map_err(ServerFnError::from)
+            .map(|x| {
+                x.into_iter()
+                    .map(|(date, count)| (date, count as f32))
+                    .collect()
+            })
     })
     .await?
 }
 /// Gets a year's worth of data for the boat
 #[server(GetYearBoatEvents)]
-pub(crate) async fn get_monthly_events_for_boat(id: BoatId) -> Result<Vec<(NaiveDate, f32)>, ServerFnError> {
+pub(crate) async fn get_monthly_events_for_boat(
+    id: BoatId,
+) -> Result<Vec<(NaiveDate, f32)>, ServerFnError> {
     // let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu");
     let conn_string = "db.sql";
     let state = crate::ui::state::AppState::new(conn_string);
@@ -61,8 +67,12 @@ pub(crate) async fn get_monthly_events_for_boat(id: BoatId) -> Result<Vec<(Naive
     conn.interact(move |conn| {
         let start = chrono::Utc::now().naive_local() - chrono::TimeDelta::try_days(365).unwrap();
         crate::db::use_event::UseEvent::monthly_timeseries_for_boat(conn, id, start, None)
-        .map_err(ServerFnError::from)
-        .map(|x| x.into_iter().map(|(date, count)|(date, count as f32)).collect())
+            .map_err(ServerFnError::from)
+            .map(|x| {
+                x.into_iter()
+                    .map(|(date, count)| (date, count as f32))
+                    .collect()
+            })
     })
     .await?
 }
@@ -80,29 +90,30 @@ pub(crate) async fn get_resolved_issues_for_boat(id: BoatId) -> Result<Vec<Issue
 
 #[component]
 pub fn BoatNav() -> Element {
-    use dioxus_router::prelude::*;
     use crate::ui::components::Route;
+    use dioxus_router::prelude::*;
     let path: Route = use_route();
     let id = match path {
         Route::BoatSummary { id }
-        | Route::BoatMonthlyUses{ id }
-        | Route::BoatYearlyUses{ id }
-        | Route::BoatEdit{ id } 
-        | Route::BoatIssues{ id } => Some(id),
-        _ => None
-    }.expect("should be in path where id is known");
-    
+        | Route::BoatMonthlyUses { id }
+        | Route::BoatYearlyUses { id }
+        | Route::BoatEdit { id }
+        | Route::BoatIssues { id } => Some(id),
+        _ => None,
+    }
+    .expect("should be in path where id is known");
+
     let inactive_class = "inline-block p-4 rounded-t-lg hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 dark:hover:text-gray-300";
     let active_class = "inline-block p-4 rounded-t-lg hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 dark:hover:text-gray-300 active bg-gray-100 rounded-t-lg dark:bg-gray-800 dark:text-blue-500";
 
-    rsx!{
-        div { 
+    rsx! {
+        div {
             id: "boat-nav",
-            ul { 
+            ul {
                 class: "flex flex-wrap text-sm font-medium text-center text-gray-500 border-b border-gray-200 dark:border-gray-700 dark:text-gray-400",
                 li { class: "me-2",
                     Link {
-                        class: if matches!(path, Route::BoatSummary{..}) { active_class } else {inactive_class}, 
+                        class: if matches!(path, Route::BoatSummary{..}) { active_class } else {inactive_class},
                         to: Route::BoatSummary{id},
                         "Summary"
                     }
@@ -110,28 +121,28 @@ pub fn BoatNav() -> Element {
                 li { class: "me-2",
                     Link {
                         // "aria-current": "page",
-                        class: if matches!(path, Route::BoatMonthlyUses{..}) { active_class } else {inactive_class}, 
+                        class: if matches!(path, Route::BoatMonthlyUses{..}) { active_class } else {inactive_class},
                         to: Route::BoatMonthlyUses{id},
                         "Monthly Usage Chart"
                     }
                 }
                 li { class: "me-2",
                     Link {
-                        class: if matches!(path, Route::BoatYearlyUses{..}) { active_class } else {inactive_class}, 
+                        class: if matches!(path, Route::BoatYearlyUses{..}) { active_class } else {inactive_class},
                         to: Route::BoatYearlyUses{id},
                         "Yearly Usage Chart"
                     }
                 }
                 li { class: "me-2",
                     Link {
-                        class: if matches!(path, Route::BoatIssues{..}) { active_class } else {inactive_class}, 
+                        class: if matches!(path, Route::BoatIssues{..}) { active_class } else {inactive_class},
                         to: Route::BoatIssues{id},
                         "Issues"
                     }
                 }
                 li { class: "me-2",
                     Link {
-                        class: if matches!(path, Route::BoatEdit{..}) { active_class } else {inactive_class}, 
+                        class: if matches!(path, Route::BoatEdit{..}) { active_class } else {inactive_class},
                         to: Route::BoatEdit{id},
                         "Edit"
                     }
@@ -144,8 +155,8 @@ pub fn BoatNav() -> Element {
                         "Export to CSV"
                     }
                 }
-            } 
-        }   
+            }
+        }
         dioxus_router::components::Outlet::<crate::ui::components::Route>  {}
     }
 }
@@ -168,7 +179,9 @@ pub fn BoatSummary(id: BoatId) -> Element {
 #[component]
 pub fn BoatMonthlyUses(id: BoatId) -> Element {
     let boat_fut = use_server_future(use_reactive!(|id| async move { get_boat(id).await }))?;
-    let uses_fut = use_server_future(use_reactive!(|id| async move { get_events_for_boat(id).await }))?;
+    let uses_fut = use_server_future(use_reactive!(
+        |id| async move { get_events_for_boat(id).await }
+    ))?;
 
     rsx! {
         div {
@@ -186,7 +199,9 @@ pub fn BoatMonthlyUses(id: BoatId) -> Element {
 #[component]
 pub fn BoatYearlyUses(id: BoatId) -> Element {
     let boat_fut = use_server_future(use_reactive!(|id| async move { get_boat(id).await }))?;
-    let uses_fut = use_server_future(use_reactive!(|id| async move { get_monthly_events_for_boat(id).await }))?;
+    let uses_fut = use_server_future(use_reactive!(|id| async move {
+        get_monthly_events_for_boat(id).await
+    }))?;
 
     rsx! {
         div {
@@ -205,21 +220,22 @@ pub fn BoatYearlyUses(id: BoatId) -> Element {
 #[component]
 pub fn BoatIssues(id: BoatId) -> Element {
     let boat_fut = use_server_future(use_reactive!(|id| async move { get_boat(id).await }))?;
-    let issues_fut = use_server_future(use_reactive!(|id| async move { get_open_issues_for_boat(id).await }))?;
+    let issues_fut = use_server_future(use_reactive!(|id| async move {
+        get_open_issues_for_boat(id).await
+    }))?;
 
     rsx! {
         div {
             class: "overflow-y-auto flex flex-col flex-grow",
             BoatTitle {
-                boat: boat_fut.value().read().clone()?, 
+                boat: boat_fut.value().read().clone()?,
             }
             BoatIssueList {
-               issues: issues_fut.value().read().clone()? 
-            } 
+               issues: issues_fut.value().read().clone()?
+            }
         }
     }
 }
-
 
 #[component]
 pub fn BoatEdit(id: BoatId) -> Element {
@@ -228,7 +244,7 @@ pub fn BoatEdit(id: BoatId) -> Element {
         div {
             class: "overflow-y-auto flex flex-col flex-grow",
             BoatTitle {
-                boat: boat_fut.value().read().clone()?, 
+                boat: boat_fut.value().read().clone()?,
             }
             self::creation_edit_form::EditBoatForm {
                 id
@@ -237,11 +253,8 @@ pub fn BoatEdit(id: BoatId) -> Element {
     }
 }
 
-
 #[component]
-fn BoatTitle(
-    boat: Result<BoatAndStats, ServerFnError>,
-) -> Element {
+fn BoatTitle(boat: Result<BoatAndStats, ServerFnError>) -> Element {
     match boat {
         Ok(boat) => rsx! {
             div {
@@ -267,22 +280,25 @@ fn BoatTitle(
     }
 }
 
-
 #[derive(Debug, Clone, Copy, Default, PartialEq)]
 pub enum BoatUsesDateFormatting {
     #[default]
     Daily,
-    Monthly
+    Monthly,
 }
 
 #[component]
 fn BoatUses(
     use_events: Result<Vec<(NaiveDate, f32)>, ServerFnError>,
-    date_formatting: Option<BoatUsesDateFormatting>
+    date_formatting: Option<BoatUsesDateFormatting>,
 ) -> Element {
     let date_format: Box<dyn Fn(NaiveDate) -> String> = match date_formatting.unwrap_or_default() {
-        BoatUsesDateFormatting::Daily => Box::new(|time: NaiveDate| time.format("%m-%d").to_string()),
-        BoatUsesDateFormatting::Monthly => Box::new(|time: NaiveDate| time.format("%y-%m").to_string()),
+        BoatUsesDateFormatting::Daily => {
+            Box::new(|time: NaiveDate| time.format("%m-%d").to_string())
+        }
+        BoatUsesDateFormatting::Monthly => {
+            Box::new(|time: NaiveDate| time.format("%y-%m").to_string())
+        }
     };
     match use_events {
         Ok(timed_counts) => {
@@ -334,9 +350,7 @@ fn BoatUses(
 }
 
 #[component]
-fn BoatIssueList(
-    issues: Result<Vec<Issue>, ServerFnError>,
-) -> Element {
+fn BoatIssueList(issues: Result<Vec<Issue>, ServerFnError>) -> Element {
     match issues {
         Ok(issues) => {
             rsx! {

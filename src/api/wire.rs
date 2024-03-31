@@ -1,14 +1,16 @@
+use crate::db::{
+    boat::types::{BoatId, BoatType, WeightClass},
+    use_event::UseScenario,
+    use_event_batch::BatchId,
+};
 use chrono::{NaiveDate, NaiveDateTime};
-use crate::db::{boat::types::{BoatId, BoatType, WeightClass}, use_event::UseScenario, use_event_batch::BatchId};
-
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct CsvExportParams {
     pub start: Option<NaiveDateTime>,
     pub end: Option<NaiveDateTime>,
-    pub id: Option<BoatId>
+    pub id: Option<BoatId>,
 }
-
 
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct BoatUseCsvRow {

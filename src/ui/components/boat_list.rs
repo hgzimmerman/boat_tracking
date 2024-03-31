@@ -23,20 +23,20 @@ pub fn BoatListPage() -> Element {
                     boats: boats_fut.value().read().clone()?
                 }
             }
-            
+
         }
     }
 }
 
 pub fn BoatListNav() -> Element {
-    use dioxus_router::prelude::*;
     use crate::ui::components::Route;
+    use dioxus_router::prelude::*;
     rsx! {
         nav {
             class: "bg-ggrc sticky top-0",
             ul {
                 class: "flex items-center",
-                
+
                 li {
                     class: "mr-3",
                     Link {

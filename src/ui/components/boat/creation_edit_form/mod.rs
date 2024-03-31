@@ -1,8 +1,8 @@
 use crate::{
-    db::boat::types::{BoatId, BoatType, WeightClass}, ui::components::boat::creation_edit_form::service::CreateBoatMsg
+    db::boat::types::{BoatId, BoatType, WeightClass},
+    ui::components::boat::creation_edit_form::service::CreateBoatMsg,
 };
 use dioxus::prelude::*;
-
 
 mod edit_tab;
 pub use edit_tab::*;
@@ -10,17 +10,15 @@ mod new_boat_page;
 pub use new_boat_page::*;
 mod service;
 
-/// A toggle used to control how the form behaves, as it can serve two purposes 
+/// A toggle used to control how the form behaves, as it can serve two purposes
 /// - creation of a new boat or updating an existing one.
-#[derive(Debug, Clone, Copy, PartialEq, Eq,)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum BoatFormMode {
     /// A new boat should be created.
     New,
     /// An existing boat with the provided id should be updated.
-    Edit(BoatId)
+    Edit(BoatId),
 }
-
-
 
 /// The common form component that handles creation and upating of boats.
 #[component]
@@ -29,22 +27,19 @@ fn BoatForm(
     acquired_at: Signal<String>,
     manufactured_at: Signal<String>,
     relinquished_at: Option<Signal<String>>,
-    boat_type: Signal<Option<BoatType>>,    
+    boat_type: Signal<Option<BoatType>>,
     weight_class: Signal<Option<WeightClass>>,
-    mode: BoatFormMode
+    mode: BoatFormMode,
 ) -> Element {
-
     let mut show_weight_class_dropdown = use_signal(|| false);
     let mut show_boat_type_dropdown = use_signal(|| false);
 
     let boat_svc = use_coroutine_handle::<CreateBoatMsg>();
 
     // let title = name.map(move |name| {
-    let title = use_memo(move || {
-         match mode {
-            BoatFormMode::New => "Add a new boat".to_string(),
-            BoatFormMode::Edit(_) => format!("Edit {name}"),
-        }       
+    let title = use_memo(move || match mode {
+        BoatFormMode::New => "Add a new boat".to_string(),
+        BoatFormMode::Edit(_) => format!("Edit {name}"),
     });
 
     rsx! {
@@ -317,15 +312,15 @@ fn BoatForm(
                                     relinquished_at.set(event.value())
                                 }
                             }
-                        }                   
-                   }   
+                        }
+                   }
                } else {
                     rsx!()
                }
             }
-            
+
             {
-    
+
                 match mode {
                     BoatFormMode::New => rsx!{
                         button {
@@ -349,9 +344,8 @@ fn BoatForm(
                             "Save Changes to Boat"
                         }
                     },
-                } 
+                }
             }
         }
     }
 }
-

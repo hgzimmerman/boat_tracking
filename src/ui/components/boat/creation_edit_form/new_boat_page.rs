@@ -1,9 +1,10 @@
-use crate::{
-    db::boat::types::{BoatType, WeightClass}, ui::components::{boat::creation_edit_form::BoatFormMode, toast::ToastMsgMsg}
-};
-use dioxus::prelude::*;
 use super::service::create_boat_service;
 use super::BoatForm;
+use crate::{
+    db::boat::types::{BoatType, WeightClass},
+    ui::components::{boat::creation_edit_form::BoatFormMode, toast::ToastMsgMsg},
+};
+use dioxus::prelude::*;
 
 #[component]
 pub fn NewBoatPage() -> Element {

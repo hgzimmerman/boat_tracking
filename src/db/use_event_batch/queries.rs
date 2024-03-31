@@ -116,21 +116,25 @@ impl UseEventBatch {
         batch_id: BatchId,
         boat_ids: Vec<BoatId>,
         use_type: Option<UseScenario>,
-        recorded_at: Option<chrono::NaiveDateTime>
+        recorded_at: Option<chrono::NaiveDateTime>,
     ) -> Result<BatchId, diesel::result::Error> {
         conn.transaction(|conn| {
-            let target = use_event::table
-                .filter(use_event::batch_id.eq(batch_id));
-            diesel::delete(target)
-                .execute(conn)?;
+            let target = use_event::table.filter(use_event::batch_id.eq(batch_id));
+            diesel::delete(target).execute(conn)?;
 
             let batch: UseEventBatch = if use_type.is_some() || recorded_at.is_some() {
-                let changeset = UseEventBatchChangeset { id: batch_id, recorded_at, use_scenario: use_type };
+                let changeset = UseEventBatchChangeset {
+                    id: batch_id,
+                    recorded_at,
+                    use_scenario: use_type,
+                };
                 diesel::update(&changeset)
                     .set(&changeset)
                     .get_result(conn)?
             } else {
-                use_event_batch::table.filter(use_event_batch::id.eq(batch_id)).get_result(conn)?
+                use_event_batch::table
+                    .filter(use_event_batch::id.eq(batch_id))
+                    .get_result(conn)?
             };
             let use_events = boat_ids
                 .into_iter()

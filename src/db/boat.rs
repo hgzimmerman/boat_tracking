@@ -3,7 +3,6 @@ pub mod types;
 #[cfg(feature = "ssr")]
 pub mod queries;
 
-
 use types::{HasCox, OarsPerSeat, SeatCount, WeightClass};
 
 use self::types::{BoatAttributes, BoatId, BoatType, OarConfiguration};
@@ -13,7 +12,12 @@ use super::DbOrdering;
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[cfg_attr(
     feature = "ssr",
-    derive(diesel::Queryable, diesel::Selectable, diesel::Identifiable, diesel::AsChangeset)
+    derive(
+        diesel::Queryable,
+        diesel::Selectable,
+        diesel::Identifiable,
+        diesel::AsChangeset
+    )
 )]
 #[cfg_attr(feature = "ssr", diesel(table_name = crate::schema::boat))]
 pub struct Boat {

@@ -22,7 +22,6 @@ pub fn app() -> Element {
     }
 }
 
-
 /// Use this on the ssr side to basically turn of ssr. (observing crashes in hydration routine when this was added)
 pub fn empty_app() -> Element {
     None

@@ -70,7 +70,7 @@ pub fn BatchEditPage(id: BatchId) -> Element {
 }
 
 /// Because of limitations of the router, we need a distinct component for each use case.
-/// In order to share code, we have one general implementation, that we pass the 'mode' 
+/// In order to share code, we have one general implementation, that we pass the 'mode'
 /// to to change aspects of the pages behavior.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum BatchPageMode {
@@ -82,7 +82,7 @@ pub enum BatchPageMode {
     /// The saved boats will create a new batch.
     Template { id: BatchId },
     /// Allow editing an existing batch.
-    /// The saved boats will replace the entries in the old batch. 
+    /// The saved boats will replace the entries in the old batch.
     Edit { id: BatchId },
 }
 impl BatchPageMode {
@@ -134,26 +134,26 @@ fn GeneralBatchCreationPage(mode: BatchPageMode) -> Element {
     });
 
     // If the ID is populated, then use it to fetch the existing set of boats for a specific batch.
-        use_future(move || {
-            async move {
-                if let Some(id) = mode.as_option() {
-                    match get_existing_batch(id).await {
-                        Ok(batch) => {
-                            let batch = batch
-                                .into_iter()
-                                .map(|(_event, boat)| boat)
-                                .collect::<Vec<_>>();
-                            selected.set(batch)
-                            // TODO also set the time element (when we add one) corresponding to the batch in question.
-                        }
-                        Err(error) => toast_svc.send(ToastMsgMsg::Add(
-                            ToastData::from(error),
-                            ToastData::DEFAULT_TIME,
-                        )),
+    use_future(move || {
+        async move {
+            if let Some(id) = mode.as_option() {
+                match get_existing_batch(id).await {
+                    Ok(batch) => {
+                        let batch = batch
+                            .into_iter()
+                            .map(|(_event, boat)| boat)
+                            .collect::<Vec<_>>();
+                        selected.set(batch)
+                        // TODO also set the time element (when we add one) corresponding to the batch in question.
                     }
+                    Err(error) => toast_svc.send(ToastMsgMsg::Add(
+                        ToastData::from(error),
+                        ToastData::DEFAULT_TIME,
+                    )),
                 }
             }
-        });
+        }
+    });
 
     rsx! {
         div {
@@ -233,14 +233,16 @@ pub(crate) async fn get_existing_batch(
 pub(crate) async fn replace_batch(
     batch_id: BatchId,
     boat_ids: Vec<BoatId>,
-    use_type: Option<UseScenario>
+    use_type: Option<UseScenario>,
 ) -> Result<(), ServerFnError> {
     let conn_string = "db.sql";
     let state = crate::ui::state::AppState::new(conn_string);
     let conn = state.pool().get().await?;
     conn.interact(move |conn| {
         // currently don't overwrite the recorded at field, because we don't support customizing it in the first place
-        UseEventBatch::replace_batch_uses(conn, batch_id, boat_ids, use_type, None).map_err(ServerFnError::from).map(|_| ())
+        UseEventBatch::replace_batch_uses(conn, batch_id, boat_ids, use_type, None)
+            .map_err(ServerFnError::from)
+            .map(|_| ())
     })
     .await?
 }
@@ -309,11 +311,13 @@ async fn boat_list_service(
                 tracing::info!("fetching");
                 search().await
             }
-            BoatListMsg::SaveChanges { batch_id, boat_ids,  } => {
+            BoatListMsg::SaveChanges { batch_id, boat_ids } => {
                 let session_type = *session_type.read();
                 tracing::info!(?batch_id, ?boat_ids, "Overwriting old batch with new data");
                 match replace_batch(batch_id, boat_ids, Some(session_type)).await {
-                    Ok(_) => toasts.send(ToastData::info(format!("Edited batch {batch_id}")).into()),
+                    Ok(_) => {
+                        toasts.send(ToastData::info(format!("Edited batch {batch_id}")).into())
+                    }
                     Err(error) => toasts.send(ToastData::error(error).into()),
                 }
             }
@@ -409,7 +413,7 @@ async fn boat_list_service(
             }
             BoatListMsg::Submit => {
                 let ids: Vec<BoatId> = selected_boats.read().iter().map(|b| b.id).collect();
-                let session_type = *session_type.read(); 
+                let session_type = *session_type.read();
                 if !ids.is_empty() {
                     match submit_boats(ids, session_type).await {
                         Ok(id) => {

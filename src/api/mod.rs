@@ -1,25 +1,24 @@
 use crate::{db::use_event::UseEvent, ui::state::AppState};
 
-use self::wire::{CsvExportParams, BoatUseCsvRow};
+use self::wire::{BoatUseCsvRow, CsvExportParams};
 
 pub mod wire;
 
 pub async fn export_csv_handler(
     state: AppState,
-    axum::extract::Query(params): axum::extract::Query<CsvExportParams>
+    axum::extract::Query(params): axum::extract::Query<CsvExportParams>,
 ) -> Result<CsvRows<BoatUseCsvRow>, String> {
     let conn = state.pool().get().await.map_err(|e| e.to_string())?;
-    let rows = conn.interact(move |conn| {
-        UseEvent::export_events(conn, params.start, params.end, params.id.map(|x| vec![x]))
-    })
+    let rows = conn
+        .interact(move |conn| {
+            UseEvent::export_events(conn, params.start, params.end, params.id.map(|x| vec![x]))
+        })
         .await
         .map_err(|e| e.to_string())?
         .map_err(|e| e.to_string())?;
-        
+
     Ok(CsvRows(rows))
 }
-
-
 
 pub struct CsvRows<T>(Vec<T>);
 
@@ -50,8 +49,12 @@ where
     }
 }
 
-fn serialize<T: serde::Serialize>(rows: Vec<T>) -> Result<String, Box<dyn std::error::Error + Send + Sync>>{
-    let mut writer = csv::WriterBuilder::new().has_headers(true).from_writer(Vec::with_capacity(2048));
+fn serialize<T: serde::Serialize>(
+    rows: Vec<T>,
+) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
+    let mut writer = csv::WriterBuilder::new()
+        .has_headers(true)
+        .from_writer(Vec::with_capacity(2048));
 
     for row in rows {
         writer.serialize(row)?;

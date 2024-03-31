@@ -1,28 +1,28 @@
 pub mod batch;
+mod batch_list;
 pub mod boat;
 pub mod boat_list;
 pub mod issue_list;
+mod modal;
 pub mod new_issue;
 pub mod toast;
-mod batch_list;
-mod modal;
 
 use batch::BatchViewingPage;
 use batch::{BatchCreationPage, BatchEditPage, BatchTemplateCreationPage};
 use batch_list::BatchListPage;
-use boat::{BoatSummary, BoatMonthlyUses, BoatYearlyUses, BoatEdit, BoatIssues};
+use boat::{BoatEdit, BoatIssues, BoatMonthlyUses, BoatSummary, BoatYearlyUses};
 use boat_list::BoatListPage;
 use issue_list::IssueListPage;
 // use new_boat::NewBoatPage;
 use boat::creation_edit_form::NewBoatPage;
-use new_issue::NewIssuePage;
 use boat::BoatNav;
+use new_issue::NewIssuePage;
 
 use crate::db::{boat::types::BoatId, use_event_batch::BatchId};
 use dioxus::prelude::*;
 use dioxus_router::prelude::*;
 
-use self::batch_list::{Page};
+use self::batch_list::Page;
 use self::boat_list::BoatListNav;
 
 #[derive(Routable, Clone, Debug, PartialEq)]

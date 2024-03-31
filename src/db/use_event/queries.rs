@@ -28,7 +28,7 @@ impl UseEvent {
     }
 
     /// Gets the counts per day of uses for a specified boat.
-    /// 
+    ///
     /// The returned list will have empty 0s for dates
     pub fn daily_timeseries_for_boat(
         conn: &mut SqliteConnection,
@@ -44,29 +44,35 @@ impl UseEvent {
             filter = filter.filter(use_event::recorded_at.lt(date_end));
         }
 
-        // kind of a lame strategy, but the idea is to grab the dates, and then do the correlation server-side 
+        // kind of a lame strategy, but the idea is to grab the dates, and then do the correlation server-side
         let datetimes: Vec<NaiveDateTime> = filter
             .order_by(use_event::recorded_at.asc()) // oldest first
             .select(use_event::recorded_at)
             .get_results::<NaiveDateTime>(conn)?;
-        
-        let ts_map = datetimes.into_iter()
-        .map(|datetime: NaiveDateTime| datetime.date())
-        .fold(HashMap::new(), |mut acc, next| {
-            *acc.entry(next).or_default() += 1usize;
-            acc
-        });
+
+        let ts_map = datetimes
+            .into_iter()
+            .map(|datetime: NaiveDateTime| datetime.date())
+            .fold(HashMap::new(), |mut acc, next| {
+                *acc.entry(next).or_default() += 1usize;
+                acc
+            });
 
         let start = date_start.date();
-        let end = date_end.as_ref().map(chrono::NaiveDateTime::date).unwrap_or_else(|| chrono::Utc::now().naive_utc().date());
+        let end = date_end
+            .as_ref()
+            .map(chrono::NaiveDateTime::date)
+            .unwrap_or_else(|| chrono::Utc::now().naive_utc().date());
 
-        let list = start.iter_days().take_while(|d| d <= &end)
+        let list = start
+            .iter_days()
+            .take_while(|d| d <= &end)
             .map(|date| (date, ts_map.get(&date).cloned().unwrap_or(0)))
             .collect::<Vec<_>>();
 
         Ok(list)
     }
-    
+
     /// Sums uses over a month for a specified boat
     pub fn monthly_timeseries_for_boat(
         conn: &mut SqliteConnection,
@@ -82,26 +88,32 @@ impl UseEvent {
             filter = filter.filter(use_event::recorded_at.lt(date_end));
         }
 
-        // kind of a lame strategy, but the idea is to grab the dates, and then do the correlation server-side 
+        // kind of a lame strategy, but the idea is to grab the dates, and then do the correlation server-side
         let datetimes: Vec<NaiveDateTime> = filter
             .order_by(use_event::recorded_at.asc()) // oldest first
             .select(use_event::recorded_at)
             .get_results::<NaiveDateTime>(conn)?;
-        
-        let ts_map = datetimes.into_iter()
-        .map(|datetime: NaiveDateTime| datetime.date())
-        .fold(HashMap::new(), |mut acc, next| {
-            let key = NaiveDate::from_ymd_opt(next.year(), next.month(), 1).expect("Should be valid date");
-            *acc.entry(key).or_default() += 1usize;
-            acc
-        });
+
+        let ts_map = datetimes
+            .into_iter()
+            .map(|datetime: NaiveDateTime| datetime.date())
+            .fold(HashMap::new(), |mut acc, next| {
+                let key = NaiveDate::from_ymd_opt(next.year(), next.month(), 1)
+                    .expect("Should be valid date");
+                *acc.entry(key).or_default() += 1usize;
+                acc
+            });
 
         let start = date_start.date();
         let start = NaiveDate::from_ymd_opt(start.year(), start.month(), 1).unwrap();
-        let end = date_end.as_ref().map(chrono::NaiveDateTime::date).unwrap_or_else(|| chrono::Utc::now().naive_utc().date());
+        let end = date_end
+            .as_ref()
+            .map(chrono::NaiveDateTime::date)
+            .unwrap_or_else(|| chrono::Utc::now().naive_utc().date());
         let end = NaiveDate::from_ymd_opt(end.year(), end.month(), 1).unwrap();
 
-        let list = start.iter_days()
+        let list = start
+            .iter_days()
             .take_while(|d| d <= &end)
             .filter(|d| d.day() == 1)
             .map(|date| (date, ts_map.get(&date).cloned().unwrap_or(0)))
@@ -109,17 +121,14 @@ impl UseEvent {
 
         Ok(list)
     }
-     
 
     pub fn export_events(
         conn: &mut SqliteConnection,
         date_start: Option<NaiveDateTime>,
         date_end: Option<NaiveDateTime>,
-        boat_ids: Option<Vec<BoatId>>
+        boat_ids: Option<Vec<BoatId>>,
     ) -> Result<Vec<BoatUseCsvRow>, diesel::result::Error> {
-        let mut query = use_event::table
-            .inner_join(boat::table)
-            .into_boxed();
+        let mut query = use_event::table.inner_join(boat::table).into_boxed();
         if let Some(date_start) = date_start {
             query = query.filter(use_event::recorded_at.ge(date_start));
         }
