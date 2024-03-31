@@ -105,12 +105,12 @@ impl UseEvent {
             });
 
         let start = date_start.date();
-        let start = NaiveDate::from_ymd_opt(start.year(), start.month(), 1).unwrap();
+        let start = NaiveDate::from_ymd_opt(start.year(), start.month(), 1).expect("should be valid date");
         let end = date_end
             .as_ref()
             .map(chrono::NaiveDateTime::date)
             .unwrap_or_else(|| chrono::Utc::now().naive_utc().date());
-        let end = NaiveDate::from_ymd_opt(end.year(), end.month(), 1).unwrap();
+        let end = NaiveDate::from_ymd_opt(end.year(), end.month(), 1).expect("should be valid date");
 
         let list = start
             .iter_days()

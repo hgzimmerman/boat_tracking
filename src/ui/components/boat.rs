@@ -40,7 +40,7 @@ pub(crate) async fn get_events_for_boat(
     let conn = state.pool().get().await?;
 
     conn.interact(move |conn| {
-        let start = chrono::Utc::now().naive_local() - chrono::TimeDelta::try_days(30).unwrap();
+        let start = chrono::Utc::now().naive_local() - chrono::TimeDelta::try_days(30).expect("should be able to create a month");
         crate::db::use_event::UseEvent::daily_timeseries_for_boat(conn, id, start, None)
             .map_err(ServerFnError::from)
             .map(|x| {
@@ -61,7 +61,7 @@ pub(crate) async fn get_monthly_events_for_boat(
     let conn = state.pool().get().await?;
 
     conn.interact(move |conn| {
-        let start = chrono::Utc::now().naive_local() - chrono::TimeDelta::try_days(365).unwrap();
+        let start = chrono::Utc::now().naive_local() - chrono::TimeDelta::try_days(365).expect("Should create year delta");
         crate::db::use_event::UseEvent::monthly_timeseries_for_boat(conn, id, start, None)
             .map_err(ServerFnError::from)
             .map(|x| {
@@ -264,7 +264,7 @@ fn BoatTitle(boat: Result<BoatAndStats, ServerFnError>) -> Element {
                 div {
                     class: "px-4",
                     {
-                        format!("{:?} {}",boat.boat.weight_class, boat.boat.boat_type().unwrap())
+                        format!("{:?} {}",boat.boat.weight_class, boat.boat.boat_type()?)
                     }
                 }
             }

@@ -12,7 +12,7 @@ pub async fn sleep(duration: std::time::Duration) {
             let _ = send.send(());
         });
         let _timeout = web_sys::window()
-            .unwrap()
+            .expect("should be able to get window")
             .set_timeout_with_callback_and_timeout_and_arguments_0(
                 closure.as_ref().unchecked_ref(),
                 duration.as_millis() as i32,

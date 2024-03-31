@@ -1,6 +1,13 @@
 use anyhow::Error;
 
-// #[tokio::main]
+
+// TODO:
+// Keep working on date parsing
+// Make sure that the templates still work.
+// don't allow editing things in the view practice screen.
+// It seems like timezone offsets are getting applied twice in some places
+
+
 fn main() -> Result<(), Error> {
     #[cfg(feature = "web")]
     {
@@ -65,7 +72,7 @@ fn main() -> Result<(), Error> {
         }
 
         tokio::runtime::Runtime::new()
-            .unwrap()
+            .expect("Should create runtime")
             .block_on(async move {
                 let cfg = ServeConfigBuilder::new()
                     .assets_path(PathBuf::from("dist"))
@@ -110,7 +117,7 @@ fn main() -> Result<(), Error> {
                     .register_server_fns()
                     .fallback(get(render_handler_with_context).with_state((
                         move |ctx| {
-                            ctx.insert::<AppState>(state.clone()).unwrap();
+                            ctx.insert::<AppState>(state.clone()).expect("should be able to add state");
                         },
                         cfg,
                         ssr_state,
@@ -128,7 +135,7 @@ fn main() -> Result<(), Error> {
                 let tcp_lisener = TcpListener::bind(addr).await.expect("should bind to tcp");
                 axum::serve(tcp_lisener, app.into_make_service())
                     .await
-                    .unwrap();
+                    .expect("Should run server");
             });
     }
 
