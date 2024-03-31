@@ -112,7 +112,9 @@ fn GeneralBatchCreationPage(mode: BatchPageMode) -> Element {
     let filter = use_signal(BoatFilter3::default);
     let search_name = use_signal(|| Option::<String>::None);
     let search_boat_state = use_signal(Vec::<Boat>::new);
-    let session_type = use_signal(|| UseScenario::Adult);
+
+    let mut session_type = use_signal(|| UseScenario::Adult);
+    let mut created_at_time = use_signal(|| crate::ui::util::time::render_local(chrono::Utc::now().naive_utc()));
 
     let toast_svc = use_coroutine_handle::<ToastMsgMsg>();
     let boat_svc = use_coroutine(|rx| {
@@ -139,11 +141,23 @@ fn GeneralBatchCreationPage(mode: BatchPageMode) -> Element {
             if let Some(id) = mode.as_option() {
                 match get_existing_batch(id).await {
                     Ok(batch) => {
+                        // This could be done better by using a different future that gets the date from the batch itself,
+                        // but because the datetime _should_be_ the same between the batch and its constituent events, and batches should have at least one item,
+                        // this will be fine. 
+                        if let Some(time) = batch.iter().next().map(|x| x.0.recorded_at) {
+                            created_at_time.set(crate::ui::util::time::render_local(time))
+                        }
+                        if let Some(use_scenario) = batch.iter().next().map(|x| x.0.use_scenario) {
+                            session_type.set(use_scenario)
+                        }
+
+                        // TODO  make the above use a distinct db query.
                         let batch = batch
                             .into_iter()
                             .map(|(_event, boat)| boat)
                             .collect::<Vec<_>>();
-                        selected.set(batch)
+                        selected.set(batch);
+
                         // TODO also set the time element (when we add one) corresponding to the batch in question.
                     }
                     Err(error) => toast_svc.send(ToastMsgMsg::Add(
@@ -163,7 +177,8 @@ fn GeneralBatchCreationPage(mode: BatchPageMode) -> Element {
                 boats: selected,
                 boat_svc,
                 mode,
-                session_type
+                session_type,
+                created_at_time,
             }
             {
                 if mode.is_view() {

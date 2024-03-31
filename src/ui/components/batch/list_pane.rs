@@ -9,6 +9,7 @@ pub(super) fn BatchListPane(
     boat_svc: Coroutine<BoatListMsg>,
     mode: BatchPageMode,
     session_type: Signal<UseScenario>,
+    created_at_time: Signal<String>,
 ) -> Element {
     rsx! {
         // The pane
@@ -24,8 +25,9 @@ pub(super) fn BatchListPane(
             SubmitRow {
                 boats: boats.read().clone(),
                 boat_svc,
-                mode
-                session_type
+                mode,
+                session_type,
+                created_at_time
             }
         }
     }
@@ -78,6 +80,7 @@ fn SubmitRow(
     boat_svc: Coroutine<BoatListMsg>,
     mode: BatchPageMode,
     session_type: Signal<UseScenario>,
+    created_at_time: Signal<String>,
 ) -> Element {
     // TODO make this use the current time of day to initialize it.
     let mut show_session_type_dropdown = use_signal(|| false);
@@ -182,6 +185,25 @@ fn SubmitRow(
                             }
                         }
                     }
+
+                    div {
+                        class: "my-1",
+                        /* label {
+                            r#for: "manufactured-at",
+                            class: "block mb-2 text-sm font-medium text-gray-900 dark:text-white",
+                            "Time"
+                        } */
+                        input {
+                            r#type: "datetime-local",
+                            id: "manufactured-at",
+                            class: "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500",
+                            value: created_at_time.read().to_owned(),
+                            oninput: move |event| {
+                                created_at_time.set(event.value())
+                            }
+                        } 
+                    }
+
                     {
                         match mode {
                             BatchPageMode::Create | BatchPageMode::Template { .. } => rsx!{
