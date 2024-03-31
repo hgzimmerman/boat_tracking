@@ -229,6 +229,7 @@ pub fn BatchListPage(page: ReadOnlySignal<Page>) -> Element {
                     a {
                         class: "inline-block p-4",
                         href: format!("/export.csv"),
+                        target: "_blank",
                         "Export all to CSV"
                     }
                 }

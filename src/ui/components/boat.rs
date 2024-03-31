@@ -152,6 +152,7 @@ pub fn BoatNav() -> Element {
                     a {
                         class: "inline-block p-4",
                         href: format!("/export.csv?id={id}"),
+                        target: "_blank",
                         "Export to CSV"
                     }
                 }
