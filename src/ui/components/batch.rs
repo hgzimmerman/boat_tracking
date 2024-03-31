@@ -430,26 +430,37 @@ async fn boat_list_service(
                 let session_type = *session_type.read();
                 let recorded_at = created_at_time();
                 tracing::trace!(recorded= ?recorded_at.trim());
-                // TODO Do proper validation here...
-                let recorded_at = NaiveDateTime::parse_from_str(recorded_at.trim(), crate::ui::util::time::MINUTE_RESOLUTION_FMT).expect("should parse string");
-                if !ids.is_empty() {
-                    match submit_boats(ids, session_type, recorded_at).await {
-                        Ok(id) => {
-                            tracing::info!(%id, "Created batch");
-                            searched_boats.set(Vec::new());
-                            selected_boats.set(Vec::new());
-                            search_name.set(None);
-                            created_at_time.set(crate::ui::util::time::render_local(chrono::Utc::now().naive_utc()));
-                            toasts.send(ToastData::success("Submitted boats").into());
-                            // refresh the search page
-                            search().await
+
+                // let date_result = DateTime::<FixedOffset>::parse_from_str(recorded_at.trim(), crate::ui::util::time::MINUTE_RESOLUTION_FMT);
+                let date_result = crate::ui::util::time::parse_str_as_naive_to_utc(recorded_at.trim());
+                match date_result {
+                   Ok(recorded_at)  => {
+                       // This recorded at should be input + 4h
+                       tracing::info!(?recorded_at, input=created_at_time());
+                        if !ids.is_empty() {
+                            match submit_boats(ids, session_type, recorded_at).await {
+                                Ok(id) => {
+                                    tracing::info!(%id, "Created batch");
+                                    searched_boats.set(Vec::new());
+                                    selected_boats.set(Vec::new());
+                                    search_name.set(None);
+                                    created_at_time.set(crate::ui::util::time::render_local(chrono::Utc::now().naive_utc()));
+                                    toasts.send(ToastData::success("Submitted boats").into());
+                                    // refresh the search page
+                                    search().await
+                                }
+                                Err(error) => {
+                                    tracing::error!(?error, "Could not submit batch");
+                                    toasts.send(ToastData::warn("Could not submit batch".to_string()).into());
+                                }
+                            }
                         }
-                        Err(error) => {
-                            tracing::error!(?error, "Could not submit batch");
-                            toasts.send(ToastData::warn("Could not submit batch".to_string()).into());
-                        }
-                    }
+                   },
+                   Err(error) => {
+                        toasts.send(ToastData::error(error).into());
+                   }
                 }
+                
             }
         }
     }

@@ -63,7 +63,6 @@ pub fn BoatListNav() -> Element {
 fn BoatRow(boat: BoatAndStats) -> Element {
     rsx! {
         div {
-            // "style": "display:flex; flex-direction: horizontal; flex-grow: 1; gap: 10px; border: solid black 1px; padding: 6px",
             class: "flex flex-row flex-grow gap-2.5 p-1.5",
             onclick: move |event| {
                 // now, outer won't be triggered
