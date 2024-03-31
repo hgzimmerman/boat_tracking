@@ -49,7 +49,7 @@ fn SearchResults(boats: Vec<Boat>, boat_svc: Coroutine<BoatListMsg>) -> Element 
                     button {
                         class: "m-2 btn btn-blue",
                         onclick: move |_| {
-                            boat_svc.send(BoatListMsg::AddToBatch(b.id.clone()));
+                            boat_svc.send(BoatListMsg::AddToBatch(b.id));
                         },
                         "Add to batch"
                     }

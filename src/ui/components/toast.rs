@@ -21,7 +21,6 @@ pub async fn toast_service(mut rx: UnboundedReceiver<ToastMsgMsg>, mut toasts: S
         match msg {
             ToastMsgMsg::Add(toast, duration) => {
                 let counter = toasts.write().add(toast);
-                let mut toasts = toasts.clone();
                 wasm_bindgen_futures::spawn_local(async move {
                     sleep(duration).await;
                     toasts.write().toasts.lock().unwrap().shift_remove(&counter);

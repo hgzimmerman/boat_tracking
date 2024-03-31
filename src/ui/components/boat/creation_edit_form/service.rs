@@ -1,7 +1,7 @@
 use crate::{
     db::boat::{
         types::{BoatId, BoatType, WeightClass},
-        Boat, NewBoat,
+        Boat, 
     },
     ui::components::toast::{MsgType, ToastData, ToastMsgMsg},
 };
@@ -22,7 +22,7 @@ pub(super) async fn create_boat(
     let state = crate::ui::state::AppState::new(conn_string);
     let conn = state.pool().get().await?;
 
-    let boat = NewBoat::new(name, weight, ty, acquired_at, manufactured_at);
+    let boat = crate::db::boat::NewBoat::new(name, weight, ty, acquired_at, manufactured_at);
 
     conn.interact(|conn| Boat::new_boat(conn, boat).map_err(ServerFnError::from))
         .await?
@@ -102,7 +102,7 @@ impl UpdateBoatArgs {
             None
         } else {
             tracing::info!(acquired = ?acquired_at.read());
-            chrono::NaiveDate::parse_from_str(&&acquired_at.read(), "%Y-%m-%d")
+            chrono::NaiveDate::parse_from_str(&acquired_at.read(), "%Y-%m-%d")
                 .map_err(BoatArgsError::InvalidAcquiredAt)
                 .map(Some)?
         };
@@ -110,7 +110,7 @@ impl UpdateBoatArgs {
             None
         } else {
             tracing::info!(manufactured = ?manufactured_at.read());
-            chrono::NaiveDate::parse_from_str(&&manufactured_at.read(), "%Y-%m-%d")
+            chrono::NaiveDate::parse_from_str(&manufactured_at.read(), "%Y-%m-%d")
                 .map_err(BoatArgsError::InvalidManufactureddAt)
                 .map(Some)?
         };
@@ -120,7 +120,7 @@ impl UpdateBoatArgs {
                     Ok(None)
                 } else {
                     tracing::info!(relinquished = ?relinquished_at.read());
-                    chrono::NaiveDate::parse_from_str(&&relinquished_at.read(), "%Y-%m-%d")
+                    chrono::NaiveDate::parse_from_str(&relinquished_at.read(), "%Y-%m-%d")
                         .map_err(BoatArgsError::InvalidSoldAt)
                         .map(Some)
                 }
@@ -187,7 +187,7 @@ impl CreateBoatArgs {
             None
         } else {
             tracing::info!(acquired = ?acquired_at.read());
-            chrono::NaiveDate::parse_from_str(&&acquired_at.read(), "%Y-%m-%d")
+            chrono::NaiveDate::parse_from_str(&acquired_at.read(), "%Y-%m-%d")
                 .map_err(BoatArgsError::InvalidAcquiredAt)
                 .map(Some)?
         };
@@ -195,7 +195,7 @@ impl CreateBoatArgs {
             None
         } else {
             tracing::info!(manufactured = ?manufactured_at.read());
-            chrono::NaiveDate::parse_from_str(&&manufactured_at.read(), "%Y-%m-%d")
+            chrono::NaiveDate::parse_from_str(&manufactured_at.read(), "%Y-%m-%d")
                 .map_err(BoatArgsError::InvalidManufactureddAt)
                 .map(Some)?
         };

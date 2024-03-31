@@ -217,13 +217,13 @@ pub fn BatchListPage(page: ReadOnlySignal<Page>) -> Element {
                     if *offset_state.read() != 0 {
                         Link {
                             class: "inline-block border border-blue-500 rounded py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white",
-                            to: Route::BatchListPage{page: Page{0: page.saturating_sub(1)}},
+                            to: Route::BatchListPage{page: Page(page.saturating_sub(1))},
                             "Newer"
                         }
                     }
                     Link {
                         class: "inline-block border border-blue-500 rounded py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white",
-                        to: Route::BatchListPage{page: Page{0: page.saturating_add(1)}},
+                        to: Route::BatchListPage{page: Page(page.saturating_add(1))},
                         "Older"
                     }
                     a {
@@ -244,8 +244,8 @@ pub fn BatchListPage(page: ReadOnlySignal<Page>) -> Element {
             }
             // the controls
             BatchList {
-                offset: offset_state.read().clone(),
-                limit: limit_state.clone()
+                offset: *offset_state.read(),
+                limit: limit_state
             }
         }
     }

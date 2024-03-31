@@ -19,7 +19,7 @@ use crate::{
             Boat, BoatFilter3,
         },
         use_event::{UseEvent, UseScenario},
-        use_event_batch::{BatchId, NewBatch, NewBatchArgs, UseEventBatch},
+        use_event_batch::BatchId,
     },
     ui::components::toast::ToastData,
 };
@@ -108,10 +108,10 @@ impl BatchPageMode {
 /// the page with boats that came from that particular batch.
 #[component]
 fn GeneralBatchCreationPage(mode: BatchPageMode) -> Element {
-    let mut selected = use_signal(|| Vec::<Boat>::new());
+    let mut selected = use_signal(Vec::<Boat>::new);
     let filter = use_signal(BoatFilter3::default);
     let search_name = use_signal(|| Option::<String>::None);
-    let search_boat_state = use_signal(|| Vec::<Boat>::new());
+    let search_boat_state = use_signal(Vec::<Boat>::new);
     let session_type = use_signal(|| UseScenario::Adult);
 
     let toast_svc = use_coroutine_handle::<ToastMsgMsg>();
@@ -206,14 +206,14 @@ pub(crate) async fn submit_boats(
     let conn_string = "db.sql";
     let state = crate::ui::state::AppState::new(conn_string);
     let conn = state.pool().get().await?;
-    let new_batch = NewBatchArgs {
+    let new_batch = crate::db::use_event_batch::NewBatchArgs {
         boat_ids,
-        batch: NewBatch {
+        batch: crate::db::use_event_batch::NewBatch {
             use_scenario: session_type,
             recorded_at: chrono::Utc::now().naive_utc(),
         },
     };
-    conn.interact(|conn| UseEventBatch::create_batch(conn, new_batch).map_err(ServerFnError::from))
+    conn.interact(|conn| crate::db::use_event_batch::UseEventBatch::create_batch(conn, new_batch).map_err(ServerFnError::from))
         .await?
 }
 #[server(GetExistingBatch)]
@@ -224,7 +224,7 @@ pub(crate) async fn get_existing_batch(
     let state = crate::ui::state::AppState::new(conn_string);
     let conn = state.pool().get().await?;
     conn.interact(move |conn| {
-        UseEventBatch::get_events_and_boats_for_batch(conn, batch_id).map_err(ServerFnError::from)
+        crate::db::use_event_batch::UseEventBatch::get_events_and_boats_for_batch(conn, batch_id).map_err(ServerFnError::from)
     })
     .await?
 }
@@ -240,7 +240,7 @@ pub(crate) async fn replace_batch(
     let conn = state.pool().get().await?;
     conn.interact(move |conn| {
         // currently don't overwrite the recorded at field, because we don't support customizing it in the first place
-        UseEventBatch::replace_batch_uses(conn, batch_id, boat_ids, use_type, None)
+        crate::db::use_event_batch::UseEventBatch::replace_batch_uses(conn, batch_id, boat_ids, use_type, None)
             .map_err(ServerFnError::from)
             .map(|_| ())
     })
@@ -425,7 +425,7 @@ async fn boat_list_service(
                         }
                         Err(error) => {
                             tracing::error!(?error, "Could not submit batch");
-                            toasts.send(ToastData::warn(format!("Could not submit batch")).into());
+                            toasts.send(ToastData::warn("Could not submit batch".to_string()).into());
                         }
                     }
                 }

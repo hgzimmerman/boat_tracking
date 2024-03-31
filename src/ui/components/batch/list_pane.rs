@@ -57,7 +57,7 @@ fn List(boats: Vec<Boat>, boat_svc: Coroutine<BoatListMsg>, mode: BatchPageMode)
                                     button {
                                         class: "m-2 btn btn-red",
                                         onclick: move |_| {
-                                            boat_svc.send(BoatListMsg::RemoveFromBatch(b.id.clone()));
+                                            boat_svc.send(BoatListMsg::RemoveFromBatch(b.id));
                                         },
                                         "Remove"
                                     }
