@@ -23,3 +23,17 @@ pub struct BoatUseCsvRow {
     pub batch_id: Option<BatchId>,
     pub use_scenario: UseScenario,
 }
+
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct BoatSummaryCsvRow {
+    pub boat_id: BoatId,
+    pub boat_name: String,
+    pub boat_type: Option<BoatType>,
+    pub boat_weight_class: WeightClass,
+    pub manufactured_at: Option<NaiveDate>,
+    pub acquired_at: Option<NaiveDate>,
+    pub relinquished_at: Option<NaiveDate>,
+    pub total_uses: u64,
+    pub open_issues: u64
+}

@@ -44,6 +44,15 @@ pub fn BoatListNav() -> Element {
                         "New Boat"
                     }
                 }
+                li {
+                    class: "mr-3",
+                    a {
+                        class: "inline-block p-4",
+                        href: format!("/boats_export.csv"),
+                        target: "_blank",
+                        "Export to CSV"
+                    }
+                }
             }
         }
         Outlet::<Route> {}

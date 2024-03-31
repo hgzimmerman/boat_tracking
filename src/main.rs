@@ -77,7 +77,8 @@ fn main() -> Result<(), Error> {
 
                 // build our application with some routes
                 let app = Router::new()
-                    .route("/export.csv", get(boat_tracking::api::export_csv_handler))
+                    .route("/uses_export.csv", get(boat_tracking::api::export_uses_csv_handler))
+                    .route("/boats_export.csv", get(boat_tracking::api::export_boats_csv_handler))
                     .serve_static_assets("dist")
                     .await
                     .connect_hot_reload()
