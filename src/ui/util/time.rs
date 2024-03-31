@@ -13,4 +13,4 @@ pub fn convert_to_local(datetime: NaiveDateTime) -> DateTime<Local> {
 pub fn format_local_date_time(local_datetime: DateTime<Local>) -> DelayedFormat<StrftimeItems<'static>> {
     local_datetime.format(MINUTE_RESOLUTION_FMT)
 }
-const MINUTE_RESOLUTION_FMT: &'static str = "%Y-%m-%d %H:%M";
+pub const MINUTE_RESOLUTION_FMT: &'static str = "%Y-%m-%d %H:%M";

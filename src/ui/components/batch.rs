@@ -23,6 +23,7 @@ use crate::{
     },
     ui::components::toast::ToastData,
 };
+use chrono::NaiveDateTime;
 use dioxus::prelude::*;
 use dioxus_fullstack::prelude::*;
 
@@ -126,6 +127,7 @@ fn GeneralBatchCreationPage(mode: BatchPageMode) -> Element {
             filter,
             search_name,
             session_type,
+            created_at_time,
             toast_svc,
         )
     });
@@ -215,6 +217,7 @@ pub(crate) async fn search_boats(
 pub(crate) async fn submit_boats(
     boat_ids: Vec<BoatId>,
     session_type: UseScenario,
+    recorded_at: NaiveDateTime
 ) -> Result<BatchId, ServerFnError> {
     // let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu");
     let state = crate::ui::state::AppState::singleton();
@@ -223,7 +226,7 @@ pub(crate) async fn submit_boats(
         boat_ids,
         batch: crate::db::use_event_batch::NewBatch {
             use_scenario: session_type,
-            recorded_at: chrono::Utc::now().naive_utc(),
+            recorded_at,
         },
     };
     conn.interact(|conn| crate::db::use_event_batch::UseEventBatch::create_batch(conn, new_batch).map_err(ServerFnError::from))
@@ -295,6 +298,7 @@ async fn boat_list_service(
     mut filter: Signal<BoatFilter3>,
     mut search_name: Signal<Option<String>>,
     session_type: Signal<UseScenario>,
+    mut created_at_time: Signal<String>,
     toasts: Coroutine<ToastMsgMsg>,
 ) {
     use futures::stream::StreamExt;
@@ -402,6 +406,7 @@ async fn boat_list_service(
             }
             BoatListMsg::RemoveFromBatch(id) => {
                 let mut boat_to_remove = None;
+                // O(n), retain the items that aren't the one at the id
                 let new_selected_boats = {
                     selected_boats
                         .read()
@@ -418,21 +423,26 @@ async fn boat_list_service(
                         .collect()
                 };
                 selected_boats.set(new_selected_boats);
-                if let Some(boat) = boat_to_remove {
-                    searched_boats.write().push(boat);
-                }
+                search().await;
             }
             BoatListMsg::Submit => {
                 let ids: Vec<BoatId> = selected_boats.read().iter().map(|b| b.id).collect();
                 let session_type = *session_type.read();
+                let recorded_at = created_at_time();
+                tracing::trace!(recorded= ?recorded_at.trim());
+                // TODO Do proper validation here...
+                let recorded_at = NaiveDateTime::parse_from_str(recorded_at.trim(), crate::ui::util::time::MINUTE_RESOLUTION_FMT).expect("should parse string");
                 if !ids.is_empty() {
-                    match submit_boats(ids, session_type).await {
+                    match submit_boats(ids, session_type, recorded_at).await {
                         Ok(id) => {
                             tracing::info!(%id, "Created batch");
                             searched_boats.set(Vec::new());
                             selected_boats.set(Vec::new());
                             search_name.set(None);
+                            created_at_time.set(crate::ui::util::time::render_local(chrono::Utc::now().naive_utc()));
                             toasts.send(ToastData::success("Submitted boats").into());
+                            // refresh the search page
+                            search().await
                         }
                         Err(error) => {
                             tracing::error!(?error, "Could not submit batch");
