@@ -1,4 +1,3 @@
-use std::ops::Deref;
 
 use crate::{
     db::{
@@ -51,7 +50,7 @@ async fn get_boats_for_batch(batch_id: BatchId) -> Result<Vec<Boat>, ServerFnErr
 #[component]
 pub fn BatchList(offset: usize, limit: Signal<usize>) -> Element {
     let scenario: Signal<Option<UseScenario>> = use_signal(|| None);
-    let batches_fut = use_server_future(use_reactive(
+    let batches_fut = use_resource(use_reactive(
         (&offset, &*limit.read(), &*scenario.read()),
         move |(offset, limit, scenario)| {
             async move {
@@ -68,24 +67,31 @@ pub fn BatchList(offset: usize, limit: Signal<usize>) -> Element {
                     })
             }
         },
-    ))?;
+    ));
 
-    let b = batches_fut.value();
-    let b = b.read();
-    let batches = b.deref().as_ref().unwrap().as_ref().unwrap();
-    rsx! {
-        div {
-            class: "divide-y-2 flex flex-col overflow-auto grow",
-            {
-                batches.iter().map(|batch_and_counts| {
-                    rsx!{
-                        BatchListRow {
-                            batch_and_counts: batch_and_counts.clone()
-                        }
+    // let batches = b.deref().as_ref().unwrap().as_ref().unwrap();
+    match batches_fut.value().read().as_ref()? {
+        Ok(batches) => {
+            rsx! {
+                div {
+                    class: "divide-y-2 flex flex-col overflow-auto grow",
+                    {
+                        batches.iter().map(|batch_and_counts| {
+                            rsx!{
+                                BatchListRow {
+                                    batch_and_counts: batch_and_counts.clone()
+                                }
+                            }
+                        })
                     }
-                })
-            }
-        }
+                }
+            }           
+        },
+        Err(error) => rsx! {
+            div {
+                {error.to_string()}
+           } 
+        },
     }
 }
 

@@ -164,7 +164,7 @@ pub fn BoatNav() -> Element {
 
 #[component]
 pub fn BoatSummary(id: BoatId) -> Element {
-    let boat_fut = use_server_future(use_reactive!(|id| async move { get_boat(id).await }))?;
+    let boat_fut = use_resource(use_reactive!(|id| async move { get_boat(id).await }));
 
     rsx! {
         div {
@@ -179,10 +179,10 @@ pub fn BoatSummary(id: BoatId) -> Element {
 
 #[component]
 pub fn BoatMonthlyUses(id: BoatId) -> Element {
-    let boat_fut = use_server_future(use_reactive!(|id| async move { get_boat(id).await }))?;
-    let uses_fut = use_server_future(use_reactive!(
+    let boat_fut = use_resource(use_reactive!(|id| async move { get_boat(id).await }));
+    let uses_fut = use_resource(use_reactive!(
         |id| async move { get_events_for_boat(id).await }
-    ))?;
+    ));
 
     rsx! {
         div {
@@ -199,10 +199,10 @@ pub fn BoatMonthlyUses(id: BoatId) -> Element {
 
 #[component]
 pub fn BoatYearlyUses(id: BoatId) -> Element {
-    let boat_fut = use_server_future(use_reactive!(|id| async move { get_boat(id).await }))?;
-    let uses_fut = use_server_future(use_reactive!(|id| async move {
+    let boat_fut = use_resource(use_reactive!(|id| async move { get_boat(id).await }));
+    let uses_fut = use_resource(use_reactive!(|id| async move {
         get_monthly_events_for_boat(id).await
-    }))?;
+    }));
 
     rsx! {
         div {
@@ -220,10 +220,10 @@ pub fn BoatYearlyUses(id: BoatId) -> Element {
 
 #[component]
 pub fn BoatIssues(id: BoatId) -> Element {
-    let boat_fut = use_server_future(use_reactive!(|id| async move { get_boat(id).await }))?;
-    let issues_fut = use_server_future(use_reactive!(|id| async move {
+    let boat_fut = use_resource(use_reactive!(|id| async move { get_boat(id).await }));
+    let issues_fut = use_resource(use_reactive!(|id| async move {
         get_open_issues_for_boat(id).await
-    }))?;
+    }));
 
     rsx! {
         div {
@@ -240,7 +240,7 @@ pub fn BoatIssues(id: BoatId) -> Element {
 
 #[component]
 pub fn BoatEdit(id: BoatId) -> Element {
-    let boat_fut = use_server_future(use_reactive!(|id| async move { get_boat(id).await }))?;
+    let boat_fut = use_resource(use_reactive!(|id| async move { get_boat(id).await }));
     rsx! {
         div {
             class: "overflow-y-auto flex flex-col flex-grow",

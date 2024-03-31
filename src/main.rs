@@ -79,6 +79,7 @@ fn main() -> Result<(), Error> {
                 let app = Router::new()
                     .route("/export.csv", get(boat_tracking::api::export_csv_handler))
                     .serve_static_assets("dist")
+                    .await
                     .connect_hot_reload()
                     // .register_server_fns_with_handler("", |func| {
                     //     let state = state.clone();

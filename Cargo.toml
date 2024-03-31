@@ -22,11 +22,12 @@ diesel-derive-newtype = "2.1.0"
 deadpool-diesel = {version = "0.5.0", features = []}
 diesel = {version = "2.1.0", features = ["chrono", "returning_clauses_for_sqlite_3_35"], optional = false}
 
-dioxus = "0.5.0-alpha.2"
-dioxus-router = { version = "0.5.0-alpha.2", features = [] }
-dioxus-fullstack = { version = "0.5.0-alpha.2"}
+dioxus = "0.5.0"
+dioxus-router = { version = "0.5.0", features = [] }
+dioxus-fullstack = { version = "0.5.0"}
 # features = ["router", "dioxus-router"] 
-dioxus-charts= {git = "https://github.com/DogeDark/dioxus-charts", branch = "0.5-support"}
+# dioxus-charts= {git = "https://github.com/DogeDark/dioxus-charts", branch = "0.5-support"}
+dioxus-charts= "0.2.0" 
 
 dioxus-web = { version = "0.5.0-alpha.2", optional = true }
 axum = {version = "0.7.0", features = ["ws"], optional = true}
