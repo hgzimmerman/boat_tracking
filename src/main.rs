@@ -6,17 +6,21 @@ fn main() -> Result<(), Error> {
     {
         use tracing_subscriber::prelude::*;
         use tracing_web::MakeWebConsoleWriter;
+        
+        let filter = tracing_subscriber::filter::Targets::new()
+            .with_target("boat_tracking", tracing::Level::DEBUG)
+            .with_default(tracing::Level::WARN);
 
         let fmt_layer = tracing_subscriber::fmt::layer()
             .with_ansi(false) // Only partially supported across browsers
             .without_time() // std::time is not available in browsers, see note below
             .with_writer(MakeWebConsoleWriter::new()) // write events to the console
-            .with_filter(tracing::level_filters::LevelFilter::DEBUG);
-        // let perf_layer = tracing_web::performance_layer().with_details_from_fields(tracing_subscriber::fmt::format::Pretty::default());
+            .with_filter(filter);
+        let perf_layer = tracing_web::performance_layer().with_details_from_fields(tracing_subscriber::fmt::format::Pretty::default());
 
         tracing_subscriber::registry()
             .with(fmt_layer)
-            // .with(perf_layer)
+            .with(perf_layer)
             .init(); // Install these as subscribers to tracing events
 
         tracing::info!(dev_version = 1, "Starting app");
