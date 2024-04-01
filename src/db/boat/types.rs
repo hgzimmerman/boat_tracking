@@ -65,7 +65,7 @@ impl BoatType {
             BoatType::Pair => (HasCox(0), SeatCount(2), OarsPerSeat(1)),
             BoatType::PairPlus => (HasCox(1), SeatCount(2), OarsPerSeat(1)),
             BoatType::Four => (HasCox(0), SeatCount(4), OarsPerSeat(1)),
-            BoatType::FourPlus => (HasCox(0), SeatCount(4), OarsPerSeat(1)),
+            BoatType::FourPlus => (HasCox(1), SeatCount(4), OarsPerSeat(1)),
             BoatType::Eight => (HasCox(1), SeatCount(8), OarsPerSeat(1)),
         }
     }
