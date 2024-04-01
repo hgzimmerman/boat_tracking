@@ -17,7 +17,7 @@ This should give the organization data to know which boats to buy, sell, maintai
 * Viewing historical usage of boats 
 * Issue tracking for individual boats (WIP)
 * CSV export 
-  * Summary (WIP)
+  * Summary 
   * Per-boat usage history 
   * All boats usage history
 
