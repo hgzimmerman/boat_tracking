@@ -5,7 +5,7 @@ use dioxus::prelude::*;
 pub fn NewIssuePage() -> Element {
     rsx! {
         div {
-            "style": "display:flex; flex-direction: vertical; flex-grow: 1;",
+            class: "flex flex-column flex-grow",
             "We should have a form here for a new issue"
         }
     }

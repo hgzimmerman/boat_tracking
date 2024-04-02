@@ -260,8 +260,8 @@ fn BoatTitle(boat: Result<BoatAndStats, ServerFnError>) -> Element {
             div {
                 class: "flex flex-row  bg-ggrc items-center",
                 div {
-                    "style": "min-width: 160px; font-size: x-large; font-weight: 500 ",
-                    class: "px-4",
+                    "style": "min-width: 160px;",
+                    class: "px-4 text-xl font-medium",
                     {boat.boat.name.clone()}
                 }
                 div {
@@ -406,7 +406,8 @@ fn BoatIssue(issue: Issue) -> Element {
                     }
                 })}
                 div {
-                    "style": "min-width: 160px; font-size: x-large; font-weight: 500",
+                    "style": "min-width: 160px;",
+                    class: "text-xl font-medium",
                     {issue.note.clone()}
                 }
 
