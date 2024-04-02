@@ -19,7 +19,7 @@ use crate::{
             Boat, BoatFilter3,
         },
         use_event::{UseEvent, UseScenario},
-        use_event_batch::BatchId,
+        use_event_batch::{BatchId, UseEventBatch},
     },
     ui::components::toast::ToastData,
 };
@@ -142,39 +142,35 @@ fn GeneralBatchCreationPage(mode: BatchPageMode) -> Element {
     });
 
     // If the ID is populated, then use it to fetch the existing set of boats for a specific batch.
+    // 
+    // Use this to set the selected list, the time and the type of session.
     use_future(move || {
         async move {
             if let Some(id) = mode.as_option() {
                 match get_existing_batch(id).await {
-                    Ok(batch) => {
-                        // This could be done better by using a different future that gets the date from the batch itself,
-                        // but because the datetime _should_be_ the same between the batch and its constituent events, and batches should have at least one item,
-                        // this will be fine. 
+                    Ok(ExistingBatch { batch, batch_entries }) => {
                         match mode {
                             BatchPageMode::Create 
                             | BatchPageMode::Template { .. } => {},
                             BatchPageMode::View { .. } 
                             | BatchPageMode::Edit { .. } => {
-                                // only set the created at time if we are editing or viewing, otherwise, 
+                                // Only set the created at time if we are editing or viewing, otherwise, 
                                 // we want the template to use the current time.
-                                if let Some(time) = batch.iter().next().map(|x| x.0.recorded_at) {
+                                if let Some(time) = batch.as_ref().map(|x| x.recorded_at) {
                                     created_at_time.set(crate::ui::util::time::render_local(time))
-                                }    
+                                }
                             },
                         }
                         
-                        if let Some(use_scenario) = batch.iter().next().map(|x| x.0.use_scenario) {
+                        if let Some(use_scenario) = batch.map(|x| x.use_scenario) {
                             session_type.set(use_scenario)
                         }
 
-                        // TODO  make the above use a distinct db query.
-                        let batch = batch
+                        let batch = batch_entries
                             .into_iter()
                             .map(|(_event, boat)| boat)
                             .collect::<Vec<_>>();
                         selected.set(batch);
-
-                        // TODO also set the time element (when we add one) corresponding to the batch in question.
                     }
                     Err(error) => toast_svc.send(ToastMsgMsg::Add(
                         ToastData::from(error),
@@ -246,16 +242,27 @@ pub(crate) async fn submit_boats(
     conn.interact(|conn| crate::db::use_event_batch::UseEventBatch::create_batch(conn, new_batch).map_err(ServerFnError::from))
         .await?
 }
-#[server(GetExistingBatch)]
+
+#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
+pub struct ExistingBatch {
+    batch: Option<UseEventBatch>,
+    batch_entries: Vec<(UseEvent, Boat)>,
+}
+#[server(GetExistingBatch2)]
 pub(crate) async fn get_existing_batch(
     batch_id: BatchId,
-) -> Result<Vec<(UseEvent, Boat)>, ServerFnError> {
+) -> Result<ExistingBatch, ServerFnError> {
     let state = crate::ui::state::AppState::singleton();
     let conn = state.pool().get().await?;
-    conn.interact(move |conn| {
-        crate::db::use_event_batch::UseEventBatch::get_events_and_boats_for_batch(conn, batch_id).map_err(ServerFnError::from)
-    })
-    .await?
+    let batch_entries = conn.interact(move |conn| {
+        crate::db::use_event_batch::UseEventBatch::get_events_and_boats_for_batch(conn, batch_id).map_err(ServerFnError::new)
+    });
+    let batch = conn.interact(move |conn| {
+        crate::db::use_event_batch::UseEventBatch::get_batch(conn, batch_id).map_err(ServerFnError::new)
+    });
+    let (batch_entries, batch) = futures::future::try_join(batch_entries, batch).await?;
+    Ok(ExistingBatch { batch: batch?, batch_entries: batch_entries? })
+
 }
 
 #[server(ReplaceBatch)]

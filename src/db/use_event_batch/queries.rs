@@ -42,26 +42,6 @@ impl UseEventBatch {
         })
     }
 
-    /// Gets the most recent batch, with the option to paginate
-    pub fn get_most_recent_batch(
-        conn: &mut SqliteConnection,
-        scenario: Option<UseScenario>,
-        offset: usize,
-    ) -> Result<Option<UseEventBatch>, diesel::result::Error> {
-        match scenario {
-            Some(scenario) => use_event_batch::table
-                .filter(use_event_batch::use_scenario.eq(scenario))
-                .order_by(use_event_batch::recorded_at.desc())
-                .offset(i64::try_from(offset).unwrap_or_default())
-                .get_result(conn)
-                .optional(),
-            None => use_event_batch::table
-                .order_by(use_event_batch::recorded_at.desc())
-                .offset(i64::try_from(offset).unwrap_or_default())
-                .get_result(conn)
-                .optional(),
-        }
-    }
 
     /// Gets a list of batches and their use count.
     pub fn get_most_recent_batches_and_their_use_count(
@@ -108,6 +88,13 @@ impl UseEventBatch {
             .inner_join(boat::table.on(boat::id.eq(use_event::boat_id)))
             .select((UseEvent::as_select(), Boat::as_select()))
             .get_results(conn)
+    }
+    
+    pub fn get_batch(conn: &mut SqliteConnection, id: BatchId) -> Result<Option<UseEventBatch>, diesel::result::Error> {
+        use_event_batch::table
+            .filter(use_event_batch::id.eq(id))
+            .get_result::<UseEventBatch>(conn)
+            .optional()
     }
 
     /// Removes all events in a given batch, then creates new events to replace them.
