@@ -169,12 +169,45 @@ pub fn BoatNav() -> Element {
 
 #[component]
 pub fn BoatSummary(id: BoatId) -> Element {
-    // let boat_fut = use_resource(use_reactive!(|id| async move { get_boat(id).await }));
+    let boat_fut = use_resource(use_reactive!(|id| async move { get_boat(id).await }));
 
     rsx! {
         div {
             class: "overflow-y-auto flex flex-col flex-grow",
-            
+            {
+                match boat_fut.value().as_ref()?.clone() {
+                    Ok(boat) => rsx!{
+                        /* div {
+                            {boat.boat.weight_class.to_string()}
+                        } */
+                        div {
+                            "Manufactured at "
+                            {boat.boat.manufactured_at.as_ref().map(ToString::to_string)}
+                        }
+                        div {
+                            "Acquired at "
+                            {boat.boat.acquired_at.as_ref().map(ToString::to_string)}
+                        }
+                        div {
+                            "Sold at "
+                            {boat.boat.relinquished_at.as_ref().map(ToString::to_string)}
+                        }
+                        div {
+                            "Open issues "
+                            {boat.open_issues.as_ref().map(ToString::to_string)}
+                        }
+                        div {
+                            "uses (30 days) "
+                            {boat.uses_last_thirty_days.as_ref().map(ToString::to_string)}
+                        }
+                        div {
+                            "uses (all time) "
+                            {boat.total_uses.as_ref().map(ToString::to_string)}
+                        }
+                    },
+                    Err(_) => return None
+                }
+            }
         }
     }
 }

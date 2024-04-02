@@ -96,19 +96,19 @@ impl BoatAndStats {
             .select((
                 Boat::as_select(),
                 issue::table
-                    .select(diesel::dsl::count(
-                        issue::boat_id.eq(id).and(issue::resolved_at.is_null()),
+                    .filter(issue::boat_id.eq(id).and(issue::resolved_at.is_null()))
+                    .select(diesel::dsl::count_star(
                     ))
                     .single_value(),
                 use_event::table
-                    .select(diesel::dsl::count(use_event::boat_id.eq(id)))
+                    .filter(use_event::boat_id.eq(id))
+                    .select(diesel::dsl::count_star())
                     .single_value(),
                 use_event::table
-                    .select(diesel::dsl::count(
-                        use_event::boat_id
-                            .eq(id)
-                            .and(use_event::recorded_at.gt(ago_30_d)),
-                    ))
+                    .filter(use_event::boat_id.eq(id)
+                        .and(use_event::recorded_at.gt(ago_30_d)),
+                )
+                    .select(diesel::dsl::count_star())
                     .single_value(),
             ))
             .get_result::<BoatAndStats>(conn)
