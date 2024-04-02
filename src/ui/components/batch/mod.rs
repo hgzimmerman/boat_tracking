@@ -137,7 +137,7 @@ fn GeneralBatchCreationPage(mode: BatchPageMode) -> Element {
         )
     });
 
-    // Initialize the page by fetching the msgs.
+    // Initialize the page by fetching the boats to possibly select.
     use_future(move || async move {
         boat_svc.send(BoatListMsg::Fetch);
     });

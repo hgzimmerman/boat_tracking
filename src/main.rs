@@ -1,10 +1,5 @@
 use anyhow::Error;
 
-// TODO:
-// Keep working on date parsing (I believe this works)
-// Make sure that the templates still work. (I believe the date parsing was broken here)
-// don't allow editing things in the "view practice" page.
-// It seems like timezone offsets are getting applied twice in some places (I think this is addressed now)
 
 fn main() -> Result<(), Error> {
     #[cfg(feature = "web")]
