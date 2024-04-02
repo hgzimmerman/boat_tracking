@@ -1,4 +1,7 @@
-use crate::{db::{boat::BoatAndStats, use_event::UseEvent}, ui::state::AppState};
+use crate::{
+    db::{boat::BoatAndStats, use_event::UseEvent},
+    ui::state::AppState,
+};
 
 use self::wire::{BoatSummaryCsvRow, BoatUseCsvRow, CsvExportParams};
 
@@ -20,7 +23,6 @@ pub async fn export_uses_csv_handler(
     Ok(CsvRows(rows))
 }
 
-
 pub async fn export_boats_csv_handler(
     state: AppState,
 ) -> Result<CsvRows<BoatSummaryCsvRow>, String> {
@@ -29,21 +31,31 @@ pub async fn export_boats_csv_handler(
         .interact(move |conn| {
             BoatAndStats::get_boats(conn).map(|boats| {
                 let convert_to_u64 = |x: i64| u64::try_from(x).ok();
-                boats.into_iter()
-                    .map(|BoatAndStats { boat, open_issues, total_uses, uses_last_thirty_days: _ }| {
-                        BoatSummaryCsvRow {
-                            boat_id: boat.id,
-                            boat_type: boat.boat_type(),
-                            boat_name: boat.name,
-                            boat_weight_class: boat.weight_class,
-                            manufactured_at: boat.manufactured_at,
-                            acquired_at: boat.acquired_at,
-                            relinquished_at: boat.relinquished_at,
-                            total_uses: total_uses.and_then(convert_to_u64).unwrap_or_default(),
-                            open_issues: open_issues.and_then(convert_to_u64).unwrap_or_default()
-                        }                
-                    })
-                    .collect() 
+                boats
+                    .into_iter()
+                    .map(
+                        |BoatAndStats {
+                             boat,
+                             open_issues,
+                             total_uses,
+                             uses_last_thirty_days: _,
+                         }| {
+                            BoatSummaryCsvRow {
+                                boat_id: boat.id,
+                                boat_type: boat.boat_type(),
+                                boat_name: boat.name,
+                                boat_weight_class: boat.weight_class,
+                                manufactured_at: boat.manufactured_at,
+                                acquired_at: boat.acquired_at,
+                                relinquished_at: boat.relinquished_at,
+                                total_uses: total_uses.and_then(convert_to_u64).unwrap_or_default(),
+                                open_issues: open_issues
+                                    .and_then(convert_to_u64)
+                                    .unwrap_or_default(),
+                            }
+                        },
+                    )
+                    .collect()
             })
         })
         .await
@@ -52,8 +64,6 @@ pub async fn export_boats_csv_handler(
 
     Ok(CsvRows(rows))
 }
-
-
 
 pub struct CsvRows<T>(Vec<T>);
 

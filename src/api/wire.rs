@@ -24,7 +24,6 @@ pub struct BoatUseCsvRow {
     pub use_scenario: UseScenario,
 }
 
-
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct BoatSummaryCsvRow {
     pub boat_id: BoatId,
@@ -35,5 +34,5 @@ pub struct BoatSummaryCsvRow {
     pub acquired_at: Option<NaiveDate>,
     pub relinquished_at: Option<NaiveDate>,
     pub total_uses: u64,
-    pub open_issues: u64
+    pub open_issues: u64,
 }

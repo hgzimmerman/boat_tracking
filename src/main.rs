@@ -1,19 +1,17 @@
 use anyhow::Error;
 
-
 // TODO:
 // Keep working on date parsing (I believe this works)
 // Make sure that the templates still work. (I believe the date parsing was broken here)
 // don't allow editing things in the "view practice" page.
 // It seems like timezone offsets are getting applied twice in some places (I think this is addressed now)
 
-
 fn main() -> Result<(), Error> {
     #[cfg(feature = "web")]
     {
         use tracing_subscriber::prelude::*;
         use tracing_web::MakeWebConsoleWriter;
-        
+
         let filter = tracing_subscriber::filter::Targets::new()
             .with_target("boat_tracking", tracing::Level::DEBUG)
             .with_default(tracing::Level::WARN);
@@ -23,7 +21,8 @@ fn main() -> Result<(), Error> {
             .without_time() // std::time is not available in browsers, see note below
             .with_writer(MakeWebConsoleWriter::new()) // write events to the console
             .with_filter(filter);
-        let perf_layer = tracing_web::performance_layer().with_details_from_fields(tracing_subscriber::fmt::format::Pretty::default());
+        let perf_layer = tracing_web::performance_layer()
+            .with_details_from_fields(tracing_subscriber::fmt::format::Pretty::default());
 
         tracing_subscriber::registry()
             .with(fmt_layer)
@@ -88,8 +87,14 @@ fn main() -> Result<(), Error> {
 
                 // build our application with some routes
                 let app = Router::new()
-                    .route("/uses_export.csv", get(boat_tracking::api::export_uses_csv_handler))
-                    .route("/boats_export.csv", get(boat_tracking::api::export_boats_csv_handler))
+                    .route(
+                        "/uses_export.csv",
+                        get(boat_tracking::api::export_uses_csv_handler),
+                    )
+                    .route(
+                        "/boats_export.csv",
+                        get(boat_tracking::api::export_boats_csv_handler),
+                    )
                     .serve_static_assets("dist")
                     .await
                     .connect_hot_reload()
@@ -117,7 +122,8 @@ fn main() -> Result<(), Error> {
                     .register_server_fns()
                     .fallback(get(render_handler_with_context).with_state((
                         move |ctx| {
-                            ctx.insert::<AppState>(state.clone()).expect("should be able to add state");
+                            ctx.insert::<AppState>(state.clone())
+                                .expect("should be able to add state");
                         },
                         cfg,
                         ssr_state,

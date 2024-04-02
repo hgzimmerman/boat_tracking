@@ -1,7 +1,7 @@
 use crate::{
     db::boat::{
         types::{BoatId, BoatType, WeightClass},
-        Boat, 
+        Boat,
     },
     ui::components::toast::{MsgType, ToastData, ToastMsgMsg},
 };

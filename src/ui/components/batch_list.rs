@@ -1,4 +1,3 @@
-
 use crate::{
     db::{
         boat::Boat,
@@ -81,12 +80,12 @@ pub fn BatchList(offset: usize, limit: Signal<usize>) -> Element {
                         })
                     }
                 }
-            }           
-        },
+            }
+        }
         Err(error) => rsx! {
             div {
                 {error.to_string()}
-           } 
+           }
         },
     }
 }
