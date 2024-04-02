@@ -101,12 +101,17 @@ fn SubmitRow(
                         class: "btn btn-blue min-w-28 rounded-s ",
                         onclick: move |e| {
                             e.stop_propagation();
-                            let inverted = !*show_session_type_dropdown.read();
-                            show_session_type_dropdown.set(inverted);
+
+                            if matches!(mode, BatchPageMode::View {..}) {
+                                let inverted = !*show_session_type_dropdown.read();
+                                show_session_type_dropdown.set(inverted);
+                            }
                         },
                         onmouseover: move |e| {
                             e.stop_propagation();
-                            show_session_type_dropdown.set(true);
+                            if matches!(mode, BatchPageMode::View {..}) {
+                                show_session_type_dropdown.set(true);
+                            }
                         },
                         onmouseout: move |e| {
                             e.stop_propagation();
@@ -186,13 +191,9 @@ fn SubmitRow(
                         }
                     }
 
+                    // Time
                     div {
                         class: "my-1",
-                        /* label {
-                            r#for: "manufactured-at",
-                            class: "block mb-2 text-sm font-medium text-gray-900 dark:text-white",
-                            "Time"
-                        } */
                         input {
                             r#type: "datetime-local",
                             id: "manufactured-at",
