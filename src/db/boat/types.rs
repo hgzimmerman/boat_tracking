@@ -174,6 +174,17 @@ pub enum WeightClass {
     Heavy,
     Tubby,
 }
+impl std::fmt::Display for WeightClass {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            WeightClass::Light => "Light",
+            WeightClass::Medium => "Medium",
+            WeightClass::Heavy => "Heavy",
+            WeightClass::Tubby => "Tubby",
+        };
+        f.write_str(s)
+    }
+}
 
 #[derive(
     Clone,
