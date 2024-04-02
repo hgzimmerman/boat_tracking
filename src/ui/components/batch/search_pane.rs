@@ -1,4 +1,4 @@
-use super::BoatListMsg;
+use super::service::BoatListMsg;
 use crate::db::boat::{
     types::{HasCox, OarConfiguration, SeatCount},
     Boat, BoatFilter3,
