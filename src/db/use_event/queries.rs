@@ -157,7 +157,6 @@ impl UseEvent {
                         boat_name: boat.name,
                         boat_type,
                         boat_weight_class: boat.weight_class,
-                        acquired_at: boat.acquired_at,
                         used_at: event.recorded_at,
                         use_scenario: event.use_scenario,
                         boat_id: boat.id,

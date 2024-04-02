@@ -177,9 +177,6 @@ pub fn BoatSummary(id: BoatId) -> Element {
             {
                 match boat_fut.value().as_ref()?.clone() {
                     Ok(boat) => rsx!{
-                        /* div {
-                            {boat.boat.weight_class.to_string()}
-                        } */
                         div {
                             "Manufactured at "
                             {boat.boat.manufactured_at.as_ref().map(ToString::to_string)}

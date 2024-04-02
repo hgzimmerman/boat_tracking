@@ -18,7 +18,6 @@ pub struct BoatUseCsvRow {
     pub boat_name: String,
     pub boat_type: BoatType,
     pub boat_weight_class: WeightClass,
-    pub acquired_at: Option<NaiveDate>,
     pub used_at: NaiveDateTime,
     pub batch_id: Option<BatchId>,
     pub use_scenario: UseScenario,
