@@ -77,7 +77,7 @@ fn NavBar() -> Element {
     rsx! {
         nav {
             id: "main-nav",
-            class: "bg-ggrc sticky top-0",
+            class: "bg-ggrc sticky px-4 top-0",
             ul {
                 class: "flex items-center",
                 li {

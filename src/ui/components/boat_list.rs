@@ -32,7 +32,7 @@ pub fn BoatListNav() -> Element {
     use dioxus_router::prelude::*;
     rsx! {
         nav {
-            class: "bg-ggrc sticky top-0",
+            class: "bg-ggrc sticky top-0 px-4",
             ul {
                 class: "flex items-center",
 

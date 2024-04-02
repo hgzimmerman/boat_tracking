@@ -163,6 +163,7 @@ fn BatchListRow(batch_and_counts: BatchAndCounts) -> Element {
                     None => rsx!{}
                 }
             }
+            // take up space
             div {
                 class: "grow"
             }
@@ -206,7 +207,7 @@ pub fn BatchListPage(page: ReadOnlySignal<Page>) -> Element {
             class: "flex flex-col overflow-hidden grow",
             // page header/nav
             div {
-                class: "h-16 bg-ggrc flex flex-row items-center",
+                class: "h-16 bg-ggrc flex flex-row items-center px-4",
                 div {
                     class: "grow",
                     if *offset_state.read() != 0 {
