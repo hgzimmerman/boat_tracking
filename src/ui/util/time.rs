@@ -14,10 +14,12 @@ pub fn convert_to_local(datetime: NaiveDateTime) -> DateTime<Local> {
 /// 
 /// his should be isomorphic with render_local
 pub fn parse_str_as_naive_to_utc(input: &str) -> Result<NaiveDateTime, Box<dyn std::error::Error>> {
+    tracing::debug!(input);
     let local = chrono::Local::now();
     let local_tz = local.timezone();
     // If this is parsed, then it needs to be offset in _reverse_.
-    let local = NaiveDateTime::parse_from_str(input, MINUTE_RESOLUTION_FMT)?;
+    let local = NaiveDateTime::parse_from_str(input, MINUTE_RESOLUTION_FMT)
+    .or_else(|_| NaiveDateTime::parse_from_str(input, MINUTE_RESOLUTION_FMT_T))?;
     
     Ok(local_tz.from_local_datetime(&local).map(|x| x.naive_utc()).unwrap())
 }
@@ -26,6 +28,7 @@ pub fn format_local_date_time(local_datetime: DateTime<Local>) -> DelayedFormat<
     local_datetime.format(MINUTE_RESOLUTION_FMT)
 }
 pub const MINUTE_RESOLUTION_FMT: &'static str = "%Y-%m-%d %H:%M";
+pub const MINUTE_RESOLUTION_FMT_T: &'static str = "%Y-%m-%dT%H:%M";
 
 #[cfg(test)]
 mod test {
