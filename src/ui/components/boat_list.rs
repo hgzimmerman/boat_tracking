@@ -19,7 +19,7 @@ pub fn BoatListPage() -> Element {
             div {
                 class: "flex-grow flex flex-col items-center bg-gray-50 divide-x-2 dark:divide-white",
                 BoatList {
-                    boats: boats_fut.value().read().clone()?
+                    boats: boats_fut.value().cloned()?
                 }
             }
 
@@ -88,7 +88,7 @@ fn BoatRow(boat: BoatAndStats) -> Element {
             {
                 boat.boat.acquired_at.map(|x| rsx! {
                     div {
-                        "Acquired at : ",
+                        "Acquired at: ",
                         {x.to_string()}
                     }
                 })
@@ -97,27 +97,27 @@ fn BoatRow(boat: BoatAndStats) -> Element {
                 label {
                     "Uses: "
                 }
-                {format!("{}",boat.total_uses.unwrap_or_default() )}
+                {format!("{}", boat.total_uses.unwrap_or_default() )}
             }
             div {
                 label {
                     "Monthly Uses: "
                 }
-                {format!("{}",boat.uses_last_thirty_days.unwrap_or_default())}
+                {format!("{}", boat.uses_last_thirty_days.unwrap_or_default())}
             }
             div {
                 label {
                     "Open Issues: "
                 }
-                {format!("{}",boat.open_issues.unwrap_or_default())}
+                {format!("{}", boat.open_issues.unwrap_or_default())}
             }
         }
     }
 }
 
 #[component]
-pub fn BoatList(boats: Result<Vec<BoatAndStats>, ServerFnError>) -> Element {
-    match boats {
+pub fn BoatList(boats: ReadOnlySignal<Result<Vec<BoatAndStats>, ServerFnError>>) -> Element {
+    match boats() {
         Ok(boats) => {
             rsx! {
                 div {
