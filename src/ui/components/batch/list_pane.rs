@@ -101,21 +101,22 @@ fn SubmitRow(
                         class: "btn btn-blue min-w-28 rounded-s ",
                         onclick: move |e| {
                             e.stop_propagation();
-
-                            if matches!(mode, BatchPageMode::View {..}) {
+                            if !mode.is_view() {
                                 let inverted = !*show_session_type_dropdown.read();
                                 show_session_type_dropdown.set(inverted);
                             }
                         },
                         onmouseover: move |e| {
                             e.stop_propagation();
-                            if matches!(mode, BatchPageMode::View {..}) {
+                            if !mode.is_view() {
                                 show_session_type_dropdown.set(true);
                             }
                         },
                         onmouseout: move |e| {
                             e.stop_propagation();
-                            show_session_type_dropdown.set(false);
+                            if !mode.is_view() {
+                                show_session_type_dropdown.set(false);
+                            }
                         },
                         {session_type.read().to_string()}
                         // the dropdown
@@ -199,6 +200,7 @@ fn SubmitRow(
                             id: "manufactured-at",
                             class: "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500",
                             value: created_at_time.read().to_owned(),
+                            disabled: mode.is_view(),
                             oninput: move |event| {
                                 created_at_time.set(event.value())
                             }
