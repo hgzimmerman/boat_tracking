@@ -275,7 +275,7 @@ fn BoatTitle(boat: Result<BoatAndStats, ServerFnError>) -> Element {
     match boat {
         Ok(boat) => rsx! {
             div {
-                class: "flex flex-row  bg-ggrc items-center h-14",
+                class: "flex flex-row  bg-ggrc items-center h-14 min-h-14",
                 div {
                     "style": "min-width: 160px;",
                     class: "px-4 text-xl font-medium",
