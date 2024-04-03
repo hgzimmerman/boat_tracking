@@ -80,7 +80,7 @@ fn BoatRow(boat: BoatAndStats) -> Element {
                 }
                 div {
                     {
-                        format!("{:?} {}",boat.boat.weight_class, boat.boat.boat_type()?)
+                        format!("{} {}",boat.boat.weight_class, boat.boat.boat_type()?)
                     }
                 }
             }

@@ -95,7 +95,9 @@ fn BoatForm(
                         e.stop_propagation();
                         show_weight_class_dropdown.set(false);
                     },
-                    {format!("{weight_class:?}")}
+                    {
+                        weight_class().as_ref().map(ToString::to_string).unwrap_or_else(|| "None".to_string())
+                    }
                     // the dropdown
                     div {
                         id: "weight-class-dropdown-positioner",
@@ -176,7 +178,9 @@ fn BoatForm(
                         e.stop_propagation();
                         show_boat_type_dropdown.set(false);
                     },
-                    {format!("{boat_type:?}")}
+                    {
+                        boat_type().as_ref().map(ToString::to_string).unwrap_or_else(|| "None".to_string())
+                    }
                     // the dropdown
                     div {
                         id: "boat-type-dropdown-positioner",
