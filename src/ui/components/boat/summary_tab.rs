@@ -1,9 +1,8 @@
-use std::collections::HashMap;
 
 use dioxus::prelude::*;
 use dioxus_fullstack::prelude::*;
 
-use crate::db::{boat::types::BoatId, use_event::{UseEvent, UseScenario}};
+use crate::db::{boat::types::BoatId, use_event::UseScenario};
 
 
 
@@ -19,27 +18,27 @@ pub fn BoatSummary(id: BoatId) -> Element {
                     match boat_fut.value().as_ref()?.clone() {
                         Ok(boat) => rsx!{
                             LabeledValue {
-                                label: "Manufactured at:",
+                                label: "Manufactured at".to_string(),
                                 value: boat.boat.manufactured_at.as_ref().map(ToString::to_string)
                             }
                             LabeledValue {
-                                label: "Acquired at:",
+                                label: "Acquired at".to_string(),
                                 value: boat.boat.acquired_at.as_ref().map(ToString::to_string)
                             }
                             LabeledValue {
-                                label: "Sold at:",
+                                label: "Sold at".to_string(),
                                 value: boat.boat.relinquished_at.as_ref().map(ToString::to_string)
                             }
                             LabeledValue {
-                                label: "Open Issues:",
+                                label: "Open Issues".to_string(),
                                 value: boat.open_issues.as_ref().map(ToString::to_string)
                             }
                             LabeledValue {
-                                label: "Uses (30 days):",
+                                label: "Uses (30 days)".to_string(),
                                 value: boat.uses_last_thirty_days.as_ref().map(ToString::to_string)
                             }
                             LabeledValue {
-                                label: "Uses (all time):",
+                                label: "Uses (all time)".to_string(),
                                 value: boat.total_uses.as_ref().map(ToString::to_string)
                             }
                         },
@@ -57,13 +56,28 @@ pub fn BoatSummary(id: BoatId) -> Element {
 
 /// Convience component for simplifying the styling of the summary statistics.
 #[component]
-fn LabeledValue(label: &'static str, value: Option<String>) -> Element {
+fn LabeledValue(label: String, value: Option<String>) -> Element {
     rsx!{
         div {
             class: "space-x-4",
             label {
                 class: "text-lg",
-                {label}
+                {label}":"
+            }
+            span {
+                {value?}
+            }
+        }
+    } 
+}
+
+#[component]
+fn LabeledValue2(label: String, value: Option<String>) -> Element {
+    rsx!{
+        div {
+            class: "space-x-2 text-sm",
+            label {
+                {label}":"
             }
             span {
                 {value?}
@@ -79,30 +93,55 @@ fn UsageBreakdown(id: ReadOnlySignal<BoatId>) -> Element {
 
     let events = use_resource(move || get_event_list_for_boat(*id.read()));
     
-    rsx! {
-        div {
-            match events.value()()? {
-                Ok(events) => rsx!{
-                     PieChart{
-                        height: "40%",
-                        width: "40%",
-                        series: events.counts,
-                        labels: events.labels,
-                        label_position: LabelPosition::Outside,
-                        label_offset: 0.2,
-                        donut: true,
-                        donut_width: 100.0
-                    }            
-                },
-                Err(error) => rsx!{
-                    div {
-                        {error.to_string()}
+    match events.value()()? {
+        Ok(events) => {
+            let legend = rsx! {
+                div {
+                    "style": "margin-left: -70px; margin-top: 30px",
+                    class: "pr-2",
+                    {
+                        events.iter().map(|label_and_count| rsx!{
+                            LabeledValue2 {
+                                label: label_and_count.label.to_string(),
+                                value: label_and_count.count.to_string()
+                            }
+                        })   
+                    }                                
+                }
+            };
+            rsx!{
+                div {
+                    class: "flex flex-row flex-shrink border max-w-min min-w-max",
+                    {
+                        let events = EventCountsAndLabelLists::from(events);
+                        rsx!{
+                            div {
+                                "style": "margin-left: -20px;",
+                                PieChart{
+                                    width: "500px",
+                                    height: "300px",
+                                    viewbox_width: 500,
+                                    viewbox_height: 300,
+                                    series: events.counts,
+                                    labels: events.labels,
+                                    label_position: LabelPosition::Outside,
+                                    label_offset: 0.2,
+                                    donut: true,
+                                    donut_width: 100.0
+                                }
+                            }
+                        }
                     }
-                } 
+                    {legend}
+                }
             }
-            
-        }
-    } 
+        },
+        Err(error) => rsx!{
+            div {
+                {error.to_string()}
+            }
+        } 
+    }
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -132,20 +171,20 @@ impl From<Vec<EventCountsAndLabel>> for EventCountsAndLabelLists {
 
 
 #[server(GetCountAndLabelListForBoat)]
-pub(crate) async fn get_event_list_for_boat(id: BoatId) -> Result<EventCountsAndLabelLists, ServerFnError> {
+pub(crate) async fn get_event_list_for_boat(id: BoatId) -> Result<Vec<EventCountsAndLabel>, ServerFnError> {
     // let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu");
     let state = crate::ui::state::AppState::singleton();
     
     let conn = state.pool().get().await?;
 
     let events = conn.interact(move |conn| {
-        UseEvent::events_for_boat(conn, id).map_err(ServerFnError::new)
+        crate::db::use_event::UseEvent::events_for_boat(conn, id).map_err(ServerFnError::new)
     })
     .await??;
 
     let mut list_of_counts_by_use_scenario = events
     .into_iter()
-    .fold(HashMap::new(), |mut acc, next| {
+    .fold(std::collections::HashMap::new(), |mut acc, next| {
         *acc.entry(next.use_scenario).or_default() += 1;
         acc
     })
@@ -155,5 +194,5 @@ pub(crate) async fn get_event_list_for_boat(id: BoatId) -> Result<EventCountsAnd
     })
     .collect::<Vec<_>>();
     list_of_counts_by_use_scenario.sort_by_key(|x| x.label);
-    Ok(EventCountsAndLabelLists::from(list_of_counts_by_use_scenario))
+    Ok(list_of_counts_by_use_scenario)
 }
