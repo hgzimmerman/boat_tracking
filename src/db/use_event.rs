@@ -26,7 +26,8 @@ pub struct UseEvent {
 #[cfg_attr(feature = "ssr", derive(diesel_derive_enum::DbEnum))]
 #[cfg_attr(feature = "ssr", DbValueStyle = "verbatim")]
 pub enum UseScenario {
-    Youth,
+    YouthGgrc,
+    YouthSomerville,
     Adult,
     LearnToRow,
     ScullingSaturday,
@@ -37,7 +38,8 @@ pub enum UseScenario {
 impl std::fmt::Display for UseScenario {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let s = match self {
-            UseScenario::Youth => "Youth",
+            UseScenario::YouthGgrc => "Youth-GGRC",
+            UseScenario::YouthSomerville => "Youth-Somerville",
             UseScenario::Adult => "Adult",
             UseScenario::LearnToRow => "Learn To Row",
             UseScenario::ScullingSaturday => "Sculling Saturday",

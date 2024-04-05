@@ -44,6 +44,8 @@ pub(super) fn SubmitRow(
 }
 
 /// The form element that allows selecting the sort of practice or regatta
+/// 
+/// This could be select element, but this custom thing is fine for now.
 #[component]
 fn SessionTypeDropup(
     boat_svc: Coroutine<BoatListMsg>,
@@ -89,7 +91,8 @@ fn SessionTypeDropup(
                     ul {
                         {
                             [
-                                UseScenario::Youth,
+                                UseScenario::YouthGgrc,
+                                UseScenario::YouthSomerville,
                                 UseScenario::Adult,
                                 UseScenario::LearnToRow,
                                 UseScenario::ScullingSaturday,
