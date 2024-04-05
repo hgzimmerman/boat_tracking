@@ -13,7 +13,19 @@ use dioxus::prelude::*;
 use dioxus_fullstack::prelude::*;
 
 #[component]
-pub fn EditBoatForm(id: BoatId) -> Element {
+pub fn BoatEdit(id: BoatId) -> Element {
+    rsx! {
+        div {
+            class: "overflow-y-auto flex flex-col flex-grow",
+            EditBoatForm {
+                id
+            }
+        }
+    }
+}
+
+#[component]
+fn EditBoatForm(id: BoatId) -> Element {
     let mut name = use_signal(String::new);
     let mut acquired_at = use_signal(String::new);
     let mut manufactured_at = use_signal(String::new);

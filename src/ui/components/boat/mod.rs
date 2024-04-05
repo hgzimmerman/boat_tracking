@@ -1,12 +1,17 @@
-use chrono::NaiveDate;
 use dioxus::prelude::*;
 use dioxus_fullstack::prelude::*;
 
-use crate::db::{
-    boat::{types::BoatId, BoatAndStats},
-    issue::Issue,
-};
+use crate::db::boat::{types::BoatId, BoatAndStats};
 pub mod creation_edit_form;
+pub use creation_edit_form::BoatEdit;
+mod summary_tab;
+pub use summary_tab::*;
+
+mod use_count_chart_tabs;
+pub use use_count_chart_tabs::*;
+
+mod issues_tab;
+pub use issues_tab::*;
 
 #[server(GetBoat)]
 pub(crate) async fn get_boat(id: BoatId) -> Result<BoatAndStats, ServerFnError> {
@@ -18,74 +23,6 @@ pub(crate) async fn get_boat(id: BoatId) -> Result<BoatAndStats, ServerFnError> 
         .await?
 }
 
-#[server(GetBoatOpenIssues)]
-pub(crate) async fn get_open_issues_for_boat(id: BoatId) -> Result<Vec<Issue>, ServerFnError> {
-    // let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu");
-    let state = crate::ui::state::AppState::singleton();
-    let conn = state.pool().get().await?;
-
-    conn.interact(move |conn| {
-        Issue::get_open_issues_for_boat(conn, id).map_err(ServerFnError::from)
-    })
-    .await?
-}
-
-/// Currently gets a month's worth of data, by day
-#[server(GetBoatEvents)]
-pub(crate) async fn get_events_for_boat(
-    id: BoatId,
-) -> Result<Vec<(NaiveDate, f32)>, ServerFnError> {
-    // let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu");
-    let state = crate::ui::state::AppState::singleton();
-    let conn = state.pool().get().await?;
-
-    conn.interact(move |conn| {
-        let start = chrono::Utc::now().naive_local()
-            - chrono::TimeDelta::try_days(30).expect("should be able to create a month");
-        crate::db::use_event::UseEvent::daily_timeseries_for_boat(conn, id, start, None)
-            .map_err(ServerFnError::from)
-            .map(|x| {
-                x.into_iter()
-                    .map(|(date, count)| (date, count as f32))
-                    .collect()
-            })
-    })
-    .await?
-}
-
-/// Gets a year's worth of data for the boat
-#[server(GetYearBoatEvents)]
-pub(crate) async fn get_monthly_events_for_boat(
-    id: BoatId,
-) -> Result<Vec<(NaiveDate, f32)>, ServerFnError> {
-    // let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu");
-    let state = crate::ui::state::AppState::singleton();
-    let conn = state.pool().get().await?;
-
-    conn.interact(move |conn| {
-        let start = chrono::Utc::now().naive_local()
-            - chrono::TimeDelta::try_days(365).expect("Should create year delta");
-        crate::db::use_event::UseEvent::monthly_timeseries_for_boat(conn, id, start, None)
-            .map_err(ServerFnError::from)
-            .map(|x| {
-                x.into_iter()
-                    .map(|(date, count)| (date, count as f32))
-                    .collect()
-            })
-    })
-    .await?
-}
-
-#[server(GetBoatResolvedIssues)]
-pub(crate) async fn get_resolved_issues_for_boat(id: BoatId) -> Result<Vec<Issue>, ServerFnError> {
-    let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu");
-    let conn = state.pool().get().await?;
-
-    conn.interact(move |conn| {
-        Issue::get_resolved_issues_for_boat(conn, id).map_err(ServerFnError::from)
-    })
-    .await?
-}
 
 #[component]
 pub fn BoatNav() -> Element {
@@ -167,124 +104,6 @@ pub fn BoatNav() -> Element {
     }
 }
 
-#[component]
-fn LabeledValue(label: &'static str, value: Option<String>) -> Element {
-    rsx!{
-        div {
-            class: "space-x-4",
-            label {
-                class: "text-lg",
-                {label}
-            }
-            span {
-                {value?}
-            }
-        }
-    } 
-}
-
-#[component]
-pub fn BoatSummary(id: BoatId) -> Element {
-    let boat_fut = use_resource(use_reactive!(|id| async move { get_boat(id).await }));
-
-    rsx! {
-        div {
-            class: "overflow-y-auto flex flex-col flex-grow space-y-1",
-            {
-                match boat_fut.value().as_ref()?.clone() {
-                    Ok(boat) => rsx!{
-                        LabeledValue {
-                            label: "Manufactured at:",
-                            value: boat.boat.manufactured_at.as_ref().map(ToString::to_string)
-                        }
-                        LabeledValue {
-                            label: "Acquired at:",
-                            value: boat.boat.acquired_at.as_ref().map(ToString::to_string)
-                        }
-                        LabeledValue {
-                            label: "Sold at:",
-                            value: boat.boat.relinquished_at.as_ref().map(ToString::to_string)
-                        }
-                        LabeledValue {
-                            label: "Open Issues:",
-                            value: boat.open_issues.as_ref().map(ToString::to_string)
-                        }
-                        LabeledValue {
-                            label: "Uses (30 days):",
-                            value: boat.uses_last_thirty_days.as_ref().map(ToString::to_string)
-                        }
-                        LabeledValue {
-                            label: "Uses (all time):",
-                            value: boat.total_uses.as_ref().map(ToString::to_string)
-                        }
-                    },
-                    Err(_) => return None
-                }
-            }
-        }
-    }
-}
-
-#[component]
-pub fn BoatMonthlyUses(id: BoatId) -> Element {
-    let uses_fut = use_resource(use_reactive!(
-        |id| async move { get_events_for_boat(id).await }
-    ));
-
-    rsx! {
-        div {
-            class: "overflow-y-auto flex flex-col flex-grow",
-            BoatUses {
-                use_events: uses_fut.value().read().clone()?,
-            }
-        }
-    }
-}
-
-#[component]
-pub fn BoatYearlyUses(id: BoatId) -> Element {
-    let uses_fut = use_resource(use_reactive!(|id| async move {
-        get_monthly_events_for_boat(id).await
-    }));
-
-    rsx! {
-        div {
-            class: "overflow-y-auto flex flex-col flex-grow",
-            BoatUses {
-                use_events: uses_fut.value().read().clone()?,
-                date_formatting: BoatUsesDateFormatting::Monthly
-            }
-        }
-    }
-}
-
-#[component]
-pub fn BoatIssues(id: BoatId) -> Element {
-    let issues_fut = use_resource(use_reactive!(|id| async move {
-        get_open_issues_for_boat(id).await
-    }));
-
-    rsx! {
-        div {
-            class: "overflow-y-auto flex flex-col flex-grow",
-            BoatIssueList {
-               issues: issues_fut.value().read().clone()?
-            }
-        }
-    }
-}
-
-#[component]
-pub fn BoatEdit(id: BoatId) -> Element {
-    rsx! {
-        div {
-            class: "overflow-y-auto flex flex-col flex-grow",
-            self::creation_edit_form::EditBoatForm {
-                id
-            }
-        }
-    }
-}
 
 #[component]
 fn BoatTitle(boat: Result<BoatAndStats, ServerFnError>) -> Element {
@@ -310,145 +129,5 @@ fn BoatTitle(boat: Result<BoatAndStats, ServerFnError>) -> Element {
                 {error.to_string()}
             }
         },
-    }
-}
-
-#[derive(Debug, Clone, Copy, Default, PartialEq)]
-pub enum BoatUsesDateFormatting {
-    #[default]
-    Daily,
-    Monthly,
-}
-
-#[component]
-fn BoatUses(
-    use_events: Result<Vec<(NaiveDate, f32)>, ServerFnError>,
-    date_formatting: Option<BoatUsesDateFormatting>,
-) -> Element {
-    let date_format: Box<dyn Fn(NaiveDate) -> String> = match date_formatting.unwrap_or_default() {
-        BoatUsesDateFormatting::Daily => {
-            Box::new(|time: NaiveDate| time.format("%m-%d").to_string())
-        }
-        BoatUsesDateFormatting::Monthly => {
-            Box::new(|time: NaiveDate| time.format("%y-%m").to_string())
-        }
-    };
-
-    match use_events {
-        Ok(timed_counts) => {
-            rsx! {
-                div {
-                    class: "px-4",
-                    h3 {
-                        class: "text-lg",
-                        "Uses"
-                    }
-                    if !timed_counts.iter().any(|(_date, uses)| *uses > 0.0 ) {
-                        div {
-                            "Boat has not been used."
-                        }
-                    } else {
-                        dioxus_charts::BarChart {
-                            // height: "calc(100% - 60px)",
-                            height: "80%",
-                            // width: "1000px",
-                            // width: "calc(100% - 60px)",
-                            width: "80%",
-                            padding_top: 10,
-                            padding_left: 40,
-                            padding_bottom: 20,
-                            padding_right: 40,
-                            show_grid_ticks: true,
-                            bar_width: "2%",
-                            horizontal_bars: true,
-                            label_interpolation: (|v| {
-                                if v == 0.0 {
-                                    "".to_string()
-                                } else {
-                                    format!("{v}")
-                                }
-                            }) as fn(f32) -> String,
-                            series: vec![timed_counts.iter().map(|( _time, count,)| *count).collect::<Vec<_>>()],
-                            labels: timed_counts.into_iter().map(|(time, _count)| date_format(time)).collect::<Vec<_>>(),
-                        }
-                    }
-                }
-            }
-        }
-        Err(error) => {
-            rsx! {
-                div {
-                    "error: ",
-                    {error.to_string()}
-                }
-            }
-        }
-    }
-}
-
-#[component]
-fn BoatIssueList(issues: Result<Vec<Issue>, ServerFnError>) -> Element {
-    match issues {
-        Ok(issues) => {
-            rsx! {
-                div {
-                    class: "px-4",
-                    h3 {
-                        "Issues"
-                    }
-                    if issues.is_empty() {
-                        div {
-                            "No issues"
-                        }
-                    } else {
-                        {issues.into_iter().map(|issue| rsx! {
-                            BoatIssue {
-                                issue: issue
-                            }
-                        })}
-                    }
-                }
-            }
-        }
-        Err(error) => {
-            rsx! {
-                div {
-                    "error: ",
-                    {error.to_string()}
-                }
-            }
-        }
-    }
-}
-
-#[component]
-fn BoatIssue(issue: Issue) -> Element {
-    rsx! {
-        div {
-            class: "flex flex-col flex-grow p-3",
-            onclick: move |event| {
-                // now, outer won't be triggered
-                event.stop_propagation();
-            },
-            div {
-                class: "flex flex-col flex grow gap-10",
-                div {
-                    "Created at ",
-                    {issue.recorded_at.to_string()},
-                }
-                {issue.resolved_at.map(|time| rsx!{
-                    div {
-                        "Resolved at ",
-                        {time.to_string()}
-                    }
-                })}
-                div {
-                    "style": "min-width: 160px;",
-                    class: "text-xl font-medium",
-                    {issue.note.clone()}
-                }
-
-            }
-        }
     }
 }
