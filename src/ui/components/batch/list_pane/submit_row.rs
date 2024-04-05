@@ -101,14 +101,14 @@ fn SessionTypeDropup(
                                 UseScenario::Other
                             ]
                             .into_iter()
-                            .map(|program| rsx!{
+                            .map(|use_scenario| rsx!{
                                 li {
                                     onclick: move |e| {
                                         e.stop_propagation();
-                                        session_type.set(program);
+                                        session_type.set(use_scenario);
                                         show_session_type_dropdown.set(false);
                                     },
-                                    {program.to_string()}
+                                    {use_scenario.to_string()}
                                 }
                             })
                         }
