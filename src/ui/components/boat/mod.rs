@@ -275,7 +275,7 @@ fn BoatTitle(boat: Result<BoatAndStats, ServerFnError>) -> Element {
     match boat {
         Ok(boat) => rsx! {
             div {
-                class: "flex flex-row  bg-ggrc items-center h-14 min-h-14",
+                class: "flex flex-row bg-ggrc items-center h-14 min-h-14",
                 div {
                     "style": "min-width: 160px;",
                     class: "px-4 text-xl font-medium",
@@ -332,8 +332,11 @@ fn BoatUses(
                         }
                     } else {
                         dioxus_charts::BarChart {
-                            height: "100%",
-                            width: "1000px",
+                            // height: "calc(100% - 60px)",
+                            height: "80%",
+                            // width: "1000px",
+                            // width: "calc(100% - 60px)",
+                            width: "80%",
                             padding_top: 10,
                             padding_left: 40,
                             padding_bottom: 20,
