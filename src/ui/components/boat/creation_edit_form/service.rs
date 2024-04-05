@@ -60,7 +60,9 @@ pub(super) async fn update_boat(
 }
 
 pub(super) enum CreateBoatMsg {
+    /// Creates a new boat
     Create,
+    /// Updates a new boat - taking the current component state and using it to overwrite the existing components at the specified id.
     Update(BoatId),
 }
 

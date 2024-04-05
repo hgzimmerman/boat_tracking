@@ -1,6 +1,9 @@
-use dioxus::prelude::*;
+use std::collections::HashMap;
 
-use crate::db::boat::types::BoatId;
+use dioxus::prelude::*;
+use dioxus_fullstack::prelude::*;
+
+use crate::db::{boat::types::BoatId, use_event::{UseEvent, UseScenario}};
 
 
 
@@ -11,41 +14,48 @@ pub fn BoatSummary(id: BoatId) -> Element {
     rsx! {
         div {
             class: "overflow-y-auto flex flex-col flex-grow space-y-1",
-            {
-                match boat_fut.value().as_ref()?.clone() {
-                    Ok(boat) => rsx!{
-                        LabeledValue {
-                            label: "Manufactured at:",
-                            value: boat.boat.manufactured_at.as_ref().map(ToString::to_string)
-                        }
-                        LabeledValue {
-                            label: "Acquired at:",
-                            value: boat.boat.acquired_at.as_ref().map(ToString::to_string)
-                        }
-                        LabeledValue {
-                            label: "Sold at:",
-                            value: boat.boat.relinquished_at.as_ref().map(ToString::to_string)
-                        }
-                        LabeledValue {
-                            label: "Open Issues:",
-                            value: boat.open_issues.as_ref().map(ToString::to_string)
-                        }
-                        LabeledValue {
-                            label: "Uses (30 days):",
-                            value: boat.uses_last_thirty_days.as_ref().map(ToString::to_string)
-                        }
-                        LabeledValue {
-                            label: "Uses (all time):",
-                            value: boat.total_uses.as_ref().map(ToString::to_string)
-                        }
-                    },
-                    Err(_) => return None
+            div {
+                {
+                    match boat_fut.value().as_ref()?.clone() {
+                        Ok(boat) => rsx!{
+                            LabeledValue {
+                                label: "Manufactured at:",
+                                value: boat.boat.manufactured_at.as_ref().map(ToString::to_string)
+                            }
+                            LabeledValue {
+                                label: "Acquired at:",
+                                value: boat.boat.acquired_at.as_ref().map(ToString::to_string)
+                            }
+                            LabeledValue {
+                                label: "Sold at:",
+                                value: boat.boat.relinquished_at.as_ref().map(ToString::to_string)
+                            }
+                            LabeledValue {
+                                label: "Open Issues:",
+                                value: boat.open_issues.as_ref().map(ToString::to_string)
+                            }
+                            LabeledValue {
+                                label: "Uses (30 days):",
+                                value: boat.uses_last_thirty_days.as_ref().map(ToString::to_string)
+                            }
+                            LabeledValue {
+                                label: "Uses (all time):",
+                                value: boat.total_uses.as_ref().map(ToString::to_string)
+                            }
+                        },
+                        Err(_) => return None
+                    }
                 }
             }
+            UsageBreakdown{
+                id            
+            }
         }
+        
     }
 }
 
+/// Convience component for simplifying the styling of the summary statistics.
 #[component]
 fn LabeledValue(label: &'static str, value: Option<String>) -> Element {
     rsx!{
@@ -60,4 +70,90 @@ fn LabeledValue(label: &'static str, value: Option<String>) -> Element {
             }
         }
     } 
+}
+
+
+#[component]
+fn UsageBreakdown(id: ReadOnlySignal<BoatId>) -> Element {
+    use dioxus_charts::{PieChart, charts::pie::LabelPosition};
+
+    let events = use_resource(move || get_event_list_for_boat(*id.read()));
+    
+    rsx! {
+        div {
+            match events.value()()? {
+                Ok(events) => rsx!{
+                     PieChart{
+                        height: "40%",
+                        width: "40%",
+                        series: events.counts,
+                        labels: events.labels,
+                        label_position: LabelPosition::Outside,
+                        label_offset: 0.2,
+                        donut: true,
+                        donut_width: 100.0
+                    }            
+                },
+                Err(error) => rsx!{
+                    div {
+                        {error.to_string()}
+                    }
+                } 
+            }
+            
+        }
+    } 
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct EventCountsAndLabel {
+    label: UseScenario,
+    count: usize 
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct EventCountsAndLabelLists {
+    labels: Vec<String>,
+    counts: Vec<f32> 
+}
+
+impl From<Vec<EventCountsAndLabel>> for EventCountsAndLabelLists {
+    fn from(value: Vec<EventCountsAndLabel>) -> Self {
+        let len = value.len();
+        value.into_iter()
+        .fold(EventCountsAndLabelLists{labels: Vec::with_capacity(len), counts: Vec::with_capacity(len)}, 
+        |mut acc, EventCountsAndLabel { label, count }| {
+            acc.labels.push(label.to_string());
+            acc.counts.push(count as f32);
+            acc
+        })
+    }
+}
+
+
+#[server(GetCountAndLabelListForBoat)]
+pub(crate) async fn get_event_list_for_boat(id: BoatId) -> Result<EventCountsAndLabelLists, ServerFnError> {
+    // let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu");
+    let state = crate::ui::state::AppState::singleton();
+    
+    let conn = state.pool().get().await?;
+
+    let events = conn.interact(move |conn| {
+        UseEvent::events_for_boat(conn, id).map_err(ServerFnError::new)
+    })
+    .await??;
+
+    let mut list_of_counts_by_use_scenario = events
+    .into_iter()
+    .fold(HashMap::new(), |mut acc, next| {
+        *acc.entry(next.use_scenario).or_default() += 1;
+        acc
+    })
+    .into_iter()
+    .map(|(label, count)| EventCountsAndLabel {
+        label, count
+    })
+    .collect::<Vec<_>>();
+    list_of_counts_by_use_scenario.sort_by_key(|x| x.label);
+    Ok(EventCountsAndLabelLists::from(list_of_counts_by_use_scenario))
 }
