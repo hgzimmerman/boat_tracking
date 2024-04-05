@@ -1,5 +1,48 @@
 use super::*;
 
+
+#[component]
+pub(super) fn SubmitRow(
+    boats: Vec<Boat>,
+    boat_svc: Coroutine<BoatListMsg>,
+    mode: BatchPageMode,
+    session_type: Signal<UseScenario>,
+    created_at_time: Signal<String>,
+) -> Element {
+    rsx! {
+        div {
+            form {
+                onclick: move |e| {
+                    e.stop_propagation();
+                },
+                class: "flex flex-col h-30",
+                div {
+                    id: "button-group",
+                    class: "inline-flex rounded-md shadow-sm m-4",
+                    role: "group",
+                    SessionTypeDropup {
+                        boat_svc,
+                        mode,
+                        session_type
+                    }
+                    TimeSelector {
+                        boat_svc,
+                        mode,
+                        created_at_time
+                    }
+
+                    SubmitButton{
+                        boat_svc,
+                        mode,
+                        boats
+                    }
+
+                }
+            }
+        }
+    }
+}
+
 /// The form element that allows selecting the sort of practice or regatta
 #[component]
 fn SessionTypeDropup(
@@ -7,7 +50,6 @@ fn SessionTypeDropup(
     mode: BatchPageMode,
     session_type: Signal<UseScenario>,
 ) -> Element {
-    // TODO make this use the current time of day to initialize it.
     let mut show_session_type_dropdown = use_signal(|| false);
     rsx! {
         button {
@@ -45,70 +87,35 @@ fn SessionTypeDropup(
                         "hidden"
                     },
                     ul {
-                        li {
-                            onclick: move |e| {
-                                e.stop_propagation();
-                                *session_type.write() = UseScenario::Youth;
-                                *show_session_type_dropdown.write() = false;
-                            },
-                            {UseScenario::Youth.to_string()}
-                        }
-                        li {
-                            onclick: move |e| {
-                                e.stop_propagation();
-                                session_type.set(UseScenario::Adult);
-                                show_session_type_dropdown.set(false);
-                            },
-                            {UseScenario::Adult.to_string()}
-                        }
-                        li {
-                            onclick: move |e| {
-                                e.stop_propagation();
-                                session_type.set(UseScenario::LearnToRow);
-                                show_session_type_dropdown.set(false);
-                            },
-                            {UseScenario::LearnToRow.to_string()}
-                        }
-                        li {
-                            onclick: move |e| {
-                                e.stop_propagation();
-                                session_type.set(UseScenario::ScullingSaturday);
-                                show_session_type_dropdown.set(false);
-                            },
-                            {UseScenario::ScullingSaturday.to_string()}
-                        }
-                        li {
-                            onclick: move |e| {
-                                e.stop_propagation();
-                                session_type.set(UseScenario::PrivateSession);
-                                show_session_type_dropdown.set(false);
-                            },
-                            {UseScenario::PrivateSession.to_string()}
-                        }
-                        li {
-                            onclick: move |e| {
-                                e.stop_propagation();
-                                session_type.set(UseScenario::Regatta);
-                                show_session_type_dropdown.set(false);
-                            },
-                            "Regatta"
-                        }
-                        li {
-                            onclick: move |e| {
-                                e.stop_propagation();
-                                session_type.set(UseScenario::Other);
-                                show_session_type_dropdown.set(false);
-                            },
-                            "Other"
+                        {
+                            [
+                                UseScenario::Youth,
+                                UseScenario::Adult,
+                                UseScenario::LearnToRow,
+                                UseScenario::ScullingSaturday,
+                                UseScenario::PrivateSession,
+                                UseScenario::Regatta, 
+                                UseScenario::Other
+                            ]
+                            .into_iter()
+                            .map(|program| rsx!{
+                                li {
+                                    onclick: move |e| {
+                                        e.stop_propagation();
+                                        session_type.set(program);
+                                        show_session_type_dropdown.set(false);
+                                    },
+                                    {program.to_string()}
+                                }
+                            })
                         }
                     }
                 }
             }
         }
-
-
     }
 }
+
 
 #[component]
 fn TimeSelector(
@@ -166,44 +173,4 @@ fn SubmitButton(
     }
 }
 
-#[component]
-pub(super) fn SubmitRow(
-    boats: Vec<Boat>,
-    boat_svc: Coroutine<BoatListMsg>,
-    mode: BatchPageMode,
-    session_type: Signal<UseScenario>,
-    created_at_time: Signal<String>,
-) -> Element {
-    rsx! {
-        div {
-            form {
-                onclick: move |e| {
-                    e.stop_propagation();
-                },
-                class: "flex flex-col h-30",
-                div {
-                    id: "button-group",
-                    class: "inline-flex rounded-md shadow-sm m-4",
-                    role: "group",
-                    SessionTypeDropup {
-                        boat_svc,
-                        mode,
-                        session_type
-                    }
-                    TimeSelector {
-                        boat_svc,
-                        mode,
-                        created_at_time
-                    }
 
-                    SubmitButton{
-                        boat_svc,
-                        mode,
-                        boats
-                    }
-
-                }
-            }
-        }
-    }
-}
