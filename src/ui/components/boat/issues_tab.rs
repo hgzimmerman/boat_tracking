@@ -16,7 +16,7 @@ pub fn BoatIssues(id: BoatId) -> Element {
         div {
             class: "overflow-y-auto flex flex-col flex-grow",
             BoatIssueList {
-               issues: issues_fut.value().read().clone()?
+               issues: issues_fut.value()()?
             }
         }
     }

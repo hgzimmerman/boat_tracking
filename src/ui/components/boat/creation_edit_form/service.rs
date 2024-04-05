@@ -84,7 +84,7 @@ impl UpdateBoatArgs {
         let name: String = if name.read().is_empty() {
             return Err(BoatArgsError::MissingName);
         } else {
-            name.read().clone()
+            name()
         };
         let weight: WeightClass = if let Some(weight) = *weight.read() {
             weight
@@ -169,7 +169,7 @@ impl CreateBoatArgs {
         let name: String = if name.read().is_empty() {
             return Err(BoatArgsError::MissingName);
         } else {
-            name.read().clone()
+            name()
         };
         let weight: WeightClass = if let Some(weight) = *weight.read() {
             weight

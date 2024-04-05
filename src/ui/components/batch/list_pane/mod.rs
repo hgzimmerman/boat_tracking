@@ -20,13 +20,13 @@ pub(super) fn BatchListPane(
             class: "flex flex-col grow divide-y-2 min-w-1/2",
             // The list of boats
             List {
-                boats: boats.read().clone(),
+                boats: boats(),
                 boat_svc: boat_svc,
                 mode: mode
             }
             // Submission form
             SubmitRow {
-                boats: boats.read().clone(),
+                boats: boats(),
                 boat_svc,
                 mode,
                 session_type,

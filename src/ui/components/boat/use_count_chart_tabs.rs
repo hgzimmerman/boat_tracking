@@ -15,7 +15,7 @@ pub fn BoatMonthlyUses(id: BoatId) -> Element {
         div {
             class: "overflow-y-auto flex flex-col flex-grow",
             BoatUsesChart {
-                use_events: uses_fut.value().read().clone()?,
+                use_events: uses_fut.value()()?,
                 date_formatting: BoatUsesDateFormatting::Daily
             }
         }
@@ -32,7 +32,7 @@ pub fn BoatYearlyUses(id: BoatId) -> Element {
         div {
             class: "overflow-y-auto flex flex-col flex-grow",
             BoatUsesChart {
-                use_events: uses_fut.value().read().clone()?,
+                use_events: uses_fut.value()()?,
                 date_formatting: BoatUsesDateFormatting::Monthly
             }
         }

@@ -23,7 +23,7 @@ pub(super) fn BoatSearchPane(
             }
             // The search results
             SearchResults {
-                boats: boats.read().clone(),
+                boats: boats(),
                 boat_svc: boat_svc
             }
         }

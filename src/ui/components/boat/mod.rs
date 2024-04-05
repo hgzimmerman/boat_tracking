@@ -46,7 +46,7 @@ pub fn BoatNav() -> Element {
 
     rsx! {
         BoatTitle {
-            boat: boat_fut.value().read().clone()?,
+            boat: boat_fut.value()()?,
         }
         nav {
             id: "boat-nav",
