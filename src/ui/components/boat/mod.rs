@@ -317,6 +317,7 @@ fn BoatUses(
             Box::new(|time: NaiveDate| time.format("%y-%m").to_string())
         }
     };
+
     match use_events {
         Ok(timed_counts) => {
             rsx! {
@@ -326,7 +327,7 @@ fn BoatUses(
                         class: "font-large",
                         "Uses"
                     }
-                    if timed_counts.is_empty() {
+                    if !timed_counts.iter().any(|(_date, uses)| *uses > 0.0 ) {
                         div {
                             "Boat has not been used."
                         }

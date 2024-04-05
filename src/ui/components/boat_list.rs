@@ -72,7 +72,7 @@ fn BoatRow(boat: BoatAndStats) -> Element {
             div {
                 class: "flex flex-col flex-grow gap-2.5",
                 div {
-                    class: "text-lg font-medium min-w-40",
+                    class: "text-xl font-medium min-w-40",
                     dioxus_router::components::Link {
                         to: crate::ui::components::Route::BoatSummary{id: boat.boat.id},
                         {boat.boat.name.clone()}
