@@ -216,6 +216,16 @@ pub fn BatchListPage(page: ReadOnlySignal<Page>) -> Element {
                             to: Route::BatchListPage{page: Page(page.saturating_sub(1))},
                             "Newer"
                         }
+                    } else {
+                        // Link is disabled, we don't want it to do anything
+                        a {
+                            class: "inline-block border border-blue-500 rounded py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white cursor-not-allowed opacity-50",
+                            href: "javascript:void(0);",
+                            onclick: |e| {
+                                e.stop_propagation()
+                            },
+                            "Newer"
+                        }
                     }
                     Link {
                         class: "inline-block border border-blue-500 rounded py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white",
