@@ -39,9 +39,9 @@ pub fn NewBoatPage() -> Element {
 
     rsx! {
         div {
-            class: "overflow-y-hidden",
+            class: "overflow-y-hidden justify-center flex flex-col grow",
             div {
-                class: "flex flex-col flex-grow justify-center overflow-y-auto",
+                class: "flex flex-col overflow-y-auto",
                 div {
                     class: "flex flex-row flex-grow justify-center",
                     BoatForm {
