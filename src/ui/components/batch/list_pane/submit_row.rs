@@ -31,12 +31,14 @@ pub(super) fn SubmitRow(
                         created_at_time
                     }
 
+                    div {
+                        class: "grow",
+                    }
                     SubmitButton{
                         boat_svc,
                         mode,
                         boats
-                    }
-
+                    }                       
                 }
             }
         }
@@ -56,7 +58,7 @@ fn SessionTypeDropup(
     rsx! {
         button {
             id: "session-dropdown-btn",
-            class: "btn btn-blue min-w-28 rounded-s ",
+            class: "btn btn-blue min-w-44 rounded-s",
             onclick: move |e| {
                 e.stop_propagation();
                 if !mode.is_view() {
