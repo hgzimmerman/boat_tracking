@@ -1,8 +1,8 @@
 use super::service::BoatListMsg;
-use crate::db::boat::{
+use crate::{db::boat::{
     types::{HasCox, OarConfiguration, SeatCount},
     Boat, BoatFilter,
-};
+}, ui::util::MaskIcon};
 use dioxus::prelude::*;
 
 #[component]
@@ -47,11 +47,17 @@ fn SearchResults(boats: Vec<Boat>, boat_svc: Coroutine<BoatListMsg>) -> Element 
                         {b.boat_type().as_ref().map(ToString::to_string)}
                     }
                     button {
-                        class: "m-2 btn btn-blue",
+                        class: "m-2 btn btn-blue inline-flex items-center",
                         onclick: move |_| {
                             boat_svc.send(BoatListMsg::AddToBatch(b.id));
                         },
-                        "Add to batch"
+                        MaskIcon {
+                            class: "fill-current w-4 h-4 mr-1 bg-white",
+                            url: "/plus.svg"
+                        }
+                        span {
+                            "Add to batch"
+                        }
                     }
                 }
             })}

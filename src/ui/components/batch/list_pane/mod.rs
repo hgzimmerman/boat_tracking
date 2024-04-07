@@ -1,5 +1,5 @@
 use super::{BatchPageMode, BoatListMsg};
-use crate::db::{boat::Boat, use_event::UseScenario};
+use crate::{db::{boat::Boat, use_event::UseScenario}, ui::util::MaskIcon};
 use dioxus::prelude::*;
 
 mod submit_row;
@@ -60,11 +60,17 @@ fn List(boats: Vec<Boat>, boat_svc: Coroutine<BoatListMsg>, mode: BatchPageMode)
                             } else {
                                 rsx!{
                                     button {
-                                        class: "m-2 btn btn-red",
+                                        class: "m-2 btn btn-red inline-flex items-center",
                                         onclick: move |_| {
                                             boat_svc.send(BoatListMsg::RemoveFromBatch(b.id));
                                         },
-                                        "Remove"
+                                        MaskIcon {
+                                            class: "fill-current w-4 h-4 mr-1 bg-white",
+                                            url: "/x.svg"
+                                        }
+                                        span {
+                                            "Remove"
+                                        }
                                     }
                                 }
                             }

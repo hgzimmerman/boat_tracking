@@ -1,7 +1,7 @@
 use dioxus::prelude::*;
 use dioxus_fullstack::prelude::*;
 
-use crate::db::boat::{types::BoatId, BoatAndStats};
+use crate::{db::boat::{types::BoatId, BoatAndStats}, ui::util::MaskIcon};
 pub mod creation_edit_form;
 pub use creation_edit_form::BoatEdit;
 mod summary_tab;
@@ -40,8 +40,8 @@ pub fn BoatNav() -> Element {
 
     let boat_fut = use_resource(use_reactive!(|id| async move { get_boat(id).await }));
 
-    let inactive_class = "inline-block p-4 rounded-t-lg hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 dark:hover:text-gray-300";
-    let active_class = "inline-block p-4 rounded-t-lg hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 dark:hover:text-gray-300 active bg-gray-100 rounded-t-lg dark:bg-gray-800 dark:text-blue-500";
+    let inactive_class = "inline-flex items-center p-4 rounded-t-lg hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 dark:hover:text-gray-300";
+    let active_class = "inline-flex items-center p-4 rounded-t-lg hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 dark:hover:text-gray-300 active bg-gray-100 rounded-t-lg dark:bg-gray-800 dark:text-blue-500";
 
     rsx! {
         BoatTitle {
@@ -85,16 +85,28 @@ pub fn BoatNav() -> Element {
                     Link {
                         class: if matches!(path, Route::BoatEdit{..}) { active_class } else {inactive_class},
                         to: Route::BoatEdit{id},
-                        "Edit"
+                        MaskIcon {
+                            class: "fill-current w-4 h-4 mr-1 bg-gray-500 dark:bg-gray-400 hover:bg-gray-600 dark:hover:bg-gray-300",
+                            url: "/pencil.svg"
+                        }
+                        span {
+                            "Edit"
+                        }
                     }
                 }
                 li {
                     class: "me-2",
                     a {
-                        class: "inline-block p-4",
+                        class: "inline-flex items-center p-4",
                         href: format!("/uses_export.csv?id={id}"),
                         target: "_blank",
-                        "Export to CSV"
+                        MaskIcon {
+                            class: "fill-current w-4 h-4 mr-1 bg-gray-500 dark:bg-gray-400 hover:bg-gray-600 dark:hover:bg-gray-300",
+                            url: "/download.svg"
+                        }
+                        span {
+                            "Export to CSV"
+                        }
                     }
                 }
             }

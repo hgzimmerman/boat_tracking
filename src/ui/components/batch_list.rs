@@ -4,7 +4,7 @@ use crate::{
         use_event::UseScenario,
         use_event_batch::{BatchAndCounts, BatchId},
     },
-    ui::components::Route,
+    ui::{components::Route, util::MaskIcon},
 };
 use dioxus::prelude::*;
 use dioxus_fullstack::prelude::*;
@@ -171,21 +171,39 @@ fn BatchListRow(batch_and_counts: BatchAndCounts) -> Element {
                 class: "",
                 // ->  batch/:batch_id
                 Link {
-                    class: "btn btn-blue",
+                    class: "btn btn-blue inline-flex items-center",
                     to: Route::BatchViewingPage { id: batch.id },
-                    "View"
+                    MaskIcon {
+                        class: "fill-current w-4 h-4 mr-1 bg-white",
+                        url: "/eye.svg"
+                    }
+                    span {
+                        "View"
+                    }
                 }
                 // -> batch/edit/:batch_id
                 Link {
-                    class: "btn btn-blue",
+                    class: "btn btn-blue inline-flex items-center",
                     to: Route::BatchEditPage { id: batch.id },
-                    "Edit"
+                    MaskIcon {
+                        class: "fill-current w-4 h-4 mr-1 bg-white",
+                        url: "/pencil.svg"
+                    }
+                    span {
+                        "Edit"
+                    }
                 }
                 // -> batch/new/:batch_id
                 Link {
-                    class: "btn btn-blue",
+                    class: "btn btn-blue inline-flex items-center",
                     to: Route::BatchTemplateCreationPage{ id: batch.id },
-                    "Use as Template"
+                    MaskIcon {
+                        class: "fill-current w-4 h-4 mr-1 bg-white",
+                        url: "/clipboard.svg"
+                    }
+                    span {
+                        "Use as Template"
+                    }
                 }
             }
         }
@@ -233,17 +251,34 @@ pub fn BatchListPage(page: ReadOnlySignal<Page>) -> Element {
                         "Older"
                     }
                     a {
-                        class: "inline-block p-4",
+                        class: "inline-flex items-center p-4",
                         href: format!("/uses_export.csv"),
                         target: "_blank",
-                        "Export all to CSV"
+                        /* img {
+                            class: "fill-current w-4 h-4 mr-1",
+                            src: "/download.svg"
+                        } */
+                        MaskIcon {
+                            class: "fill-current w-4 h-4 mr-1 bg-black",
+                            url: "/download.svg"
+                        }
+                        span {
+                            "Export all to CSV"
+                        }
                     }
                 }
                 div {
                     Link {
-                        class: "inline-block border border-blue-500 rounded py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white",
+                        class: "inline-flex items-center border border-blue-500 rounded py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white",
                         to: Route::BatchCreationPage,
-                        "Record New Practice or Regatta"
+
+                        MaskIcon {
+                            class: "fill-current w-4 h-4 mr-1 bg-white",
+                            url: "/plus.svg"
+                        }
+                        span {
+                            "Record New Practice or Regatta"
+                        }
                     }
                 }
 

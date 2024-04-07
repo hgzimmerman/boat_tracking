@@ -1,4 +1,4 @@
-use crate::db::boat::BoatAndStats;
+use crate::{db::boat::BoatAndStats, ui::util::MaskIcon};
 
 use dioxus::prelude::*;
 use dioxus_fullstack::prelude::*;
@@ -39,18 +39,30 @@ pub fn BoatListNav() -> Element {
                 li {
                     class: "mr-3",
                     Link {
-                        class: "inline-block border border-blue-500 rounded py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white",
+                        class: "inline-flex items-center border border-blue-500 rounded py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white",
                         to: Route::NewBoatPage{},
-                        "New Boat"
+                        MaskIcon {
+                            class: "fill-current w-4 h-4 mr-1 bg-white",
+                            url: "/plus.svg"
+                        }
+                        span {
+                            "New Boat"
+                        }
                     }
                 }
                 li {
                     class: "mr-3",
                     a {
-                        class: "inline-block p-4",
+                        class: "inline-flex items-center p-4",
                         href: format!("/boats_export.csv"),
                         target: "_blank",
-                        "Export to CSV"
+                        MaskIcon {
+                            class: "fill-current w-4 h-4 mr-1 bg-black",
+                            url: "/download.svg"
+                        }
+                        span {
+                            "Export to CSV"
+                        }
                     }
                 }
             }
