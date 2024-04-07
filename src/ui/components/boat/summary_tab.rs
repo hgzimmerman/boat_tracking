@@ -97,16 +97,28 @@ fn UsageBreakdown(id: ReadOnlySignal<BoatId>) -> Element {
         Ok(events) => {
             let legend = rsx! {
                 div {
-                    "style": "margin-left: -70px; margin-top: 30px",
-                    class: "pr-2",
-                    {
-                        events.iter().map(|label_and_count| rsx!{
-                            LabeledValue2 {
-                                label: label_and_count.label.to_string(),
-                                value: label_and_count.count.to_string()
+                    class: "flex flex-col",
+                    div {
+                        "style": "margin-left: -70px;",
+                        class: "p-2 m-2 border ", // TODO make this shrink to content 
+                        label {
+                            class: "text-lg",
+                            "Legend"
+                        }
+                        div {
+                            {
+                                events.iter().map(|label_and_count| rsx!{
+                                    LabeledValue2 {
+                                        label: label_and_count.label.to_string(),
+                                        value: label_and_count.count.to_string()
+                                    }
+                                })   
                             }
-                        })   
-                    }                                
+                        }                                
+                    }
+                    div {
+                        class: "grow"
+                    }
                 }
             };
             rsx!{
@@ -116,7 +128,7 @@ fn UsageBreakdown(id: ReadOnlySignal<BoatId>) -> Element {
                         let events = EventCountsAndLabelLists::from(events);
                         rsx!{
                             div {
-                                "style": "margin-left: -35px;",
+                                "style": "margin-left: -45px;",
                                 PieChart{
                                     width: "500px",
                                     height: "300px",
