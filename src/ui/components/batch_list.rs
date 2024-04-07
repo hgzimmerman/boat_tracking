@@ -69,7 +69,7 @@ pub fn BatchList(offset: usize, limit: Signal<usize>) -> Element {
             rsx! {
                 div {
                     id: "batch-page-background",
-                    class: "flex flex-grow w-full bg-gray-50 dark:bg-slate-600 md:min-w-96 max-w-xxl  overflow-auto",
+                    class: "flex flex-grow w-full bg-gray-50 dark:bg-slate-600 md:min-w-96 max-w-xxl overflow-auto",
                     div {
                         id: "batch-list-background", 
                         // needed to get the margin
@@ -181,7 +181,7 @@ fn BatchListRow(batch_and_counts: BatchAndCounts) -> Element {
                 class: "",
                 // ->  batch/:batch_id
                 Link {
-                    class: "btn btn-blue inline-flex items-center text-base",
+                    class: "btn btn-blue inline-flex items-center text-base rounded-none rounded-s",
                     to: Route::BatchViewingPage { id: batch.id },
                     MaskIcon {
                         class: "fill-current w-4 h-4 mr-1 bg-white",
@@ -193,7 +193,7 @@ fn BatchListRow(batch_and_counts: BatchAndCounts) -> Element {
                 }
                 // -> batch/edit/:batch_id
                 Link {
-                    class: "btn btn-blue inline-flex items-center text-base",
+                    class: "btn btn-blue inline-flex items-center text-base rounded-none",
                     to: Route::BatchEditPage { id: batch.id },
                     MaskIcon {
                         class: "fill-current w-4 h-4 mr-1 bg-white",
@@ -205,7 +205,7 @@ fn BatchListRow(batch_and_counts: BatchAndCounts) -> Element {
                 }
                 // -> batch/new/:batch_id
                 Link {
-                    class: "btn btn-blue inline-flex items-center text-base",
+                    class: "btn btn-blue inline-flex items-center text-base rounded-none rounded-e",
                     to: Route::BatchTemplateCreationPage{ id: batch.id },
                     MaskIcon {
                         class: "fill-current w-4 h-4 mr-1 bg-white",
@@ -266,14 +266,15 @@ pub fn BatchListPage(page: ReadOnlySignal<Page>) -> Element {
                 div {
                     if *offset_state.read() != 0 {
                         Link {
-                            class: "inline-block border border-blue-500 rounded py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white",
+                            class: "inline-block border border-blue-500 py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white rounded-none rounded-s",
                             to: Route::BatchListPage{page: Page(page.saturating_sub(1))},
                             "Newer"
                         }
                     } else {
-                        // Link is disabled, we don't want it to do anything
+                        // Link is disabled, we don't want it to do anything.
+                        // Because Link is just a link, we can't just disable it.
                         a {
-                            class: "inline-block border border-blue-500 rounded py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white cursor-not-allowed opacity-50",
+                            class: "inline-block border border-blue-500 py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white rounded-none rounded-s cursor-not-allowed opacity-50",
                             href: "javascript:void(0);",
                             onclick: |e| {
                                 e.stop_propagation()
@@ -282,7 +283,7 @@ pub fn BatchListPage(page: ReadOnlySignal<Page>) -> Element {
                         }
                     }
                     Link {
-                        class: "inline-block border border-blue-500 rounded py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white",
+                        class: "inline-block border border-blue-500  py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white rounded-none rounded-e",
                         to: Route::BatchListPage{page: Page(page.saturating_add(1))},
                         "Older"
                     }
