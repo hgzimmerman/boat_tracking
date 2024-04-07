@@ -59,7 +59,7 @@ fn SessionTypeDropup(
             class: "my-0",
             button {
                 id: "session-dropdown-btn",
-                class: "btn min-w-44 rounded-lg bg-gray-700 text-white",
+                class: "btn min-w-44 rounded-s bg-gray-50 dark:bg-gray-700 hover:dark:bg-gray-800 text-white",
                 onclick: move |e| {
                     e.stop_propagation();
                     if !mode.is_view() {
@@ -140,7 +140,7 @@ fn TimeSelector(
             input {
                 r#type: "datetime-local",
                 id: "manufactured-at",
-                class: "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500",
+                class: "bg-gray-50 text-gray-900 text-sm rounded-e focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700  dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500",
                 value: created_at_time.read().to_owned(),
                 disabled: mode.is_view(),
                 oninput: move |event| {
@@ -160,7 +160,7 @@ fn SubmitButton(
     match mode {
         BatchPageMode::Create | BatchPageMode::Template { .. } => rsx! {
             button {
-                class: "inline-flex items-center btn btn-blue rounded-e disabled:opacity-45 disabled:bg-blue-500",
+                class: "inline-flex items-center btn btn-blue rounded disabled:opacity-45 disabled:bg-blue-500",
                 disabled: boats.is_empty(),
                 onclick: move |e| {
                     e.stop_propagation();
@@ -178,7 +178,7 @@ fn SubmitButton(
         BatchPageMode::View { .. } => None,
         BatchPageMode::Edit { id } => rsx! {
             button {
-                class: "inline-flex items-center btn btn-blue rounded-e disabled:opacity-45 disabled:bg-blue-500",
+                class: "inline-flex items-center btn btn-blue rounded disabled:opacity-45 disabled:bg-blue-500",
                 disabled: boats.is_empty(),
                 onclick: move |e| {
                     e.stop_propagation();
