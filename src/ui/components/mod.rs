@@ -99,7 +99,7 @@ fn NavBar() -> Element {
         }
         div {
             id: "content-wrapper",
-            class: "flex flex-col flex-grow max-h-[calc(100vh-42px)] bg-slate-50 dark:bg-slate-500 justify-center",
+            class: "flex flex-col flex-grow max-h-[calc(100vh-42px)] bg-slate-50 dark:bg-slate-500",
             Outlet::<Route> {}
         }
     }

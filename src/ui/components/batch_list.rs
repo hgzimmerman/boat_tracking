@@ -54,7 +54,6 @@ pub fn BatchList(offset: usize, limit: Signal<usize>) -> Element {
                     .await
                     .map(|batch_data| {
                         tracing::debug!(?batch_data);
-                        // batch_data_state.set(batch_data.clone());
                         batch_data
                     })
                     .map_err(|error| {
@@ -69,17 +68,23 @@ pub fn BatchList(offset: usize, limit: Signal<usize>) -> Element {
         Ok(batches) => {
             rsx! {
                 div {
-                    class: "flex flex-row flex-grow xl:px-12 w-full bg-gray-50 dark:bg-gray-400 md:min-w-96 max-w-xxl shadow-md",
+                    id: "batch-page-background",
+                    class: "flex flex-grow w-full bg-gray-50 dark:bg-gray-400 md:min-w-96 max-w-xxl  overflow-auto",
                     div {
-                        class: "divide-y-2 flex flex-col overflow-auto grow bg-gray-100 dark:bg-gray-500 shadow-md",
-                        {
-                            batches.iter().map(|batch_and_counts| {
-                                rsx!{
-                                    BatchListRow {
-                                        batch_and_counts: batch_and_counts.clone()
+                        id: "batch-list-background", // needed to get the margin
+                        class: "flex-grow xl:mx-12 grow bg-gray-100 dark:bg-gray-500 shadow-md",
+                        div {
+                            id: "batch-list-container",
+                            class: "divide-y-2 flex flex-col grow bg-gray-100 dark:bg-gray-500",
+                            {
+                                batches.iter().map(|batch_and_counts| {
+                                    rsx!{
+                                        BatchListRow {
+                                            batch_and_counts: batch_and_counts.clone()
+                                        }
                                     }
-                                }
-                            })
+                                })
+                            }
                         }
                     }
                 }
@@ -119,7 +124,7 @@ fn BatchListRow(batch_and_counts: BatchAndCounts) -> Element {
                 id.set(None);
             },
             div {
-                class: "m-2 w-32",
+                class: "m-2 w-36",
                 {batch.use_scenario.to_string()}
             }
             div {
