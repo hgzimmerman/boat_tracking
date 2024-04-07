@@ -157,25 +157,37 @@ fn SubmitButton(
     match mode {
         BatchPageMode::Create | BatchPageMode::Template { .. } => rsx! {
             button {
-                class: "btn btn-blue rounded-e disabled:opacity-45 disabled:bg-blue-500",
+                class: "inline-flex items-center btn btn-blue rounded-e disabled:opacity-45 disabled:bg-blue-500",
                 disabled: boats.is_empty(),
                 onclick: move |e| {
                     e.stop_propagation();
                     boat_svc.send(BoatListMsg::Submit);
                 },
-                "Save New Boat Uses"
+                MaskIcon {
+                    class: "fill-current w-4 h-4 mr-1 bg-white",
+                    url: "/save.svg"
+                }
+                span {
+                    "Save New Boat Uses"
+                }
             }
         },
         BatchPageMode::View { .. } => None,
         BatchPageMode::Edit { id } => rsx! {
             button {
-                class: "btn btn-blue rounded-e disabled:opacity-45 disabled:bg-blue-500",
+                class: "inline-flex items-center btn btn-blue rounded-e disabled:opacity-45 disabled:bg-blue-500",
                 disabled: boats.is_empty(),
                 onclick: move |e| {
                     e.stop_propagation();
                     boat_svc.send(BoatListMsg::SaveChanges { batch_id: id, boat_ids: boats.iter().map(|boat|boat.id).collect()});
                 },
-                "Save Changes"
+                MaskIcon {
+                    class: "fill-current w-4 h-4 mr-1 bg-white",
+                    url: "/save.svg"
+                }
+                span {
+                    "Save Changes"
+                }
             }
         },
     }

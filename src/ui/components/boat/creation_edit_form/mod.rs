@@ -1,6 +1,6 @@
 use crate::{
     db::boat::types::{BoatId, BoatType, WeightClass},
-    ui::components::boat::creation_edit_form::service::CreateBoatMsg,
+    ui::{components::boat::creation_edit_form::service::CreateBoatMsg, util::MaskIcon},
 };
 use dioxus::prelude::*;
 
@@ -283,24 +283,36 @@ fn BoatForm(
                 match mode {
                     BoatFormMode::New => rsx!{
                         button {
-                            class: "btn btn-blue rounded-e disabled:opacity-45 disabled:bg-blue-500",
+                            class: "inline-flex items-center btn btn-blue rounded-e disabled:opacity-45 disabled:bg-blue-500",
                             disabled: boat_type.read().is_none() || weight_class.read().is_none(),
                             onclick: move |e| {
                                 e.stop_propagation();
                                 boat_svc.send(CreateBoatMsg::Create);
                             },
-                            "Save New Boat"
+                            MaskIcon {
+                                class: "fill-current w-4 h-4 mr-1 bg-white",
+                                url: "/save.svg"
+                            }
+                            span {
+                                "Save New Boat"
+                            }
                         }
                     },
                     BoatFormMode::Edit(id) => rsx!{
                         button {
-                            class: "btn btn-blue rounded-e disabled:opacity-45 disabled:bg-blue-500",
+                            class: "inline-flex items-center btn btn-blue rounded-e disabled:opacity-45 disabled:bg-blue-500",
                             disabled: boat_type.read().is_none() || weight_class.read().is_none(),
                             onclick: move |e| {
                                 e.stop_propagation();
                                 boat_svc.send(CreateBoatMsg::Update(id));
                             },
-                            "Save Changes to Boat"
+                            MaskIcon {
+                                class: "fill-current w-4 h-4 mr-1 bg-white",
+                                url: "/save.svg"
+                            }
+                            span {
+                                "Save Changes to Boat"
+                            }
                         }
                     },
                 }
