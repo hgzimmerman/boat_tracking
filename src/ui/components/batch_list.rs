@@ -121,7 +121,7 @@ fn BatchListRow(batch_and_counts: BatchAndCounts) -> Element {
     let local_recorded_at = crate::ui::util::time::render_local(batch.recorded_at);
     rsx! {
         div {
-            class: "flex flex-row h-16 items-center py-1 px-4 text-lg",
+            class: "flex flex-row flex-wrap max-h-32 items-center py-2 px-4 text-lg",
             onmouseout: move |_event| {
                 id.set(None);
             },

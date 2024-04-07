@@ -695,6 +695,10 @@ video {
   max-height: calc(100vh - 42px);
 }
 
+.max-h-32 {
+  max-height: 8rem;
+}
+
 .min-h-14 {
   min-height: 3.5rem;
 }
@@ -1053,6 +1057,11 @@ video {
 .py-2 {
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
+}
+
+.py-4 {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
 }
 
 .pb-8 {
