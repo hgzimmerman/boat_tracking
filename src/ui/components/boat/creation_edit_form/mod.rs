@@ -102,7 +102,7 @@ fn BoatForm(
                 }
                 button {
                     id: "weight-class-dropdown-btn",
-                    class: "btn btn-blue min-w-28 rounded-s",
+                    class: "btn min-w-28 rounded-s dark:bg-gray-700 dark:text-white",
                     onclick: move |e| {
                         e.stop_propagation();
                         let inverted = !*show_weight_class_dropdown.read();
@@ -164,7 +164,7 @@ fn BoatForm(
                 }
                 button {
                     id: "boat-type-dropdown-btn",
-                    class: "btn btn-blue min-w-28 rounded-s",
+                    class: "btn min-w-28 rounded-s dark:bg-gray-700 dark:text-white",
                     onclick: move |e| {
                         e.stop_propagation();
                         let inverted = !*show_boat_type_dropdown.read();
