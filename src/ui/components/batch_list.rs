@@ -69,13 +69,15 @@ pub fn BatchList(offset: usize, limit: Signal<usize>) -> Element {
             rsx! {
                 div {
                     id: "batch-page-background",
-                    class: "flex flex-grow w-full bg-gray-50 dark:bg-gray-400 md:min-w-96 max-w-xxl  overflow-auto",
+                    class: "flex flex-grow w-full bg-gray-50 dark:bg-slate-600 md:min-w-96 max-w-xxl  overflow-auto",
                     div {
-                        id: "batch-list-background", // needed to get the margin
-                        class: "flex-grow xl:mx-12 grow bg-gray-100 dark:bg-gray-500 shadow-md",
+                        id: "batch-list-background", 
+                        // needed to get the margin
+                        // and the same colors as below for when the list is shorter than the full geight.
+                        class: "flex-grow xl:mx-12 grow bg-gray-100 dark:bg-slate-700 shadow-md",
                         div {
                             id: "batch-list-container",
-                            class: "divide-y-2 flex flex-col grow bg-gray-100 dark:bg-gray-500",
+                            class: "divide-y-2 flex flex-col grow bg-gray-100 dark:bg-slate-700 dark:text-slate-50",
                             {
                                 batches.iter().map(|batch_and_counts| {
                                     rsx!{
@@ -119,12 +121,12 @@ fn BatchListRow(batch_and_counts: BatchAndCounts) -> Element {
     let local_recorded_at = crate::ui::util::time::render_local(batch.recorded_at);
     rsx! {
         div {
-            class: "flex flex-row h-16 items-center py-1 px-4",
+            class: "flex flex-row h-16 items-center py-1 px-4 text-lg",
             onmouseout: move |_event| {
                 id.set(None);
             },
             div {
-                class: "m-2 w-36",
+                class: "m-2 w-40",
                 {batch.use_scenario.to_string()}
             }
             div {
@@ -179,7 +181,7 @@ fn BatchListRow(batch_and_counts: BatchAndCounts) -> Element {
                 class: "",
                 // ->  batch/:batch_id
                 Link {
-                    class: "btn btn-blue inline-flex items-center",
+                    class: "btn btn-blue inline-flex items-center text-base",
                     to: Route::BatchViewingPage { id: batch.id },
                     MaskIcon {
                         class: "fill-current w-4 h-4 mr-1 bg-white",
@@ -191,7 +193,7 @@ fn BatchListRow(batch_and_counts: BatchAndCounts) -> Element {
                 }
                 // -> batch/edit/:batch_id
                 Link {
-                    class: "btn btn-blue inline-flex items-center",
+                    class: "btn btn-blue inline-flex items-center text-base",
                     to: Route::BatchEditPage { id: batch.id },
                     MaskIcon {
                         class: "fill-current w-4 h-4 mr-1 bg-white",
@@ -203,7 +205,7 @@ fn BatchListRow(batch_and_counts: BatchAndCounts) -> Element {
                 }
                 // -> batch/new/:batch_id
                 Link {
-                    class: "btn btn-blue inline-flex items-center",
+                    class: "btn btn-blue inline-flex items-center text-base",
                     to: Route::BatchTemplateCreationPage{ id: batch.id },
                     MaskIcon {
                         class: "fill-current w-4 h-4 mr-1 bg-white",
@@ -236,6 +238,32 @@ pub fn BatchListPage(page: ReadOnlySignal<Page>) -> Element {
                 class: "h-16 bg-ggrc flex flex-row items-center px-4",
                 div {
                     class: "grow",
+                    Link {
+                        class: "inline-flex items-center border border-blue-500 rounded py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white",
+                        to: Route::BatchCreationPage,
+
+                        MaskIcon {
+                            class: "fill-current w-4 h-4 mr-1 bg-white",
+                            url: "/plus.svg"
+                        }
+                        span {
+                            "Record New Practice or Regatta"
+                        }
+                    }
+                    a {
+                        class: "inline-flex items-center p-4",
+                        href: format!("/uses_export.csv"),
+                        target: "_blank",
+                        MaskIcon {
+                            class: "fill-current w-4 h-4 mr-1 bg-black",
+                            url: "/download.svg"
+                        }
+                        span {
+                            "Export all to CSV"
+                        }
+                    }
+                }
+                div {
                     if *offset_state.read() != 0 {
                         Link {
                             class: "inline-block border border-blue-500 rounded py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white",
@@ -258,33 +286,9 @@ pub fn BatchListPage(page: ReadOnlySignal<Page>) -> Element {
                         to: Route::BatchListPage{page: Page(page.saturating_add(1))},
                         "Older"
                     }
-                    a {
-                        class: "inline-flex items-center p-4",
-                        href: format!("/uses_export.csv"),
-                        target: "_blank",
-                        MaskIcon {
-                            class: "fill-current w-4 h-4 mr-1 bg-black",
-                            url: "/download.svg"
-                        }
-                        span {
-                            "Export all to CSV"
-                        }
-                    }
+                    
                 }
-                div {
-                    Link {
-                        class: "inline-flex items-center border border-blue-500 rounded py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white",
-                        to: Route::BatchCreationPage,
-
-                        MaskIcon {
-                            class: "fill-current w-4 h-4 mr-1 bg-white",
-                            url: "/plus.svg"
-                        }
-                        span {
-                            "Record New Practice or Regatta"
-                        }
-                    }
-                }
+                
             }
 
             // the controls

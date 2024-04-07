@@ -61,7 +61,7 @@ pub fn BoatListNav() -> Element {
                             url: "/download.svg"
                         }
                         span {
-                            "Export to CSV"
+                            "Export Boats to CSV"
                         }
                     }
                 }
@@ -133,9 +133,9 @@ pub fn BoatList(boats: ReadOnlySignal<Result<Vec<BoatAndStats>, ServerFnError>>)
         Ok(boats) => {
             rsx! {
                 div {
-                    class: "flex flex-row flex-grow xl:px-12 w-full bg-gray-50 dark:bg-gray-400 md:min-w-96 max-w-xxl shadow-md",
+                    class: "flex flex-row flex-grow xl:px-12 w-full bg-gray-50 dark:bg-slate-600 md:min-w-96 max-w-xxl shadow-md",
                     div {
-                        class: "flex-grow divide-y-2 dark:divide-white dark:text-white dark:bg-gray-500",
+                        class: "flex-grow divide-y-2 dark:divide-white dark:text-white dark:bg-slate-700",
                         {
                             boats.into_iter().map(|boat| rsx! {
                                 BoatRow {
