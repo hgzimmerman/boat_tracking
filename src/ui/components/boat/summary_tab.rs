@@ -83,6 +83,10 @@ fn LabeledValue2(label: String, value: Option<String>) -> Element {
     }
 }
 
+/// Pie chart + legend that indicates what the distribution of 
+/// uses for different types of practices and regattas is.
+/// 
+/// Not shown if the boat has not been used
 #[component]
 fn UsageBreakdown(id: ReadOnlySignal<BoatId>) -> Element {
     use dioxus_charts::{charts::pie::LabelPosition, PieChart};
@@ -91,6 +95,11 @@ fn UsageBreakdown(id: ReadOnlySignal<BoatId>) -> Element {
 
     match events.value()()? {
         Ok(events) => {
+            // Rendering is too goofy if the SVG can't be drawn due to not having data,
+            // so just don't render anything until we can solve that better.
+            if events.is_empty() {
+                return None
+            }
             let legend = rsx! {
                 div {
                     class: "flex flex-col",
