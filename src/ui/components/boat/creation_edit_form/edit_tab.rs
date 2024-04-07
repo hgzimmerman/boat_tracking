@@ -16,7 +16,8 @@ use dioxus_fullstack::prelude::*;
 pub fn BoatEdit(id: BoatId) -> Element {
     rsx! {
         div {
-            class: "overflow-y-auto flex flex-col flex-grow",
+            id: "edit-content-wrapper",
+            class: "overflow-y-auto flex flex-col flex-grow justify-center",
             EditBoatForm {
                 id
             }
@@ -88,18 +89,15 @@ fn EditBoatForm(id: BoatId) -> Element {
     });
     rsx! {
         div {
-            class: "flex flex-col flex-grow justify-center",
-            div {
-                class: "flex flex-row flex-grow justify-center",
-                BoatForm {
-                    name: name,
-                    acquired_at: acquired_at,
-                    manufactured_at: manufactured_at,
-                    relinquished_at: relinquished_at,
-                    boat_type: boat_type,
-                    weight_class: weight_class,
-                    mode: BoatFormMode::Edit(id)
-                }
+            class: "flex flex-row justify-center",
+            BoatForm {
+                name: name,
+                acquired_at: acquired_at,
+                manufactured_at: manufactured_at,
+                relinquished_at: relinquished_at,
+                boat_type: boat_type,
+                weight_class: weight_class,
+                mode: BoatFormMode::Edit(id)
             }
         }
 
