@@ -3,9 +3,6 @@ use dioxus_fullstack::prelude::*;
 
 use crate::db::{boat::types::BoatId, issue::Issue};
 
-
-
-
 #[component]
 pub fn BoatIssues(id: BoatId) -> Element {
     let issues_fut = use_resource(use_reactive!(|id| async move {
@@ -21,7 +18,6 @@ pub fn BoatIssues(id: BoatId) -> Element {
         }
     }
 }
-
 
 #[component]
 fn BoatIssueList(issues: Result<Vec<Issue>, ServerFnError>) -> Element {
@@ -90,7 +86,6 @@ fn BoatIssue(issue: Issue) -> Element {
     }
 }
 
-
 #[server(GetBoatOpenIssues)]
 pub(crate) async fn get_open_issues_for_boat(id: BoatId) -> Result<Vec<Issue>, ServerFnError> {
     // let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu");
@@ -102,8 +97,6 @@ pub(crate) async fn get_open_issues_for_boat(id: BoatId) -> Result<Vec<Issue>, S
     })
     .await?
 }
-
-
 
 #[server(GetBoatResolvedIssues)]
 pub(crate) async fn get_resolved_issues_for_boat(id: BoatId) -> Result<Vec<Issue>, ServerFnError> {

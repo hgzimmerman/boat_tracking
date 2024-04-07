@@ -1,6 +1,5 @@
 use super::*;
 
-
 #[component]
 pub(super) fn SubmitRow(
     boats: Vec<Boat>,
@@ -38,7 +37,7 @@ pub(super) fn SubmitRow(
                         boat_svc,
                         mode,
                         boats
-                    }                       
+                    }
                 }
             }
         }
@@ -46,7 +45,7 @@ pub(super) fn SubmitRow(
 }
 
 /// The form element that allows selecting the sort of practice or regatta
-/// 
+///
 /// This could be select element, but this custom thing is fine for now.
 #[component]
 fn SessionTypeDropup(
@@ -99,7 +98,7 @@ fn SessionTypeDropup(
                                 UseScenario::LearnToRow,
                                 UseScenario::ScullingSaturday,
                                 UseScenario::PrivateSession,
-                                UseScenario::Regatta, 
+                                UseScenario::Regatta,
                                 UseScenario::Other
                             ]
                             .into_iter()
@@ -125,7 +124,6 @@ fn SessionTypeDropup(
         }
     }
 }
-
 
 #[component]
 fn TimeSelector(
@@ -182,5 +180,3 @@ fn SubmitButton(
         },
     }
 }
-
-

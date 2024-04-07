@@ -21,7 +21,10 @@ use crate::{
         use_event::{UseEvent, UseScenario},
         use_event_batch::{BatchId, UseEventBatch},
     },
-    ui::components::{batch::service::{boat_list_service, get_existing_batch, BoatListMsg, ExistingBatch}, toast::ToastData},
+    ui::components::{
+        batch::service::{boat_list_service, get_existing_batch, BoatListMsg, ExistingBatch},
+        toast::ToastData,
+    },
 };
 use chrono::NaiveDateTime;
 use dioxus::prelude::*;
@@ -120,7 +123,8 @@ fn GeneralBatchCreationPage(mode: BatchPageMode) -> Element {
     let search_boat_state = use_signal(Vec::<Boat>::new);
 
     let mut session_type = use_signal(|| UseScenario::Adult);
-    let mut created_at_time = use_signal(|| crate::ui::util::time::render_local(chrono::Utc::now().naive_utc()));
+    let mut created_at_time =
+        use_signal(|| crate::ui::util::time::render_local(chrono::Utc::now().naive_utc()));
 
     let toast_svc = use_coroutine_handle::<ToastMsgMsg>();
     let boat_svc = use_coroutine(|rx| {
@@ -143,26 +147,27 @@ fn GeneralBatchCreationPage(mode: BatchPageMode) -> Element {
     });
 
     // If the ID is populated, then use it to fetch the existing set of boats for a specific batch.
-    // 
+    //
     // Use this to set the selected list, the time and the type of session.
     use_future(move || {
         async move {
             if let Some(id) = mode.as_option() {
                 match get_existing_batch(id).await {
-                    Ok(ExistingBatch { batch, batch_entries }) => {
+                    Ok(ExistingBatch {
+                        batch,
+                        batch_entries,
+                    }) => {
                         match mode {
-                            BatchPageMode::Create 
-                            | BatchPageMode::Template { .. } => {},
-                            BatchPageMode::View { .. } 
-                            | BatchPageMode::Edit { .. } => {
-                                // Only set the created at time if we are editing or viewing, otherwise, 
+                            BatchPageMode::Create | BatchPageMode::Template { .. } => {}
+                            BatchPageMode::View { .. } | BatchPageMode::Edit { .. } => {
+                                // Only set the created at time if we are editing or viewing, otherwise,
                                 // we want the template to use the current time.
                                 if let Some(time) = batch.as_ref().map(|x| x.recorded_at) {
                                     created_at_time.set(crate::ui::util::time::render_local(time))
                                 }
-                            },
+                            }
                         }
-                        
+
                         if let Some(use_scenario) = batch.map(|x| x.use_scenario) {
                             session_type.set(use_scenario)
                         }

@@ -42,7 +42,6 @@ impl UseEventBatch {
         })
     }
 
-
     /// Gets a list of batches and their use count.
     pub fn get_most_recent_batches_and_their_use_count(
         conn: &mut SqliteConnection,
@@ -89,8 +88,11 @@ impl UseEventBatch {
             .select((UseEvent::as_select(), Boat::as_select()))
             .get_results(conn)
     }
-    
-    pub fn get_batch(conn: &mut SqliteConnection, id: BatchId) -> Result<Option<UseEventBatch>, diesel::result::Error> {
+
+    pub fn get_batch(
+        conn: &mut SqliteConnection,
+        id: BatchId,
+    ) -> Result<Option<UseEventBatch>, diesel::result::Error> {
         use_event_batch::table
             .filter(use_event_batch::id.eq(id))
             .get_result::<UseEventBatch>(conn)

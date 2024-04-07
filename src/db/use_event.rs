@@ -21,7 +21,7 @@ pub struct UseEvent {
 
 // use_scenario TEXT CHECK( use_scenario IN ('Youth', 'Adult', 'LearnToRow', 'ScullingSaturday', 'PrivateSession', 'Regatta', 'Other') ) NOT NULL
 #[derive(
-    Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize, Hash
+    Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize, Hash,
 )]
 #[cfg_attr(feature = "ssr", derive(diesel_derive_enum::DbEnum))]
 #[cfg_attr(feature = "ssr", DbValueStyle = "verbatim")]

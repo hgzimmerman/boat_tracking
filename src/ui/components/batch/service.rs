@@ -17,7 +17,7 @@ pub(crate) async fn search_boats(
 pub(crate) async fn submit_boats(
     boat_ids: Vec<BoatId>,
     session_type: UseScenario,
-    recorded_at: NaiveDateTime
+    recorded_at: NaiveDateTime,
 ) -> Result<BatchId, ServerFnError> {
     // let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu");
     let state = crate::ui::state::AppState::singleton();
@@ -29,8 +29,11 @@ pub(crate) async fn submit_boats(
             recorded_at,
         },
     };
-    conn.interact(|conn| crate::db::use_event_batch::UseEventBatch::create_batch(conn, new_batch).map_err(ServerFnError::from))
-        .await?
+    conn.interact(|conn| {
+        crate::db::use_event_batch::UseEventBatch::create_batch(conn, new_batch)
+            .map_err(ServerFnError::from)
+    })
+    .await?
 }
 
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
@@ -39,20 +42,22 @@ pub struct ExistingBatch {
     pub(super) batch_entries: Vec<(UseEvent, Boat)>,
 }
 #[server(GetExistingBatch2)]
-pub(crate) async fn get_existing_batch(
-    batch_id: BatchId,
-) -> Result<ExistingBatch, ServerFnError> {
+pub(crate) async fn get_existing_batch(batch_id: BatchId) -> Result<ExistingBatch, ServerFnError> {
     let state = crate::ui::state::AppState::singleton();
     let conn = state.pool().get().await?;
     let batch_entries = conn.interact(move |conn| {
-        crate::db::use_event_batch::UseEventBatch::get_events_and_boats_for_batch(conn, batch_id).map_err(ServerFnError::new)
+        crate::db::use_event_batch::UseEventBatch::get_events_and_boats_for_batch(conn, batch_id)
+            .map_err(ServerFnError::new)
     });
     let batch = conn.interact(move |conn| {
-        crate::db::use_event_batch::UseEventBatch::get_batch(conn, batch_id).map_err(ServerFnError::new)
+        crate::db::use_event_batch::UseEventBatch::get_batch(conn, batch_id)
+            .map_err(ServerFnError::new)
     });
     let (batch_entries, batch) = futures::future::try_join(batch_entries, batch).await?;
-    Ok(ExistingBatch { batch: batch?, batch_entries: batch_entries? })
-
+    Ok(ExistingBatch {
+        batch: batch?,
+        batch_entries: batch_entries?,
+    })
 }
 
 #[server(ReplaceBatch)]
@@ -65,9 +70,11 @@ pub(crate) async fn replace_batch(
     let conn = state.pool().get().await?;
     conn.interact(move |conn| {
         // currently don't overwrite the recorded at field, because we don't support customizing it in the first place
-        crate::db::use_event_batch::UseEventBatch::replace_batch_uses(conn, batch_id, boat_ids, use_type, None)
-            .map_err(ServerFnError::from)
-            .map(|_| ())
+        crate::db::use_event_batch::UseEventBatch::replace_batch_uses(
+            conn, batch_id, boat_ids, use_type, None,
+        )
+        .map_err(ServerFnError::from)
+        .map(|_| ())
     })
     .await?
 }
@@ -243,11 +250,12 @@ pub(super) async fn boat_list_service(
                 tracing::trace!(recorded= ?recorded_at.trim());
 
                 // let date_result = DateTime::<FixedOffset>::parse_from_str(recorded_at.trim(), crate::ui::util::time::MINUTE_RESOLUTION_FMT);
-                let date_result = crate::ui::util::time::parse_str_as_naive_to_utc(recorded_at.trim());
+                let date_result =
+                    crate::ui::util::time::parse_str_as_naive_to_utc(recorded_at.trim());
                 match date_result {
-                   Ok(recorded_at)  => {
-                       // This recorded at should be input + 4h
-                       tracing::info!(?recorded_at, input=created_at_time());
+                    Ok(recorded_at) => {
+                        // This recorded at should be input + 4h
+                        tracing::info!(?recorded_at, input = created_at_time());
                         if !ids.is_empty() {
                             match submit_boats(ids, session_type, recorded_at).await {
                                 Ok(id) => {
@@ -255,23 +263,27 @@ pub(super) async fn boat_list_service(
                                     searched_boats.set(Vec::new());
                                     selected_boats.set(Vec::new());
                                     search_name.set(None);
-                                    created_at_time.set(crate::ui::util::time::render_local(chrono::Utc::now().naive_utc()));
+                                    created_at_time.set(crate::ui::util::time::render_local(
+                                        chrono::Utc::now().naive_utc(),
+                                    ));
                                     toasts.send(ToastData::success("Submitted boats").into());
                                     // refresh the search page
                                     search().await
                                 }
                                 Err(error) => {
                                     tracing::error!(?error, "Could not submit batch");
-                                    toasts.send(ToastData::warn("Could not submit batch".to_string()).into());
+                                    toasts.send(
+                                        ToastData::warn("Could not submit batch".to_string())
+                                            .into(),
+                                    );
                                 }
                             }
                         }
-                   },
-                   Err(error) => {
+                    }
+                    Err(error) => {
                         toasts.send(ToastData::error(error).into());
-                   }
+                    }
                 }
-                
             }
         }
     }

@@ -4,7 +4,6 @@ use dioxus_fullstack::prelude::*;
 
 use crate::db::boat::types::BoatId;
 
-
 #[component]
 pub fn BoatMonthlyUses(id: BoatId) -> Element {
     let uses_fut = use_resource(use_reactive!(
@@ -111,7 +110,6 @@ fn BoatUsesChart(
         }
     }
 }
-
 
 /// Currently gets a month's worth of data, by day
 #[server(GetBoatEvents)]

@@ -22,24 +22,24 @@ enum BoatFormMode {
 
 /// The Options for boat weights
 const WEIGHTS: [Option<WeightClass>; 5] = [
-    None, 
-    Some(WeightClass::Light), 
-    Some(WeightClass::Medium), 
-    Some(WeightClass::Heavy), 
-    Some(WeightClass::Tubby)
+    None,
+    Some(WeightClass::Light),
+    Some(WeightClass::Medium),
+    Some(WeightClass::Heavy),
+    Some(WeightClass::Tubby),
 ];
 /// The boat type options.
 /// Excludes some of the more exodic types because we don't ever plan on using them.
 const BOAT_TYPES: [Option<BoatType>; 9] = [
-    None, 
-    Some(BoatType::Single), 
-    Some(BoatType::Double), 
+    None,
+    Some(BoatType::Single),
+    Some(BoatType::Double),
     Some(BoatType::Quad),
     Some(BoatType::QuadPlus),
-    Some(BoatType::Pair), 
-    Some(BoatType::Four), 
-    Some(BoatType::FourPlus), 
-    Some(BoatType::Eight), 
+    Some(BoatType::Pair),
+    Some(BoatType::Four),
+    Some(BoatType::FourPlus),
+    Some(BoatType::Eight),
 ];
 
 /// The common form component that handles creation and upating of boats.
@@ -145,7 +145,7 @@ fn BoatForm(
                                                     weight_class.set(*weight);
                                                     show_weight_class_dropdown.set(false);
                                                 },
-                                                {weight.as_ref().map(ToString::to_string).unwrap_or_else(|| "None".to_string())} 
+                                                {weight.as_ref().map(ToString::to_string).unwrap_or_else(|| "None".to_string())}
                                             }
                                         }
                                     })
@@ -194,7 +194,7 @@ fn BoatForm(
                             },
                             ul {
                                 {
-                                   BOAT_TYPES 
+                                   BOAT_TYPES
                                     .iter()
                                     .map(|bt| {
                                         let active = boat_type() == *bt;
@@ -207,7 +207,7 @@ fn BoatForm(
                                                     boat_type.set(*bt);
                                                     show_boat_type_dropdown.set(false);
                                                 },
-                                                {bt.as_ref().map(ToString::to_string).unwrap_or_else(|| "None".to_string())} 
+                                                {bt.as_ref().map(ToString::to_string).unwrap_or_else(|| "None".to_string())}
                                             }
                                         }
                                     })

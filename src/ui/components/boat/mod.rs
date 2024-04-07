@@ -23,7 +23,6 @@ pub(crate) async fn get_boat(id: BoatId) -> Result<BoatAndStats, ServerFnError> 
         .await?
 }
 
-
 #[component]
 pub fn BoatNav() -> Element {
     use crate::ui::components::Route;
@@ -103,7 +102,6 @@ pub fn BoatNav() -> Element {
         dioxus_router::components::Outlet::<crate::ui::components::Route>  {}
     }
 }
-
 
 #[component]
 fn BoatTitle(boat: Result<BoatAndStats, ServerFnError>) -> Element {
