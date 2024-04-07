@@ -1,14 +1,14 @@
 use super::service::BoatListMsg;
 use crate::db::boat::{
     types::{HasCox, OarConfiguration, SeatCount},
-    Boat, BoatFilter3,
+    Boat, BoatFilter,
 };
 use dioxus::prelude::*;
 
 #[component]
 pub(super) fn BoatSearchPane(
     boats: Signal<Vec<Boat>>,
-    filter: Signal<BoatFilter3>,
+    filter: Signal<BoatFilter>,
     search_name: Signal<Option<String>>,
     boat_svc: Coroutine<BoatListMsg>,
 ) -> Element {
@@ -61,7 +61,7 @@ fn SearchResults(boats: Vec<Boat>, boat_svc: Coroutine<BoatListMsg>) -> Element 
 
 #[component]
 fn FilterPane(
-    filter: Signal<BoatFilter3>,
+    filter: Signal<BoatFilter>,
     search_name: Signal<Option<String>>,
     boat_svc: Coroutine<BoatListMsg>,
 ) -> Element {

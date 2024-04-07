@@ -89,20 +89,18 @@ pub enum BoatOrder {
     Size(DbOrdering),
 }
 
-pub struct BoatFilter {
-    pub boat_type: Option<BoatType>,
-    pub coxed: Option<bool>,
-    pub oars: Option<OarsPerSeat>,
-}
 
 #[derive(
     Default, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize,
 )]
-pub struct BoatFilter3 {
+pub struct BoatFilter {
     /// Currently needed by dioxus to avoid failing to deserialize when all items are empty.
     pub _x: usize,
+    /// The number of seats the returned boats should have
     pub num_seats: Option<SeatCount>,
+    /// should the returned boats have a coxswain
     pub coxed: Option<HasCox>,
+    /// Should the returned boats be sweep or sculling
     pub oars_config: Option<OarConfiguration>,
 }
 

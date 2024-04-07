@@ -2,14 +2,14 @@ use super::*;
 
 #[server(GetBoats2)]
 pub(crate) async fn search_boats(
-    filter: BoatFilter3,
+    filter: BoatFilter,
     search_name: Option<String>,
 ) -> Result<Vec<Boat>, ServerFnError> {
     // let state: crate::ui::state::AppState = extract().await.expect("to get state aoeu");
     let state = crate::ui::state::AppState::singleton();
     let conn = state.pool().get().await?;
     tracing::info!(?search_name, ?filter);
-    conn.interact(|conn| Boat::get_boats3(conn, filter, search_name).map_err(ServerFnError::from))
+    conn.interact(|conn| Boat::get_filtered_boats(conn, filter, search_name).map_err(ServerFnError::from))
         .await?
 }
 
@@ -113,7 +113,7 @@ pub(super) async fn boat_list_service(
     mut rx: UnboundedReceiver<BoatListMsg>,
     mut searched_boats: Signal<Vec<Boat>>,
     mut selected_boats: Signal<Vec<Boat>>,
-    mut filter: Signal<BoatFilter3>,
+    mut filter: Signal<BoatFilter>,
     mut search_name: Signal<Option<String>>,
     session_type: Signal<UseScenario>,
     mut created_at_time: Signal<String>,
@@ -166,7 +166,7 @@ pub(super) async fn boat_list_service(
             BoatListMsg::SetFilterOarConfig(oars_config) => {
                 filter.set({
                     let current = filter.read();
-                    BoatFilter3 {
+                    BoatFilter {
                         _x: current._x,
                         num_seats: current.num_seats,
                         coxed: current.coxed,
@@ -178,7 +178,7 @@ pub(super) async fn boat_list_service(
             BoatListMsg::SetFilterCoxed(coxed) => {
                 filter.set({
                     let current = filter.read();
-                    BoatFilter3 {
+                    BoatFilter {
                         _x: current._x,
                         num_seats: current.num_seats,
                         coxed,
@@ -190,7 +190,7 @@ pub(super) async fn boat_list_service(
             BoatListMsg::SetFilterNumSeats(num_seats) => {
                 filter.set({
                     let current = filter.read();
-                    BoatFilter3 {
+                    BoatFilter {
                         _x: current._x,
                         num_seats,
                         coxed: current.coxed,
@@ -249,7 +249,6 @@ pub(super) async fn boat_list_service(
                 let recorded_at = created_at_time();
                 tracing::trace!(recorded= ?recorded_at.trim());
 
-                // let date_result = DateTime::<FixedOffset>::parse_from_str(recorded_at.trim(), crate::ui::util::time::MINUTE_RESOLUTION_FMT);
                 let date_result =
                     crate::ui::util::time::parse_str_as_naive_to_utc(recorded_at.trim());
                 match date_result {

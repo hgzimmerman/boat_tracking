@@ -16,7 +16,7 @@ use crate::{
     db::{
         boat::{
             types::{BoatId, HasCox, OarConfiguration, SeatCount},
-            Boat, BoatFilter3,
+            Boat, BoatFilter,
         },
         use_event::{UseEvent, UseScenario},
         use_event_batch::{BatchId, UseEventBatch},
@@ -118,7 +118,7 @@ impl BatchPageMode {
 #[component]
 fn GeneralBatchCreationPage(mode: BatchPageMode) -> Element {
     let mut selected = use_signal(Vec::<Boat>::new);
-    let filter = use_signal(BoatFilter3::default);
+    let filter = use_signal(BoatFilter::default);
     let search_name = use_signal(|| Option::<String>::None);
     let search_boat_state = use_signal(Vec::<Boat>::new);
 

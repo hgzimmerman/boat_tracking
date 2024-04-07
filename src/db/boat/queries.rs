@@ -30,12 +30,12 @@ impl Boat {
     }
 
     #[tracing::instrument(level = "debug", skip_all)]
-    pub fn get_boats3(
+    pub fn get_filtered_boats(
         conn: &mut SqliteConnection,
-        filter: BoatFilter3,
+        filter: BoatFilter,
         search: Option<String>,
     ) -> Result<Vec<Boat>, diesel::result::Error> {
-        let BoatFilter3 {
+        let BoatFilter {
             num_seats,
             coxed,
             oars_config,
@@ -46,8 +46,8 @@ impl Boat {
         let oars_per_seat: Option<i32> = oars_config.as_ref().map(OarConfiguration::num_oars);
         let cox = coxed.as_ref().map(HasCox::as_value);
 
-        // let mut query = boat::table.filter(boat::relinquished_at.is_not_null()).into_boxed();
-        let mut query = boat::table.into_boxed();
+        // We only want to show boats that haven't been sold or otherwise removed
+        let mut query = boat::table.filter(boat::relinquished_at.is_null()).into_boxed();
 
         if let Some(search) = search.map(|x| format!("%{x}%")) {
             query = query.filter(boat::name.like(search))

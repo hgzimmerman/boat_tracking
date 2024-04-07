@@ -13,7 +13,6 @@ use batch_list::BatchListPage;
 use boat::{BoatEdit, BoatIssues, BoatMonthlyUses, BoatSummary, BoatYearlyUses};
 use boat_list::BoatListPage;
 use issue_list::IssueListPage;
-// use new_boat::NewBoatPage;
 use boat::creation_edit_form::NewBoatPage;
 use boat::BoatNav;
 use new_issue::NewIssuePage;
