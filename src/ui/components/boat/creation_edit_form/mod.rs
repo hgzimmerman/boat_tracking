@@ -126,7 +126,7 @@ fn BoatForm(
                         div {
                             id: "weight-class-dropdown",
                             class: if *show_weight_class_dropdown.read() {
-                                "absolute z-10 py-2 w-20 top-0 left-4 origin-bottom-right rounded-md bg-white dark:bg-slate-500 shadow-lg divide-y m-2 text-slate-600 dark:text-slate-50 font-normal"
+                                "absolute z-10 py-2 w-20 top-0 left-4 origin-bottom-right rounded-md bg-slate-50 dark:bg-slate-500 shadow-lg divide-y m-2 text-slate-600 dark:text-slate-50 font-normal"
                             } else {
                                 "hidden"
                             },
@@ -138,8 +138,8 @@ fn BoatForm(
                                         let active = weight_class() == *weight;
                                         rsx! {
                                             li {
-                                                class: "hover:bg-slate-300 dark:hover:bg-slate-700",
-                                                class: if active {"bg-slate-200 dark:bg-slate-600"},
+                                                class: "hover:bg-slate-200 dark:hover:bg-slate-700",
+                                                class: if active {"bg-slate-100 dark:bg-slate-600"},
                                                 onclick: move |e| {
                                                     e.stop_propagation();
                                                     weight_class.set(*weight);
@@ -188,7 +188,7 @@ fn BoatForm(
                         div {
                             id: "boat-type-dropdown",
                             class: if *show_boat_type_dropdown.read() {
-                                "absolute z-10 py-2 w-20 top-0 left-4 origin-bottom-right rounded-md bg-white dark:bg-slate-500 shadow-lg divide-y m-2 text-slate-600 dark:text-slate-50 font-normal"
+                                "absolute z-10 py-2 w-20 top-0 left-4 origin-bottom-right rounded-md bg-slate-50 dark:bg-slate-500 shadow-lg divide-y m-2 text-slate-600 dark:text-slate-50 font-normal"
                             } else {
                                 "hidden"
                             },
@@ -200,8 +200,8 @@ fn BoatForm(
                                         let active = boat_type() == *bt;
                                         rsx! {
                                             li {
-                                                class: "hover:bg-slate-300 dark:hover:bg-slate-700",
-                                                class: if active {"bg-slate-200 dark:bg-slate-600"},
+                                                class: "hover:bg-slate-200 dark:hover:bg-slate-700",
+                                                class: if active {"bg-slate-100 dark:bg-slate-600"},
                                                 onclick: move |e| {
                                                     e.stop_propagation();
                                                     boat_type.set(*bt);

@@ -108,8 +108,8 @@ fn SessionTypeDropup(
                                     let active = session_type() == use_scenario;
                                     rsx!{
                                         li {
-                                            class: "hover:bg-slate-300 dark:hover:bg-slate-700",
-                                            class: if active {"bg-slate-200 dark:bg-slate-600"},
+                                            class: "hover:bg-slate-200 dark:hover:bg-slate-700",
+                                            class: if active {"bg-slate-100 dark:bg-slate-600"},
                                             onclick: move |e| {
                                                 e.stop_propagation();
                                                 session_type.set(use_scenario);
