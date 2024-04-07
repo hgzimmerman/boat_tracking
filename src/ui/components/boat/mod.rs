@@ -56,7 +56,13 @@ pub fn BoatNav() -> Element {
                     Link {
                         class: if matches!(path, Route::BoatSummary{..}) { active_class } else {inactive_class},
                         to: Route::BoatSummary{id},
-                        "Summary"
+                        MaskIcon {
+                            class: "fill-current w-4 h-4 mr-1 bg-gray-500 dark:bg-gray-400 hover:bg-gray-600 dark:hover:bg-gray-300",
+                            url: "/pie_chart.svg"
+                        }
+                        span {
+                            "Summary"
+                        }
                     }
                 }
                 li { class: "me-2",
@@ -64,21 +70,39 @@ pub fn BoatNav() -> Element {
                         // "aria-current": "page",
                         class: if matches!(path, Route::BoatMonthlyUses{..}) { active_class } else {inactive_class},
                         to: Route::BoatMonthlyUses{id},
-                        "Monthly Usage Chart"
+                        MaskIcon {
+                            class: "fill-current w-4 h-4 mr-1 bg-gray-500 dark:bg-gray-400 hover:bg-gray-600 dark:hover:bg-gray-300",
+                            url: "/chart.svg"
+                        }
+                        span {
+                            "Monthly Usage Chart"
+                        }
                     }
                 }
                 li { class: "me-2",
                     Link {
                         class: if matches!(path, Route::BoatYearlyUses{..}) { active_class } else {inactive_class},
                         to: Route::BoatYearlyUses{id},
-                        "Yearly Usage Chart"
+                        MaskIcon {
+                            class: "fill-current w-4 h-4 mr-1 bg-gray-500 dark:bg-gray-400 hover:bg-gray-600 dark:hover:bg-gray-300",
+                            url: "/chart.svg"
+                        }
+                        span {
+                            "Yearly Usage Chart"
+                        }
                     }
                 }
                 li { class: "me-2",
                     Link {
                         class: if matches!(path, Route::BoatIssues{..}) { active_class } else {inactive_class},
                         to: Route::BoatIssues{id},
-                        "Issues"
+                        MaskIcon {
+                            class: "fill-current w-4 h-4 mr-1 bg-gray-500 dark:bg-gray-400 hover:bg-gray-600 dark:hover:bg-gray-300",
+                            url: "/warn.svg"
+                        }
+                        span {
+                            "Issues"
+                        }
                     }
                 }
                 li { class: "me-2",
