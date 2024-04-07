@@ -60,7 +60,7 @@ fn BoatForm(
 
     let title = use_memo(move || match mode {
         BoatFormMode::New => "Add a new boat".to_string(),
-        BoatFormMode::Edit(_) => format!("Edit {name}"),
+        BoatFormMode::Edit(_) => format!("Editing: {name}"),
     });
 
     rsx! {
