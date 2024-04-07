@@ -128,7 +128,7 @@ fn UsageBreakdown(id: ReadOnlySignal<BoatId>) -> Element {
                         let events = EventCountsAndLabelLists::from(events);
                         rsx!{
                             div {
-                                "style": "margin-left: -45px;",
+                                "style": "margin-left: -45px; font-size: x-small",
                                 PieChart{
                                     width: "500px",
                                     height: "300px",
@@ -136,10 +136,10 @@ fn UsageBreakdown(id: ReadOnlySignal<BoatId>) -> Element {
                                     viewbox_height: 300,
                                     series: events.counts,
                                     labels: events.labels,
-                                    label_position: LabelPosition::Outside,
-                                    label_offset: 0.2,
+                                    label_position: LabelPosition::Center,
+                                    label_offset: 100.0,
                                     donut: true,
-                                    donut_width: 100.0
+                                    donut_width: 90.0
                                 }
                             }
                         }
