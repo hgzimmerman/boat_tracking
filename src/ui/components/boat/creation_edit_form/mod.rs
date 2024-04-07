@@ -126,7 +126,7 @@ fn BoatForm(
                         div {
                             id: "weight-class-dropdown",
                             class: if *show_weight_class_dropdown.read() {
-                                "absolute z-10 mt-2 w-20 top-0 left-4 origin-bottom-right rounded-md bg-white shadow-lg divide-y p-2 text-slate-600 font-normal"
+                                "absolute z-10 py-2 w-20 top-0 left-4 origin-bottom-right rounded-md bg-white shadow-lg divide-y m-2 text-slate-600 font-normal"
                             } else {
                                 "hidden"
                             },
@@ -134,14 +134,18 @@ fn BoatForm(
                                 {
                                     WEIGHTS
                                     .iter()
-                                    .map(|weight| rsx! {
-                                        li {
-                                            onclick: move |e| {
-                                                e.stop_propagation();
-                                                weight_class.set(*weight);
-                                                show_weight_class_dropdown.set(false);
-                                            },
-                                            {weight.as_ref().map(ToString::to_string).unwrap_or_else(|| "None".to_string())} 
+                                    .map(|weight| {
+                                        let active = weight_class() == *weight;
+                                        rsx! {
+                                            li {
+                                                class: if active {"bg-slate-200"},
+                                                onclick: move |e| {
+                                                    e.stop_propagation();
+                                                    weight_class.set(*weight);
+                                                    show_weight_class_dropdown.set(false);
+                                                },
+                                                {weight.as_ref().map(ToString::to_string).unwrap_or_else(|| "None".to_string())} 
+                                            }
                                         }
                                     })
                                 }
@@ -183,7 +187,7 @@ fn BoatForm(
                         div {
                             id: "boat-type-dropdown",
                             class: if *show_boat_type_dropdown.read() {
-                                "absolute z-10 mt-2 w-20 top-0 left-4 origin-bottom-right rounded-md bg-white shadow-lg divide-y p-2 text-slate-600 font-normal"
+                                "absolute z-10 py-2 w-20 top-0 left-4 origin-bottom-right rounded-md bg-white shadow-lg divide-y m-2 text-slate-600 font-normal"
                             } else {
                                 "hidden"
                             },
@@ -191,14 +195,18 @@ fn BoatForm(
                                 {
                                    BOAT_TYPES 
                                     .iter()
-                                    .map(|bt| rsx! {
-                                        li {
-                                            onclick: move |e| {
-                                                e.stop_propagation();
-                                                boat_type.set(*bt);
-                                                show_boat_type_dropdown.set(false);
-                                            },
-                                            {bt.as_ref().map(ToString::to_string).unwrap_or_else(|| "None".to_string())} 
+                                    .map(|bt| {
+                                        let active = boat_type() == *bt;
+                                        rsx! {
+                                            li {
+                                                class: if active {"bg-slate-200"},
+                                                onclick: move |e| {
+                                                    e.stop_propagation();
+                                                    boat_type.set(*bt);
+                                                    show_boat_type_dropdown.set(false);
+                                                },
+                                                {bt.as_ref().map(ToString::to_string).unwrap_or_else(|| "None".to_string())} 
+                                            }
                                         }
                                     })
                                 }
