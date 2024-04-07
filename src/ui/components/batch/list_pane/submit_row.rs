@@ -87,7 +87,7 @@ fn SessionTypeDropup(
                     div {
                         id: "session-dropdown",
                         class: if *show_session_type_dropdown.read() {
-                            "absolute z-10 py-2 w-40 bottom-8 left-4 origin-bottom-right rounded-md bg-white shadow-lg divide-y m-2 text-slate-600 font-normal"
+                            "absolute z-10 py-2 w-40 bottom-8 left-4 origin-bottom-right rounded-md bg-white dark:bg-slate-500 shadow-lg divide-y m-2 text-slate-600 dark:text-slate-50 font-normal"
                         } else {
                             "hidden"
                         },
@@ -108,8 +108,8 @@ fn SessionTypeDropup(
                                     let active = session_type() == use_scenario;
                                     rsx!{
                                         li {
-                                            class: "hover:bg-slate-300",
-                                            class: if active{"bg-slate-200"},
+                                            class: "hover:bg-slate-300 dark:hover:bg-slate-700",
+                                            class: if active {"bg-slate-200 dark:bg-slate-600"},
                                             onclick: move |e| {
                                                 e.stop_propagation();
                                                 session_type.set(use_scenario);
