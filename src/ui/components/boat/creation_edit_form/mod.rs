@@ -20,6 +20,28 @@ enum BoatFormMode {
     Edit(BoatId),
 }
 
+/// The Options for boat weights
+const WEIGHTS: [Option<WeightClass>; 5] = [
+    None, 
+    Some(WeightClass::Light), 
+    Some(WeightClass::Medium), 
+    Some(WeightClass::Heavy), 
+    Some(WeightClass::Tubby)
+];
+/// The boat type options.
+/// Excludes some of the more exodic types because we don't ever plan on using them.
+const BOAT_TYPES: [Option<BoatType>; 9] = [
+    None, 
+    Some(BoatType::Single), 
+    Some(BoatType::Double), 
+    Some(BoatType::Quad),
+    Some(BoatType::QuadPlus),
+    Some(BoatType::Pair), 
+    Some(BoatType::Four), 
+    Some(BoatType::FourPlus), 
+    Some(BoatType::Eight), 
+];
+
 /// The common form component that handles creation and upating of boats.
 #[component]
 fn BoatForm(
@@ -36,7 +58,6 @@ fn BoatForm(
 
     let boat_svc = use_coroutine_handle::<CreateBoatMsg>();
 
-    // let title = name.map(move |name| {
     let title = use_memo(move || match mode {
         BoatFormMode::New => "Add a new boat".to_string(),
         BoatFormMode::Edit(_) => format!("Edit {name}"),
@@ -110,45 +131,19 @@ fn BoatForm(
                                 "hidden"
                             },
                             ul {
-                                li {
-                                    onclick: move |e| {
-                                        e.stop_propagation();
-                                        weight_class.set(None);
-                                        show_weight_class_dropdown.set(false);
-                                    },
-                                    "None"
-                                }
-                                li {
-                                    onclick: move |e| {
-                                        e.stop_propagation();
-                                        weight_class.set(Some(WeightClass::Light));
-                                        show_weight_class_dropdown.set(false);
-                                    },
-                                    "Light"
-                                }
-                                li {
-                                    onclick: move |e| {
-                                        e.stop_propagation();
-                                        weight_class.set(Some(WeightClass::Medium));
-                                        show_weight_class_dropdown.set(false);
-                                    },
-                                    "Medium"
-                                }
-                                li {
-                                    onclick: move |e| {
-                                        e.stop_propagation();
-                                        weight_class.set(Some(WeightClass::Heavy));
-                                        show_weight_class_dropdown.set(false);
-                                    },
-                                    "Heavy"
-                                }
-                                li {
-                                    onclick: move |e| {
-                                        e.stop_propagation();
-                                        weight_class.set(Some(WeightClass::Tubby));
-                                        show_weight_class_dropdown.set(false);
-                                    },
-                                    "Tubby"
+                                {
+                                    WEIGHTS
+                                    .iter()
+                                    .map(|weight| rsx! {
+                                        li {
+                                            onclick: move |e| {
+                                                e.stop_propagation();
+                                                weight_class.set(*weight);
+                                                show_weight_class_dropdown.set(false);
+                                            },
+                                            {weight.as_ref().map(ToString::to_string).unwrap_or_else(|| "None".to_string())} 
+                                        }
+                                    })
                                 }
                             }
                         }
@@ -193,69 +188,19 @@ fn BoatForm(
                                 "hidden"
                             },
                             ul {
-                                li {
-                                    onclick: move |e| {
-                                        e.stop_propagation();
-                                        boat_type.set(None);
-                                        show_boat_type_dropdown.set(false);
-                                    },
-                                    "None"
-                                }
-                                li {
-                                    onclick: move |e| {
-                                        e.stop_propagation();
-                                        boat_type.set(Some(BoatType::Single));
-                                        show_boat_type_dropdown.set(false);
-                                    },
-                                    "Single"
-                                }
-                                li {
-                                    onclick: move |e| {
-                                        e.stop_propagation();
-                                        boat_type.set(Some(BoatType::Double));
-                                        show_boat_type_dropdown.set(false);
-                                    },
-                                    "Double"
-                                }
-                                li {
-                                    onclick: move |e| {
-                                        e.stop_propagation();
-                                        boat_type.set(Some(BoatType::Quad));
-                                        show_boat_type_dropdown.set(false);
-                                    },
-                                    "Quad"
-                                }
-                                li {
-                                    onclick: move |e| {
-                                        e.stop_propagation();
-                                        boat_type.set(Some(BoatType::QuadPlus));
-                                        show_boat_type_dropdown.set(false);
-                                    },
-                                    "Quad+"
-                                }
-                                li {
-                                    onclick: move |e| {
-                                        e.stop_propagation();
-                                        boat_type.set(Some(BoatType::Four));
-                                        show_boat_type_dropdown.set(false);
-                                    },
-                                    "Four"
-                                }
-                                li {
-                                    onclick: move |e| {
-                                        e.stop_propagation();
-                                        boat_type.set(Some(BoatType::FourPlus));
-                                        show_boat_type_dropdown.set(false);
-                                    },
-                                    "Four+"
-                                }
-                                li {
-                                    onclick: move |e| {
-                                        e.stop_propagation();
-                                        boat_type.set(Some(BoatType::Eight));
-                                        show_boat_type_dropdown.set(false);
-                                    },
-                                    "Eight"
+                                {
+                                   BOAT_TYPES 
+                                    .iter()
+                                    .map(|bt| rsx! {
+                                        li {
+                                            onclick: move |e| {
+                                                e.stop_propagation();
+                                                boat_type.set(*bt);
+                                                show_boat_type_dropdown.set(false);
+                                            },
+                                            {bt.as_ref().map(ToString::to_string).unwrap_or_else(|| "None".to_string())} 
+                                        }
+                                    })
                                 }
                             }
                         }
