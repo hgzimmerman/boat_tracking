@@ -138,6 +138,7 @@ fn BoatForm(
                                         let active = weight_class() == *weight;
                                         rsx! {
                                             li {
+                                                class: "hover:bg-slate-300",
                                                 class: if active {"bg-slate-200"},
                                                 onclick: move |e| {
                                                     e.stop_propagation();
@@ -199,6 +200,7 @@ fn BoatForm(
                                         let active = boat_type() == *bt;
                                         rsx! {
                                             li {
+                                                class: "hover:bg-slate-300",
                                                 class: if active {"bg-slate-200"},
                                                 onclick: move |e| {
                                                     e.stop_propagation();

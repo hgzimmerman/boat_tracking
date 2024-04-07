@@ -86,7 +86,7 @@ fn SessionTypeDropup(
                 div {
                     id: "session-dropdown",
                     class: if *show_session_type_dropdown.read() {
-                        "absolute z-10 mt-2 w-40 bottom-8 left-4 origin-bottom-right rounded-md bg-white shadow-lg divide-y p-2 text-slate-600 font-normal"
+                        "absolute z-10 py-2 w-40 bottom-8 left-4 origin-bottom-right rounded-md bg-white shadow-lg divide-y m-2 text-slate-600 font-normal"
                     } else {
                         "hidden"
                     },
@@ -103,14 +103,19 @@ fn SessionTypeDropup(
                                 UseScenario::Other
                             ]
                             .into_iter()
-                            .map(|use_scenario| rsx!{
-                                li {
-                                    onclick: move |e| {
-                                        e.stop_propagation();
-                                        session_type.set(use_scenario);
-                                        show_session_type_dropdown.set(false);
-                                    },
-                                    {use_scenario.to_string()}
+                            .map(|use_scenario| {
+                                let active = session_type() == use_scenario;
+                                rsx!{
+                                    li {
+                                        class: "hover:bg-slate-300",
+                                        class: if active{"bg-slate-200"},
+                                        onclick: move |e| {
+                                            e.stop_propagation();
+                                            session_type.set(use_scenario);
+                                            show_session_type_dropdown.set(false);
+                                        },
+                                        {use_scenario.to_string()}
+                                    }
                                 }
                             })
                         }
