@@ -75,7 +75,7 @@ pub fn BoatListNav() -> Element {
 fn BoatRow(boat: BoatAndStats) -> Element {
     rsx! {
         div {
-            class: "flex flex-row flex-grow gap-2.5 p-1.5",
+            class: "flex flex-row flex-grow gap-2.5 py-1.5 px-4",
             onclick: move |event| {
                 // now, outer won't be triggered
                 event.stop_propagation();
@@ -133,9 +133,9 @@ pub fn BoatList(boats: ReadOnlySignal<Result<Vec<BoatAndStats>, ServerFnError>>)
         Ok(boats) => {
             rsx! {
                 div {
-                    class: "flex flex-row flex-grow xl:px-12 w-full bg-gray-50 dark:bg-gray-500 md:min-w-96 max-w-xxl shadow-md",
+                    class: "flex flex-row flex-grow xl:px-12 w-full bg-gray-50 dark:bg-gray-400 md:min-w-96 max-w-xxl shadow-md",
                     div {
-                        class: "flex-grow divide-y-2 dark:divide-white dark:text-white dark:bg-gray-600 lg:px-4",
+                        class: "flex-grow divide-y-2 dark:divide-white dark:text-white dark:bg-gray-500",
                         {
                             boats.into_iter().map(|boat| rsx! {
                                 BoatRow {

@@ -69,15 +69,18 @@ pub fn BatchList(offset: usize, limit: Signal<usize>) -> Element {
         Ok(batches) => {
             rsx! {
                 div {
-                    class: "divide-y-2 flex flex-col overflow-auto grow",
-                    {
-                        batches.iter().map(|batch_and_counts| {
-                            rsx!{
-                                BatchListRow {
-                                    batch_and_counts: batch_and_counts.clone()
+                    class: "flex flex-row flex-grow xl:px-12 w-full bg-gray-50 dark:bg-gray-400 md:min-w-96 max-w-xxl shadow-md",
+                    div {
+                        class: "divide-y-2 flex flex-col overflow-auto grow bg-gray-100 dark:bg-gray-500 shadow-md",
+                        {
+                            batches.iter().map(|batch_and_counts| {
+                                rsx!{
+                                    BatchListRow {
+                                        batch_and_counts: batch_and_counts.clone()
+                                    }
                                 }
-                            }
-                        })
+                            })
+                        }
                     }
                 }
             }
@@ -101,7 +104,7 @@ fn BatchListRow(batch_and_counts: BatchAndCounts) -> Element {
         tracing::info!(?id, "getting boats for batch");
         if let Some(id) = id {
             let x = Some(get_boats_for_batch(id).await);
-            tracing::debug!(?x);
+            tracing::trace!(?x);
             x
         } else {
             None
@@ -111,7 +114,7 @@ fn BatchListRow(batch_and_counts: BatchAndCounts) -> Element {
     let local_recorded_at = crate::ui::util::time::render_local(batch.recorded_at);
     rsx! {
         div {
-            class: "flex flex-row h-16 items-center py-1",
+            class: "flex flex-row h-16 items-center py-1 px-4",
             onmouseout: move |_event| {
                 id.set(None);
             },
@@ -277,9 +280,8 @@ pub fn BatchListPage(page: ReadOnlySignal<Page>) -> Element {
                         }
                     }
                 }
-
-
             }
+
             // the controls
             BatchList {
                 offset: *offset_state.read(),
