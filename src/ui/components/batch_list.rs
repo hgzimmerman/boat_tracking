@@ -254,10 +254,6 @@ pub fn BatchListPage(page: ReadOnlySignal<Page>) -> Element {
                         class: "inline-flex items-center p-4",
                         href: format!("/uses_export.csv"),
                         target: "_blank",
-                        /* img {
-                            class: "fill-current w-4 h-4 mr-1",
-                            src: "/download.svg"
-                        } */
                         MaskIcon {
                             class: "fill-current w-4 h-4 mr-1 bg-black",
                             url: "/download.svg"
