@@ -47,7 +47,7 @@ fn SearchResults(boats: Vec<Boat>, boat_svc: Coroutine<BoatListMsg>) -> Element 
                         {b.boat_type().as_ref().map(ToString::to_string)}
                     }
                     button {
-                        class: "m-2 btn btn-blue inline-flex items-center",
+                        class: "m-2 btn btn-blue rounded inline-flex items-center",
                         onclick: move |_| {
                             boat_svc.send(BoatListMsg::AddToBatch(b.id));
                         },

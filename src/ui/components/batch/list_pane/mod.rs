@@ -60,7 +60,7 @@ fn List(boats: Vec<Boat>, boat_svc: Coroutine<BoatListMsg>, mode: BatchPageMode)
                             } else {
                                 rsx!{
                                     button {
-                                        class: "m-2 btn btn-red inline-flex items-center",
+                                        class: "m-2 btn btn-red rounded inline-flex items-center",
                                         onclick: move |_| {
                                             boat_svc.send(BoatListMsg::RemoveFromBatch(b.id));
                                         },
