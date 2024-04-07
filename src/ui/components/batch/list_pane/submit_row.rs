@@ -81,7 +81,7 @@ fn SessionTypeDropup(
             // the dropdown
             div {
                 id: "session-dropdown-positioner",
-                class: "relative h-0 w-0",
+                class: "relative h-0 w-0 top-2",
                 div {
                     id: "session-dropdown",
                     class: if *show_session_type_dropdown.read() {

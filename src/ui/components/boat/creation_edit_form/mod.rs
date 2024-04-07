@@ -184,7 +184,7 @@ fn BoatForm(
                     // the dropdown
                     div {
                         id: "boat-type-dropdown-positioner",
-                        class: "relative h-0 w-0",
+                        class: "relative h-0 w-0 top-2",
                         div {
                             id: "boat-type-dropdown",
                             class: if *show_boat_type_dropdown.read() {
