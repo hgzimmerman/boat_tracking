@@ -41,8 +41,8 @@ anyhow = "1.0.80"
 # Be careful about updating these without updating the flake too.
 # The version of the tool in nix should be the limiting factor
 web-sys = {version = "0.3.66", features = ["Window"], optional = true }
-wasm-bindgen = {version = "0.2.88", optional = true}
-wasm-bindgen-futures = "0.4.41"
+wasm-bindgen = {version = "0.2.100", optional = true}
+wasm-bindgen-futures = "0.4.50"
 async-trait = "0.1.77"
 thiserror = "1.0.58"
 

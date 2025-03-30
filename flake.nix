@@ -24,8 +24,10 @@
           pkgs.diesel-cli 
           pkgs.openssl 
           pkgs.pkg-config
-          # pkgs.dioxus-cli # currently out of date
-          ];
+          pkgs.dioxus-cli
+          ]; 
+
+          PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
       in
       {
         defaultPackage = pkgs.rustPlatform.buildRustPackage {
@@ -37,11 +39,22 @@
           cargoLock = {
             lockFile = ./Cargo.lock;
           };
+          buildInputs = pkgs.lib.optionals pkgs.hostPlatform.isWindows [
+              pkgs.windows.mingw_w64_pthreads
+          ];
+          PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
+
 
           nativeBuildInputs = inputs;
 
           buildPhase = ''
-            cargo build --release 
+            echo 'Building backend'
+            
+            cargo build --features=ssr --release 
+            
+            echo 'Building web frontend'
+
+            dx bundle --platform=web --features=web --release
 
             echo 'Creating out dir...'
             mkdir -p $out/src;
@@ -78,7 +91,7 @@
             '')
           ];
           # packages = self;
-          PKG_CONFIG_PATH = "{pkgs.openssl.dev}/lib/pkgconfig";
+          PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
           DATABASE_URL = "db.sql";
         };
       }
