@@ -86,8 +86,15 @@ fn BoatRow(boat: BoatAndStats) -> Element {
                 div {
                     class: "text-xl font-medium min-w-40",
                     dioxus_router::components::Link {
+                        class: "inline-flex items-center",
                         to: crate::ui::components::Route::BoatSummary{id: boat.boat.id},
-                        {boat.boat.name.clone()}
+                        span {
+                            {boat.boat.name.clone()}
+                        }
+                        MaskIcon {
+                            class: "fill-current w-4 h-4 ml-1 bg-white",
+                            url: "/link.svg"
+                        }
                     }
                 }
                 div {
