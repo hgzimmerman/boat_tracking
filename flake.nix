@@ -74,7 +74,7 @@
 
 
         devShell = pkgs.mkShell { 
-          packages = (inputs) ++ (with pkgs.nodePackages; [tailwindcss]) ;
+          packages = inputs ++ [ pkgs.tailwindcss ];
           nativeBuildInputs = with pkgs; [
             cargo-watch
             (writeShellScriptBin "watch-tailwind" ''
