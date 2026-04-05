@@ -37,7 +37,7 @@ futures = "0.3.30"
 # HTMX + Maud migration dependencies
 maud = "0.26"
 plotters = { version = "0.3", default-features = false, features = ["svg_backend"] }
-tower-http = { version = "0.5", features = ["fs"] }
+tower-http = { version = "0.5", features = ["fs", "trace"] }
 
 anyhow = "1.0.80"
 

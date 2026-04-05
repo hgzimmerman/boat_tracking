@@ -15,8 +15,19 @@ pub fn boat_list_page(boats: &[BoatAndStats]) -> Markup {
 /// Boat list component
 pub fn boat_list(boats: &[BoatAndStats]) -> Markup {
     html! {
-        div class="flex flex-row flex-grow xl:px-12 w-full bg-gray-50 dark:bg-slate-600 md:min-w-96 max-w-xxl shadow-md" {
-            div class="flex-grow divide-y-2 dark:divide-white dark:text-white dark:bg-slate-700" {
+        div class="flex flex-col flex-grow xl:px-12 w-full bg-gray-50 dark:bg-slate-600 md:min-w-96 max-w-xxl" {
+            // Header with Add New button
+            div class="flex justify-between items-center p-4 bg-white dark:bg-slate-700 shadow-md" {
+                h2 class="text-2xl font-bold text-gray-900 dark:text-white" { "Boats" }
+                a
+                    href="/boats/new"
+                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition"
+                    {
+                    "+ Add New Boat"
+                }
+            }
+            // Boat list
+            div class="flex-grow divide-y-2 dark:divide-white dark:text-white dark:bg-slate-700 shadow-md" {
                 @if boats.is_empty() {
                     div .p-8 .text-center {
                         p class="text-gray-500 dark:text-gray-300" { "No boats found." }

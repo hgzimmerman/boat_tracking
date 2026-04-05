@@ -19,6 +19,8 @@ pub async fn htmx_test_response_handler() -> Html<String> {
 
 /// Create router with all HTMX + Maud routes
 pub fn create_router() -> Router<AppState> {
+    use axum::routing::post;
+
     Router::new()
         // Test routes
         .route("/test", get(test_page_handler))
@@ -27,5 +29,8 @@ pub fn create_router() -> Router<AppState> {
         .route("/issues", get(issues::issue_list_handler))
         .route("/issues/new", get(issues::new_issue_handler))
         // Boats routes
-        .route("/boats", get(boats::boat_list_handler))
+        .route("/boats", get(boats::boat_list_handler).post(boats::create_boat_handler))
+        .route("/boats/new", get(boats::new_boat_handler))
+        .route("/boats/:id/edit", get(boats::edit_boat_handler))
+        .route("/boats/:id", post(boats::update_boat_handler))
 }

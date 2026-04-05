@@ -134,7 +134,9 @@ fn main() -> Result<(), Error> {
                     //    state1.clone(),
                     //    state_populate_middleware,
                     //)) // this doesn't really work
-                    .with_state(state1);
+                    .with_state(state1)
+                    // Add request tracing
+                    .layer(tower_http::trace::TraceLayer::new_for_http());
 
                 // run it
                 let addr = std::net::SocketAddr::from(([127, 0, 0, 1], 3000));
