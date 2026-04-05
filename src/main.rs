@@ -72,7 +72,7 @@ fn main() -> Result<(), Error> {
                 let cfg = ServeConfigBuilder::new()
                     .assets_path(PathBuf::from("dist"))
                     .build();
-                let ssr_state = SSRState::new(&cfg);
+                let _ssr_state = SSRState::new(&cfg);
 
                 let state = AppState::new(conn_string);
                 let state1 = state.clone();
@@ -83,9 +83,8 @@ fn main() -> Result<(), Error> {
 
                 // build our application with some routes
                 let app = Router::new()
-                    // HTMX + Maud test routes
-                    .route("/test", get(boat_tracking::handlers::test_page_handler))
-                    .route("/test/htmx-response", get(boat_tracking::handlers::htmx_test_response_handler))
+                    // HTMX + Maud routes (defined in handlers/mod.rs)
+                    .merge(boat_tracking::handlers::create_router())
                     // CSV export routes
                     .route(
                         "/uses_export.csv",

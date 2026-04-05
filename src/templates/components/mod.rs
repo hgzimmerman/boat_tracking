@@ -1,6 +1,10 @@
 // Reusable component templates
+pub mod modal;
+pub mod toast;
+
+pub use modal::*;
+pub use toast::*;
+
 // Components will be added in later phases:
-// - modal.rs
-// - toast.rs
 // - dropdown.rs
 // - forms.rs

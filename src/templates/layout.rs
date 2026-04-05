@@ -1,4 +1,4 @@
-use maud::{html, Markup, PreEscaped, DOCTYPE};
+use maud::{html, Markup, DOCTYPE};
 
 /// Base page layout with navigation, HTMX, Alpine.js, and Tailwind CSS
 pub fn page(title: &str, content: Markup) -> Markup {
@@ -18,6 +18,9 @@ pub fn page(title: &str, content: Markup) -> Markup {
 
                 // Alpine.js
                 script src="/alpine.min.js" defer {}
+
+                // Toast auto-dismiss
+                script src="/toast.js" {}
             }
             body class="bg-slate-50 dark:bg-slate-500 min-h-screen flex flex-col" {
                 (navbar())
