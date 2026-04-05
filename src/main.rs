@@ -36,8 +36,9 @@ fn main() -> Result<(), Error> {
         use axum::routing::*;
         use boat_tracking::ui::state::AppState;
         use dioxus_fullstack::prelude::*;
-        use std::{path::PathBuf, sync::Arc};
+        use std::{path::PathBuf};
         use tokio::net::TcpListener;
+        //suse tower_http::services::ServeDir;
         use tracing_subscriber::prelude::*;
 
         let conn_string = "db.sql";
@@ -50,6 +51,7 @@ fn main() -> Result<(), Error> {
         tracing_subscriber::registry().with(fmt_layer).init(); // Install these as subscribers to tracing events
 
         // Doesn't really work
+        #[allow(unused)]
         async fn state_populate_middleware(
             axum::extract::State(state): axum::extract::State<boat_tracking::ui::state::AppState>,
             mut request: axum::extract::Request,
@@ -75,12 +77,16 @@ fn main() -> Result<(), Error> {
                 let state = AppState::new(conn_string);
                 let state1 = state.clone();
 
-                let dom_factory =
+                let _dom_factory =
                     || dioxus::dioxus_core::VirtualDom::new(boat_tracking::ui::empty_app);
                 // let dom_factory = || dioxus::dioxus_core::VirtualDom::new(boat_tracking::ui::app);
 
                 // build our application with some routes
                 let app = Router::new()
+                    // HTMX + Maud test routes
+                    .route("/test", get(boat_tracking::handlers::test_page_handler))
+                    .route("/test/htmx-response", get(boat_tracking::handlers::htmx_test_response_handler))
+                    // CSV export routes
                     .route(
                         "/uses_export.csv",
                         get(boat_tracking::api::export_uses_csv_handler),
@@ -89,9 +95,11 @@ fn main() -> Result<(), Error> {
                         "/boats_export.csv",
                         get(boat_tracking::api::export_boats_csv_handler),
                     )
+                    // Serve static files from public/ (HTMX, Alpine.js, Tailwind, etc.)
+                    .nest_service("/", tower_http::services::ServeDir::new("public"))
                     .serve_static_assets("dist")
                     .await
-                    .connect_hot_reload()
+                    // .connect_hot_reload()
                     // .register_server_fns_with_handler("", |func| {
                     //     let state = state.clone();
                     //     move |req: axum::http::Request<axum::body::Body>| {
@@ -113,20 +121,20 @@ fn main() -> Result<(), Error> {
                     //         }
                     //     }
                     // })
-                    .register_server_fns()
-                    .fallback(get(render_handler_with_context).with_state((
-                        move |ctx| {
+                    //.register_server_fns()
+                    //.fallback(get(render_handler_with_context).with_state((
+                        /* move |ctx| {
                             ctx.insert::<AppState>(state.clone())
                                 .expect("should be able to add state");
                         },
                         cfg,
                         ssr_state,
                         Arc::new(dom_factory),
-                    )))
-                    .route_layer(axum::middleware::from_fn_with_state(
-                        state1.clone(),
-                        state_populate_middleware,
-                    )) // this doesn't really work
+                    ))) */
+                    //.route_layer(axum::middleware::from_fn_with_state(
+                    //    state1.clone(),
+                    //    state_populate_middleware,
+                    //)) // this doesn't really work
                     .with_state(state1);
 
                 // run it

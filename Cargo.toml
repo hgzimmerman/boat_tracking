@@ -18,9 +18,9 @@ serde_urlencoded = "0.7.1"
 getrandom = {version = "0.2.12", features = ["js"]}
 
 diesel-derive-enum = {version="2.1.0", features = ["sqlite"]}
-diesel-derive-newtype = "2.1.0"
+diesel-derive-newtype = "2.1.2"
 deadpool-diesel = {version = "0.5.0", features = []}
-diesel = {version = "2.1.0", features = ["chrono", "returning_clauses_for_sqlite_3_35"], optional = false}
+diesel = {version = "2.3.7", features = ["chrono", "returning_clauses_for_sqlite_3_35"], optional = false}
 
 dioxus = "0.5.1"
 dioxus-router = { version = "0.5.0", features = [] }
@@ -33,6 +33,11 @@ dioxus-web = { version = "0.5.0-alpha.2", optional = true }
 axum = {version = "0.7.0", features = ["ws"], optional = true}
 tokio = {version = "1.0.0", features = [], optional = true}
 futures = "0.3.30"
+
+# HTMX + Maud migration dependencies
+maud = "0.26"
+plotters = { version = "0.3", default-features = false, features = ["svg_backend"] }
+tower-http = { version = "0.5", features = ["fs"] }
 
 anyhow = "1.0.80"
 
