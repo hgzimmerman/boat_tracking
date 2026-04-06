@@ -26,13 +26,17 @@ jobs:
       - name: Build Tailwind CSS
         run: ./tailwindcss-linux-x64 -i input.css -o public/tailwind.css --minify
 
+      - name: Stage artifact
+        run: |
+          mkdir -p staging
+          cp target/release/boat_tracking staging/
+          cp -r public staging/
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: boat-tracking-linux
-          path: |
-            target/release/boat_tracking
-            public/
+          path: staging/
 
   build-windows-tauri:
     runs-on: windows-latest
@@ -50,10 +54,14 @@ jobs:
       - name: Build Tauri app
         run: cargo build --release --features tauri
 
+      - name: Stage artifact
+        run: |
+          New-Item -ItemType Directory -Force staging
+          Copy-Item target/release/boat_tracking.exe staging/
+          Copy-Item -Recurse public staging/
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: boat-tracking-windows
-          path: |
-            target/release/boat_tracking.exe
-            public/
+          path: staging/
