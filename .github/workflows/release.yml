@@ -1,11 +1,11 @@
-name: CI
+name: Release
 
 on:
-  pull_request:
-    branches: [master]
+  release:
+    types: [published]
 
 jobs:
-  check-linux:
+  build-linux:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -26,7 +26,15 @@ jobs:
       - name: Build Tailwind CSS
         run: ./tailwindcss-linux-x64 -i input.css -o public/tailwind.css --minify
 
-  check-windows-tauri:
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: boat-tracking-linux
+          path: |
+            target/release/boat_tracking
+            public/
+
+  build-windows-tauri:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -41,3 +49,11 @@ jobs:
 
       - name: Build Tauri app
         run: cargo build --release --features tauri
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: boat-tracking-windows
+          path: |
+            target/release/boat_tracking.exe
+            public/
