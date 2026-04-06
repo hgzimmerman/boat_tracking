@@ -39,8 +39,28 @@ async fn main() -> Result<(), Error> {
 
     let addr = std::net::SocketAddr::from(([127, 0, 0, 1], 3000));
     println!("running at http://{addr}");
-    let tcp_listener = TcpListener::bind(addr).await?;
-    axum::serve(tcp_listener, app.into_make_service()).await?;
+
+    #[cfg(feature = "tauri")]
+    {
+        // Spawn Axum server in background, launch Tauri window
+        tokio::spawn(async move {
+            let tcp_listener = TcpListener::bind(addr).await.unwrap();
+            axum::serve(tcp_listener, app.into_make_service())
+                .await
+                .unwrap();
+        });
+
+        tauri::Builder::default()
+            .run(tauri::generate_context!())
+            .expect("error running tauri application");
+    }
+
+    #[cfg(not(feature = "tauri"))]
+    {
+        // Run Axum server directly
+        let tcp_listener = TcpListener::bind(addr).await?;
+        axum::serve(tcp_listener, app.into_make_service()).await?;
+    }
 
     Ok(())
 }

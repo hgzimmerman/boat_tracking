@@ -201,10 +201,9 @@ fn boat_indicator_svg(weight_class: WeightClass, seat_count: i32, is_sculling: b
     let color = weight_color(weight_class);
     let dash_count = seat_count as usize;
 
-    // SVG dimensions
     let svg_width = 120;
     let svg_height = 6;
-    let gap = 3;
+    let gap = 4;
     let total_gaps = if dash_count > 1 { (dash_count - 1) * gap } else { 0 };
     let dash_width = (svg_width - total_gaps) / dash_count;
     let rx = if is_sculling { svg_height / 2 } else { 0 };
@@ -219,7 +218,7 @@ fn boat_indicator_svg(weight_class: WeightClass, seat_count: i32, is_sculling: b
 
     let label = format!("{} weight, {} seat{}", weight_class, seat_count, if seat_count == 1 { "" } else { "s" });
     format!(
-        r#"<svg width="{svg_width}" height="{svg_height}" class="mt-1" aria-label="{label}">{rects}</svg>"#,
+        r#"<svg xmlns="http://www.w3.org/2000/svg" width="{svg_width}" height="{svg_height}" class="mt-1" aria-label="{label}">{rects}</svg>"#,
     )
 }
 

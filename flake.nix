@@ -16,18 +16,30 @@
         overlays = [ rust-overlay.overlays.default ];
         pkgs = import nixpkgs { inherit system overlays; };
         rust = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
-        inputs = [ 
-          rust 
-          pkgs.wasm-bindgen-cli 
-          pkgs.rust-analyzer 
-          pkgs.sqlite 
-          pkgs.diesel-cli 
-          pkgs.openssl 
+        inputs = [
+          rust
+          pkgs.wasm-bindgen-cli
+          pkgs.rust-analyzer
+          pkgs.sqlite
+          pkgs.diesel-cli
+          pkgs.openssl
           pkgs.pkg-config
           pkgs.dioxus-cli
-          ]; 
+          ];
 
-          PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
+        tauriDeps = with pkgs; [
+          glib
+          gtk3
+          webkitgtk_4_1
+          libsoup_3
+          cairo
+          gdk-pixbuf
+          pango
+          harfbuzz
+          zlib
+        ];
+
+          PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig:${pkgs.glib.dev}/lib/pkgconfig:${pkgs.gtk3.dev}/lib/pkgconfig:${pkgs.webkitgtk_4_1.dev}/lib/pkgconfig:${pkgs.libsoup_3.dev}/lib/pkgconfig:${pkgs.cairo.dev}/lib/pkgconfig:${pkgs.gdk-pixbuf.dev}/lib/pkgconfig:${pkgs.pango.dev}/lib/pkgconfig:${pkgs.harfbuzz.dev}/lib/pkgconfig";
       in
       {
         defaultPackage = pkgs.rustPlatform.buildRustPackage {
@@ -39,10 +51,10 @@
           cargoLock = {
             lockFile = ./Cargo.lock;
           };
-          buildInputs = pkgs.lib.optionals pkgs.hostPlatform.isWindows [
+          buildInputs = tauriDeps ++ pkgs.lib.optionals pkgs.hostPlatform.isWindows [
               pkgs.windows.mingw_w64_pthreads
           ];
-          PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
+          inherit PKG_CONFIG_PATH;
 
 
           nativeBuildInputs = inputs;
@@ -73,8 +85,8 @@
         };
 
 
-        devShell = pkgs.mkShell { 
-          packages = inputs ++ [ pkgs.tailwindcss ];
+        devShell = pkgs.mkShell {
+          packages = inputs ++ tauriDeps ++ [ pkgs.tailwindcss ];
           nativeBuildInputs = with pkgs; [
             cargo-watch
             (writeShellScriptBin "watch-tailwind" ''
@@ -90,8 +102,7 @@
               cargo watch -x "run" --features ssr --clear -d 2.5 -w ./src
             '')
           ];
-          # packages = self;
-          PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
+          inherit PKG_CONFIG_PATH;
           DATABASE_URL = "db.sql";
         };
       }

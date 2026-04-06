@@ -1,0 +1,29 @@
+{
+  "$schema": "https://raw.githubusercontent.com/nicegui/nicegui/master/tauri_conf.json",
+  "identifier": "com.ggrc.boat-tracker",
+  "productName": "GGRC Boat Tracker",
+  "version": "0.1.0",
+  "build": {
+    "frontendDist": "http://localhost:3000",
+    "devUrl": "http://localhost:3000"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "GGRC Boat Tracker",
+        "width": 1200,
+        "height": 800,
+        "resizable": true,
+        "fullscreen": false
+      }
+    ]
+  },
+  "bundle": {
+    "active": true,
+    "icon": [
+      "icons/icon.ico",
+      "icons/icon.png"
+    ]
+  },
+  "plugins": {}
+}

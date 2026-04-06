@@ -3,7 +3,14 @@ name = "boat_tracking"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+tauri = ["dep:tauri", "dep:tauri-build"]
+
+[build-dependencies]
+tauri-build = { version = "2.5", features = [], optional = true }
+
 [dependencies]
+tauri = { version = "2.10", features = [], optional = true }
 chrono = {version = "0.4.34", features = ["serde"]}
 serde = {version= "1.0.197", features = ["derive"]}
 serde_json = "1.0.114"

@@ -3,7 +3,7 @@ pub mod issues;
 pub mod boats;
 pub mod batches;
 
-use axum::{response::Html, routing::get, Router};
+use axum::{response::{Html, Redirect}, routing::get, Router};
 use axum_htmx::HxRequest;
 use maud::Markup;
 use crate::{templates, db::state::AppState};
@@ -33,6 +33,7 @@ pub async fn htmx_test_response_handler() -> Html<String> {
 /// Create router with all HTMX + Maud routes
 pub fn create_router() -> Router<AppState> {
     Router::new()
+        .route("/", get(|| async { Redirect::permanent("/batches") }))
         // Test routes
         .route("/test", get(test_page_handler))
         .route("/test/htmx-response", get(htmx_test_response_handler))
