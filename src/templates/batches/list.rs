@@ -70,15 +70,15 @@ fn batch_row(batch: &BatchAndCounts) -> Markup {
                 (batch.batch.use_scenario.to_string())
             }
 
-            div class="relative" {
+            div class="relative"
+                hx-get=(format!("/api/batches/{}/boats", batch_id))
+                hx-trigger="mouseenter once delay:500ms"
+                hx-target=(format!("#boats-preview-{}", batch_id))
+                hx-swap="innerHTML"
+                _=(format!("on mouseleave set #boats-preview-{}.innerHTML to ''", batch_id))
+            {
                 label { "Boats: " }
-                span
-                    hx-get=(format!("/api/batches/{}/boats", batch_id))
-                    hx-trigger="mouseenter once"
-                    hx-target=(format!("#boats-preview-{}", batch_id))
-                    hx-swap="innerHTML"
-                    class="cursor-pointer"
-                {
+                span class="cursor-pointer" {
                     (batch.use_counts)
                 }
                 // Placeholder for the boat list popup

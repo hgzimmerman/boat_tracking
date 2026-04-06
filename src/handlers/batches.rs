@@ -4,7 +4,6 @@ use axum::{
     http::StatusCode,
     body::Bytes,
 };
-use async_trait::async_trait;
 use serde::Deserialize;
 
 /// Custom form extractor that uses serde_qs to parse form data with array notation

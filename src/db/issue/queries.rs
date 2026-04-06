@@ -89,7 +89,7 @@ impl Issue {
         conn: &mut SqliteConnection,
         order: DbOrdering,
     ) -> Result<Vec<(Issue, Option<Boat>)>, diesel::result::Error> {
-        use diesel::{JoinOnDsl, SelectableHelper};
+        use diesel::SelectableHelper;
 
         match order {
             DbOrdering::Asc => issue::table

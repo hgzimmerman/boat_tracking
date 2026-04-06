@@ -1,4 +1,4 @@
-use maud::{html, Markup, PreEscaped};
+use maud::{html, Markup};
 use crate::db::{boat::{Boat, BoatAndStats}, use_event::UseEvent};
 
 /// Batch creation page with two-pane interface
