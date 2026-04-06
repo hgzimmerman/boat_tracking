@@ -13,7 +13,7 @@ use crate::{
         issue::Issue,
         use_event::UseEvent,
     },
-    ui::state::AppState,
+    db::state::AppState,
     templates,
 };
 

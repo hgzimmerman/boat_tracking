@@ -165,9 +165,9 @@ pub struct BoatAttributes {
 
 #[derive(
     Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize,
+    diesel_derive_enum::DbEnum,
 )]
-#[cfg_attr(feature = "ssr", derive(diesel_derive_enum::DbEnum))]
-#[cfg_attr(feature = "ssr", DbValueStyle = "verbatim")]
+#[DbValueStyle = "verbatim"]
 pub enum WeightClass {
     Light,
     Medium,

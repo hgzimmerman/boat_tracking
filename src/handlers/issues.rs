@@ -9,9 +9,9 @@ use crate::{
     db::{
         issue::{Issue, NewIssue, IssueId},
         boat::{Boat, BoatFilter, types::BoatId},
+        state::AppState,
         DbOrdering,
     },
-    ui::state::AppState,
     templates,
 };
 

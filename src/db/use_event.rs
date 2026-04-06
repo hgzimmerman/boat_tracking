@@ -1,15 +1,11 @@
-#[cfg(feature = "ssr")]
 pub mod queries;
 
 use super::{boat::types::BoatId, use_event_batch::BatchId};
 
 /// Whenever the equipment is used, it can be recorded that it was used
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-#[cfg_attr(
-    feature = "ssr",
-    derive(diesel::Queryable, diesel::Selectable, diesel::Identifiable,)
-)]
-#[cfg_attr(feature = "ssr", diesel(table_name = crate::schema::use_event))]
+#[derive(diesel::Queryable, diesel::Selectable, diesel::Identifiable)]
+#[diesel(table_name = crate::schema::use_event)]
 pub struct UseEvent {
     pub id: UseEventId,
     pub boat_id: BoatId,
@@ -22,9 +18,9 @@ pub struct UseEvent {
 // use_scenario TEXT CHECK( use_scenario IN ('Youth', 'Adult', 'LearnToRow', 'ScullingSaturday', 'PrivateSession', 'Regatta', 'Other') ) NOT NULL
 #[derive(
     Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize, Hash,
+    diesel_derive_enum::DbEnum,
 )]
-#[cfg_attr(feature = "ssr", derive(diesel_derive_enum::DbEnum))]
-#[cfg_attr(feature = "ssr", DbValueStyle = "verbatim")]
+#[DbValueStyle = "verbatim"]
 pub enum UseScenario {
     YouthGgrc,
     YouthSomerville,
@@ -51,9 +47,8 @@ impl std::fmt::Display for UseScenario {
     }
 }
 
-#[derive(Debug, Clone)]
-#[cfg_attr(feature = "ssr", derive(diesel::Insertable))]
-#[cfg_attr(feature = "ssr", diesel(table_name = crate::schema::use_event))]
+#[derive(Debug, Clone, diesel::Insertable)]
+#[diesel(table_name = crate::schema::use_event)]
 pub struct NewUseEvent {
     pub boat_id: BoatId,
     pub batch_id: Option<BatchId>,

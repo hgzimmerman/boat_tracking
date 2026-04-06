@@ -36,10 +36,10 @@ where
 use crate::{
     db::{
         boat::types::BoatId,
+        state::AppState,
         use_event::UseScenario,
         use_event_batch::{BatchId, NewBatch, NewBatchArgs, UseEventBatch},
     },
-    ui::state::AppState,
     templates,
 };
 

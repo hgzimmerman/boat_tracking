@@ -1,7 +1,4 @@
-use crate::{
-    db::{boat::BoatAndStats, use_event::UseEvent},
-    ui::state::AppState,
-};
+use crate::db::{boat::BoatAndStats, use_event::UseEvent, state::AppState};
 
 use self::wire::{BoatSummaryCsvRow, BoatUseCsvRow, CsvExportParams};
 

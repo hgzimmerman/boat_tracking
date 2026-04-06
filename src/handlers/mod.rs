@@ -6,7 +6,7 @@ pub mod batches;
 use axum::{response::Html, routing::get, Router};
 use axum_htmx::HxRequest;
 use maud::Markup;
-use crate::{templates, ui::state::AppState};
+use crate::{templates, db::state::AppState};
 
 /// Helper to conditionally wrap content in full page layout
 /// Uses axum-htmx HxRequest extractor to detect HTMX requests
