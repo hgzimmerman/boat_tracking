@@ -1,8 +1,7 @@
 // HTTP request handlers
 pub mod issues;
 pub mod boats;
-// Handler modules will be added in later phases:
-// - batches.rs
+pub mod batches;
 
 use axum::{response::Html, routing::get, Router};
 use axum_htmx::HxRequest;
@@ -48,4 +47,12 @@ pub fn create_router() -> Router<AppState> {
         // Chart routes
         .route("/boats/{id}/chart/daily", get(boats::daily_chart_handler))
         .route("/boats/{id}/chart/monthly", get(boats::monthly_chart_handler))
+        // Batch routes
+        .route("/batches", get(batches::batch_list_handler).post(batches::create_batch_handler))
+        .route("/batches/new", get(batches::new_batch_handler))
+        // Batch API routes (HTMX endpoints)
+        .route("/api/batches/boats", get(batches::list_boats_handler))
+        .route("/api/batches/search", axum::routing::post(batches::search_boats_handler))
+        .route("/api/batches/session/add/{id}", axum::routing::post(batches::add_boat_to_session_handler))
+        .route("/api/batches/session/remove/{id}", axum::routing::post(batches::remove_boat_from_session_handler))
 }
