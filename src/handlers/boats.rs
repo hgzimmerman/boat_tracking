@@ -1,12 +1,15 @@
 use axum::{
     extract::{Path, State},
-    response::{Html, Redirect},
-    http::StatusCode,
+    response::{Html, Redirect, Response},
+    http::{StatusCode, header},
     Form,
 };
 use serde::Deserialize;
 use crate::{
-    db::boat::{Boat, BoatAndStats, NewBoat, types::{BoatId, BoatType, WeightClass}},
+    db::{
+        boat::{Boat, BoatAndStats, NewBoat, types::{BoatId, BoatType, WeightClass}},
+        use_event::UseEvent,
+    },
     ui::state::AppState,
     templates,
 };
@@ -159,6 +162,34 @@ pub async fn create_boat_handler(
 
     tracing::info!("Successfully created boat");
     Ok(Redirect::to("/boats"))
+}
+
+/// Handler for boat detail page
+pub async fn boat_detail_handler(
+    State(state): State<AppState>,
+    Path(id): Path<i32>,
+) -> Result<Html<String>, StatusCode> {
+    let boat_id = BoatId::new(id);
+    let conn = state.pool().get().await
+        .map_err(|e| {
+            tracing::error!("Failed to get database connection: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    let boat = conn
+        .interact(move |conn| BoatAndStats::get_boat(conn, boat_id))
+        .await
+        .map_err(|e| {
+            tracing::error!("Database interaction error: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?
+        .map_err(|e| {
+            tracing::warn!("Boat not found: {}", e);
+            StatusCode::NOT_FOUND
+        })?;
+
+    tracing::debug!("Retrieved boat details for {}", boat.boat.name);
+    Ok(Html(templates::boats::detail::boat_detail_page(&boat).into_string()))
 }
 
 /// Handler for edit boat form page
@@ -334,4 +365,100 @@ pub async fn update_boat_handler(
 
     tracing::info!("Successfully updated boat {}", boat_id.as_int());
     Ok(Redirect::to("/boats"))
+}
+
+/// Handler for daily usage chart (30 days)
+pub async fn daily_chart_handler(
+    State(state): State<AppState>,
+    Path(id): Path<i32>,
+) -> Result<Response, StatusCode> {
+    let boat_id = BoatId::new(id);
+    let conn = state.pool().get().await
+        .map_err(|e| {
+            tracing::error!("Failed to get database connection: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    // Get last 30 days of data
+    let start = chrono::Utc::now().naive_local() - chrono::TimeDelta::try_days(30).unwrap();
+    let data = conn
+        .interact(move |conn| {
+            UseEvent::daily_timeseries_for_boat(conn, boat_id, start, None)
+        })
+        .await
+        .map_err(|e| {
+            tracing::error!("Database interaction error: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?
+        .map_err(|e| {
+            tracing::error!("Failed to get daily timeseries: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    // Convert usize to i64 for charting
+    let data: Vec<(chrono::NaiveDate, i64)> = data.into_iter()
+        .map(|(date, count)| (date, count as i64))
+        .collect();
+
+    // Generate SVG
+    let svg = templates::boats::charts::monthly_usage_chart(&data)
+        .map_err(|e| {
+            tracing::error!("Failed to generate chart: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    // Return SVG response
+    Ok(Response::builder()
+        .status(StatusCode::OK)
+        .header(header::CONTENT_TYPE, "image/svg+xml")
+        .body(svg.into())
+        .unwrap())
+}
+
+/// Handler for monthly usage chart (12 months)
+pub async fn monthly_chart_handler(
+    State(state): State<AppState>,
+    Path(id): Path<i32>,
+) -> Result<Response, StatusCode> {
+    let boat_id = BoatId::new(id);
+    let conn = state.pool().get().await
+        .map_err(|e| {
+            tracing::error!("Failed to get database connection: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    // Get last 12 months of data
+    let start = chrono::Utc::now().naive_local() - chrono::TimeDelta::try_days(365).unwrap();
+    let data = conn
+        .interact(move |conn| {
+            UseEvent::monthly_timeseries_for_boat(conn, boat_id, start, None)
+        })
+        .await
+        .map_err(|e| {
+            tracing::error!("Database interaction error: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?
+        .map_err(|e| {
+            tracing::error!("Failed to get monthly timeseries: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    // Convert usize to i64 for charting
+    let data: Vec<(chrono::NaiveDate, i64)> = data.into_iter()
+        .map(|(date, count)| (date, count as i64))
+        .collect();
+
+    // Generate SVG
+    let svg = templates::boats::charts::yearly_usage_chart(&data)
+        .map_err(|e| {
+            tracing::error!("Failed to generate chart: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    // Return SVG response
+    Ok(Response::builder()
+        .status(StatusCode::OK)
+        .header(header::CONTENT_TYPE, "image/svg+xml")
+        .body(svg.into())
+        .unwrap())
 }
