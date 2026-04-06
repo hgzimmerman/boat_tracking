@@ -1,8 +1,8 @@
 use maud::{html, Markup};
-use crate::db::issue::Issue;
+use crate::db::{issue::Issue, boat::Boat};
 
 /// Issue list page
-pub fn issue_list_page(issues: &[Issue]) -> Markup {
+pub fn issue_list_page(issues: &[(Issue, Option<Boat>)]) -> Markup {
     crate::templates::layout::page("Issues", html! {
         div .container .mx-auto .p-8 {
             div .flex .justify-between .items-center .mb-6 {
@@ -25,15 +25,16 @@ pub fn issue_list_page(issues: &[Issue]) -> Markup {
                         thead class="bg-gray-200 dark:bg-gray-700" {
                             tr {
                                 th class="px-4 py-3 text-left text-sm font-semibold" { "Recorded" }
-                                th class="px-4 py-3 text-left text-sm font-semibold" { "Boat ID" }
+                                th class="px-4 py-3 text-left text-sm font-semibold" { "Boat" }
                                 th class="px-4 py-3 text-left text-sm font-semibold" { "Note" }
                                 th class="px-4 py-3 text-left text-sm font-semibold" { "Status" }
                                 th class="px-4 py-3 text-left text-sm font-semibold" { "Resolved" }
+                                th class="px-4 py-3 text-right text-sm font-semibold" { "Actions" }
                             }
                         }
                         tbody .divide-y {
-                            @for issue in issues {
-                                (issue_row(issue))
+                            @for (issue, boat) in issues {
+                                (issue_row(issue, boat.as_ref()))
                             }
                         }
                     }
@@ -43,7 +44,7 @@ pub fn issue_list_page(issues: &[Issue]) -> Markup {
     })
 }
 
-fn issue_row(issue: &Issue) -> Markup {
+fn issue_row(issue: &Issue, boat: Option<&Boat>) -> Markup {
     let is_resolved = issue.resolved_at.is_some();
 
     html! {
@@ -52,25 +53,25 @@ fn issue_row(issue: &Issue) -> Markup {
                 (issue.recorded_at.format("%Y-%m-%d %H:%M"))
             }
             td class="px-4 py-3 text-sm" {
-                @if let Some(boat_id) = issue.boat_id {
-                    a class="text-blue-600 hover:underline"
-                      href=(format!("/boats/{}", boat_id.as_int())) {
-                        "Boat #" (boat_id.as_int())
+                @if let Some(boat) = boat {
+                    a class="text-blue-600 hover:underline dark:text-blue-400"
+                      href=(format!("/boats/{}", boat.id.as_int())) {
+                        (boat.name)
                     }
                 } @else {
                     span class="text-gray-400" { "N/A" }
                 }
             }
-            td class="px-4 py-3 text-sm" {
+            td class="px-4 py-3 text-sm max-w-md truncate" {
                 (issue.note)
             }
             td class="px-4 py-3 text-sm" {
                 @if is_resolved {
-                    span class="px-2 py-1 bg-green-200 text-green-800 rounded text-xs font-semibold" {
+                    span class="px-2 py-1 bg-green-200 text-green-800 dark:bg-green-800 dark:text-green-200 rounded text-xs font-semibold" {
                         "Resolved"
                     }
                 } @else {
-                    span class="px-2 py-1 bg-red-200 text-red-800 rounded text-xs font-semibold" {
+                    span class="px-2 py-1 bg-red-200 text-red-800 dark:bg-red-800 dark:text-red-200 rounded text-xs font-semibold" {
                         "Open"
                     }
                 }
@@ -80,6 +81,25 @@ fn issue_row(issue: &Issue) -> Markup {
                     (resolved.format("%Y-%m-%d"))
                 } @else {
                     span class="text-gray-400" { "-" }
+                }
+            }
+            td class="px-4 py-3 text-sm text-right" {
+                @if is_resolved {
+                    button
+                        hx-post=(format!("/issues/{}/unresolve", issue.id.as_int()))
+                        hx-target="body"
+                        class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-xs font-semibold transition"
+                    {
+                        "Reopen"
+                    }
+                } @else {
+                    button
+                        hx-post=(format!("/issues/{}/resolve", issue.id.as_int()))
+                        hx-target="body"
+                        class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs font-semibold transition"
+                    {
+                        "Resolve"
+                    }
                 }
             }
         }

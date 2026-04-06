@@ -37,8 +37,10 @@ pub fn create_router() -> Router<AppState> {
         .route("/test", get(test_page_handler))
         .route("/test/htmx-response", get(htmx_test_response_handler))
         // Issues routes
-        .route("/issues", get(issues::issue_list_handler))
+        .route("/issues", get(issues::issue_list_handler).post(issues::create_issue_handler))
         .route("/issues/new", get(issues::new_issue_handler))
+        .route("/issues/{id}/resolve", axum::routing::post(issues::resolve_issue_handler))
+        .route("/issues/{id}/unresolve", axum::routing::post(issues::unresolve_issue_handler))
         // Boats routes
         .route("/boats", get(boats::boat_list_handler).post(boats::create_boat_handler))
         .route("/boats/new", get(boats::new_boat_handler))
