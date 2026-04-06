@@ -1,3 +1,5 @@
+#![cfg_attr(feature = "tauri", windows_subsystem = "windows")]
+
 use anyhow::Error;
 use axum::routing::get;
 use axum::Router;
