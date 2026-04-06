@@ -98,14 +98,16 @@ pub fn boat_form_page(mode: BoatFormMode, data: BoatFormData, errors: BoatFormEr
         BoatFormMode::Edit(_) => "Edit Boat",
     };
 
-    crate::templates::layout::page(
-        title,
-        html! {
-            div class="flex-grow flex flex-col items-center bg-gray-50 dark:bg-gray-600 p-8" {
-                (boat_form(mode, data, errors))
-            }
-        },
-    )
+    crate::templates::layout::page(title, boat_form_content(mode, data, errors))
+}
+
+/// Boat form content (without page wrapper)
+pub fn boat_form_content(mode: BoatFormMode, data: BoatFormData, errors: BoatFormErrors) -> Markup {
+    html! {
+        div class="flex-grow flex flex-col items-center bg-gray-50 dark:bg-gray-600 p-8" {
+            (boat_form(mode, data, errors))
+        }
+    }
 }
 
 /// Boat form component

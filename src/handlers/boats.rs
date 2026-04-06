@@ -4,6 +4,7 @@ use axum::{
     http::{StatusCode, header, HeaderMap},
     Form,
 };
+use axum_htmx::HxRequest;
 use serde::Deserialize;
 use maud::html;
 use crate::{
@@ -53,14 +54,15 @@ pub struct BoatFormInput {
 }
 
 /// Handler for new boat form page
-pub async fn new_boat_handler() -> Html<String> {
+pub async fn new_boat_handler(hx_request: HxRequest) -> Html<String> {
     let data = templates::boats::form::BoatFormData::empty();
     let errors = templates::boats::form::BoatFormErrors::default();
-    Html(templates::boats::form::boat_form_page(
+    let content = templates::boats::form::boat_form_content(
         templates::boats::form::BoatFormMode::New,
         data,
         errors,
-    ).into_string())
+    );
+    super::maybe_page("Add a New Boat", content, hx_request)
 }
 
 /// Handler for creating a new boat
@@ -227,6 +229,7 @@ pub async fn boat_detail_handler(
 pub async fn edit_boat_handler(
     State(state): State<AppState>,
     Path(id): Path<i32>,
+    hx_request: HxRequest,
 ) -> Result<Html<String>, StatusCode> {
     let boat_id = BoatId::new(id);
     let conn = state.pool().get().await
@@ -246,12 +249,13 @@ pub async fn edit_boat_handler(
 
     let data = templates::boats::form::BoatFormData::from_boat(&boat);
     let errors = templates::boats::form::BoatFormErrors::default();
-
-    Ok(Html(templates::boats::form::boat_form_page(
+    let content = templates::boats::form::boat_form_content(
         templates::boats::form::BoatFormMode::Edit(boat_id),
         data,
         errors,
-    ).into_string()))
+    );
+
+    Ok(super::maybe_page("Edit Boat", content, hx_request))
 }
 
 /// Handler for updating an existing boat
