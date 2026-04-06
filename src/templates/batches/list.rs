@@ -71,17 +71,19 @@ fn batch_row(batch: &BatchAndCounts) -> Markup {
             }
 
             div class="relative"
-                hx-get=(format!("/api/batches/{}/boats", batch_id))
-                hx-trigger="mouseenter delay:500ms"
-                hx-target=(format!("#boats-preview-{}", batch_id))
-                hx-swap="innerHTML"
-                onmouseleave=(format!("document.getElementById('boats-preview-{}').innerHTML = ''", batch_id))
+                onmouseleave=(format!("setTimeout(() => document.getElementById('boats-preview-{}').innerHTML = '', 100)", batch_id))
             {
                 label { "Boats: " }
-                span class="cursor-pointer" {
+                span class="cursor-pointer"
+                    onmouseenter="document.querySelectorAll('[id^=\"boats-preview-\"]').forEach(el => el.innerHTML = '')"
+                    hx-get=(format!("/api/batches/{}/boats", batch_id))
+                    hx-trigger="mouseenter delay:500ms"
+                    hx-target=(format!("#boats-preview-{}", batch_id))
+                    hx-swap="innerHTML"
+                {
                     (batch.use_counts)
                 }
-                // Boat list popup
+                // Boat list popup - positioned absolutely by the popup content itself
                 div id=(format!("boats-preview-{}", batch_id)) {}
             }
         }
