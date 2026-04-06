@@ -72,10 +72,10 @@ fn batch_row(batch: &BatchAndCounts) -> Markup {
 
             div class="relative"
                 hx-get=(format!("/api/batches/{}/boats", batch_id))
-                hx-trigger="mouseenter once delay:500ms"
+                hx-trigger="mouseenter delay:500ms"
                 hx-target=(format!("#boats-preview-{}", batch_id))
                 hx-swap="innerHTML"
-                _=(format!("on mouseleave set #boats-preview-{}.innerHTML to ''", batch_id))
+                _=(format!("on mouseleave wait 200ms then set #boats-preview-{}.innerHTML to '' end on click from:body set #boats-preview-{}.innerHTML to ''", batch_id, batch_id))
             {
                 label { "Boats: " }
                 span class="cursor-pointer" {
@@ -91,12 +91,10 @@ fn batch_row(batch: &BatchAndCounts) -> Markup {
 /// Boat preview popup (rendered on hover)
 pub fn boats_preview_popup(boat_names: &[String]) -> Markup {
     html! {
-        div class="relative" {
-            div class="absolute top-1 left-0 bg-slate-100 dark:bg-slate-600 rounded border-2 border-slate-200 dark:border-white z-50 p-2 min-w-48" {
-                ul {
-                    @for boat_name in boat_names {
-                        li { (boat_name) }
-                    }
+        div class="absolute top-1 left-0 bg-slate-100 dark:bg-slate-600 rounded border-2 border-slate-200 dark:border-white z-50 p-2 min-w-48" {
+            ul {
+                @for boat_name in boat_names {
+                    li { (boat_name) }
                 }
             }
         }
