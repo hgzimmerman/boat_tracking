@@ -30,10 +30,9 @@ pub fn toast(id: &str, toast_type: ToastType, message: &str) -> Markup {
     };
 
     html! {
-        template {
+        div hx-swap-oob="beforeend:#toast-container" {
             div
                 id=(format!("toast-{}", id))
-                hx-swap-oob="afterbegin:#toast-container"
                 class=(format!("{} text-white px-6 py-4 rounded shadow-lg flex items-center gap-3 min-w-64", bg_color))
                 data-auto-dismiss="4000"
             {
