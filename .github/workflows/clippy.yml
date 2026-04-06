@@ -1,0 +1,21 @@
+name: Clippy
+
+on:
+  pull_request:
+    branches: [master]
+
+jobs:
+  clippy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev
+
+      - name: Run clippy
+        run: cargo clippy -- -D warnings

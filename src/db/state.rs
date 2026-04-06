@@ -53,10 +53,10 @@ impl AppState {
 impl axum::extract::FromRequestParts<AppState> for AppState {
     type Rejection = String;
 
-    fn from_request_parts(
+    async fn from_request_parts(
         _parts: &mut axum::http::request::Parts,
         state: &AppState,
-    ) -> impl std::future::Future<Output = Result<Self, Self::Rejection>> + Send {
-        async move { Ok(state.clone()) }
+    ) -> Result<Self, Self::Rejection> {
+        Ok(state.clone())
     }
 }

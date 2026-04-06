@@ -16,21 +16,19 @@ where
 {
     type Rejection = (StatusCode, String);
 
-    fn from_request(req: Request, state: &S) -> impl std::future::Future<Output = Result<Self, Self::Rejection>> + Send {
-        async move {
-            let body = Bytes::from_request(req, state)
-                .await
-                .map_err(|e| (StatusCode::BAD_REQUEST, format!("Failed to read body: {}", e)))?;
+    async fn from_request(req: Request, state: &S) -> Result<Self, Self::Rejection> {
+        let body = Bytes::from_request(req, state)
+            .await
+            .map_err(|e| (StatusCode::BAD_REQUEST, format!("Failed to read body: {}", e)))?;
 
-            let body_str = std::str::from_utf8(&body)
-                .map_err(|_| (StatusCode::BAD_REQUEST, "Invalid UTF-8 in form data".to_string()))?;
+        let body_str = std::str::from_utf8(&body)
+            .map_err(|_| (StatusCode::BAD_REQUEST, "Invalid UTF-8 in form data".to_string()))?;
 
-            let value = serde_qs::Config::new(5, false)
-                .deserialize_str(body_str)
-                .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, format!("Failed to parse form: {}", e)))?;
+        let value = serde_qs::Config::new(5, false)
+            .deserialize_str(body_str)
+            .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, format!("Failed to parse form: {}", e)))?;
 
-            Ok(QsForm(value))
-        }
+        Ok(QsForm(value))
     }
 }
 use crate::{
@@ -242,7 +240,7 @@ pub async fn list_boats_handler(
         })?;
 
     let boats = conn
-        .interact(|conn| crate::db::boat::BoatAndStats::get_boats(conn))
+        .interact(crate::db::boat::BoatAndStats::get_boats)
         .await
         .map_err(|e| {
             tracing::error!("Database interaction error: {}", e);
@@ -269,7 +267,7 @@ pub async fn search_boats_handler(
         })?;
 
     let boats = conn
-        .interact(|conn| crate::db::boat::BoatAndStats::get_boats(conn))
+        .interact(crate::db::boat::BoatAndStats::get_boats)
         .await
         .map_err(|e| {
             tracing::error!("Database interaction error: {}", e);
