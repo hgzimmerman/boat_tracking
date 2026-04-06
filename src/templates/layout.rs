@@ -39,19 +39,19 @@ pub fn page(title: &str, content: Markup) -> Markup {
 /// Top-level navigation bar
 fn navbar() -> Markup {
     html! {
-        nav #main-nav .bg-ggrc .sticky .px-4 .py-2 .top-0 .z-40 {
-            ul .flex .items-center .space-x-2 {
+        nav #main-nav .bg-ggrc .sticky .px-6 .py-3 .top-0 .z-40 {
+            ul .flex .items-center .space-x-6 {
                 li {
-                    a class="btn btn-primary cursor-pointer"
+                    a class="text-white font-semibold px-3 py-2 rounded hover:bg-white/25 cursor-pointer transition"
                       hx-get="/batches"
                       hx-target="body"
                       hx-push-url="true"
                       {
-                        "Practices and Regattas"
+                        "Practices & Regattas"
                     }
                 }
                 li {
-                    a class="btn btn-primary cursor-pointer"
+                    a class="text-white font-semibold px-3 py-2 rounded hover:bg-white/25 cursor-pointer transition"
                       hx-get="/boats"
                       hx-target="body"
                       hx-push-url="true"
@@ -60,7 +60,7 @@ fn navbar() -> Markup {
                     }
                 }
                 li {
-                    a class="btn btn-primary cursor-pointer"
+                    a class="text-white font-semibold px-3 py-2 rounded hover:bg-white/25 cursor-pointer transition"
                       hx-get="/issues"
                       hx-target="body"
                       hx-push-url="true"
