@@ -1,10 +1,11 @@
 use axum::{
     extract::{Path, State},
-    response::{Html, Redirect, Response},
+    response::{Html, Redirect, Response, IntoResponse},
     http::{StatusCode, header},
     Form,
 };
 use serde::Deserialize;
+use maud::html;
 use crate::{
     db::{
         boat::{Boat, BoatAndStats, NewBoat, types::{BoatId, BoatType, WeightClass}},
@@ -66,7 +67,7 @@ pub async fn new_boat_handler() -> Html<String> {
 pub async fn create_boat_handler(
     State(state): State<AppState>,
     Form(input): Form<BoatFormInput>,
-) -> Result<Redirect, Html<String>> {
+) -> Result<Html<String>, Html<String>> {
     // Validate input
     let mut errors = templates::boats::form::BoatFormErrors::default();
 
@@ -161,7 +162,12 @@ pub async fn create_boat_handler(
     })?;
 
     tracing::info!("Successfully created boat");
-    Ok(Redirect::to("/boats"))
+
+    // Return redirect with success toast
+    Ok(Html(html! {
+        div hx-redirect="/boats" {}
+        (crate::templates::components::toast::success_toast("Boat created successfully!"))
+    }.into_string()))
 }
 
 /// Handler for boat detail page
@@ -228,7 +234,7 @@ pub async fn update_boat_handler(
     State(state): State<AppState>,
     Path(id): Path<i32>,
     Form(input): Form<BoatFormInput>,
-) -> Result<Redirect, Html<String>> {
+) -> Result<Html<String>, Html<String>> {
     let boat_id = BoatId::new(id);
 
     // Validate input (similar to create)
@@ -364,7 +370,12 @@ pub async fn update_boat_handler(
     })?;
 
     tracing::info!("Successfully updated boat {}", boat_id.as_int());
-    Ok(Redirect::to("/boats"))
+
+    // Return redirect with success toast
+    Ok(Html(html! {
+        div hx-redirect="/boats" {}
+        (crate::templates::components::toast::success_toast("Boat updated successfully!"))
+    }.into_string()))
 }
 
 /// Handler for daily usage chart (30 days)
