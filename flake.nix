@@ -1,5 +1,5 @@
 {
-  description = "Minimal rust example";
+  description = "Boat tracking system for GGRC";
 
   inputs = {
     flake-utils.url = "github:numtide/flake-utils";
@@ -18,13 +18,10 @@
         rust = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
         inputs = [
           rust
-          pkgs.wasm-bindgen-cli
           pkgs.rust-analyzer
-          pkgs.sqlite
           pkgs.diesel-cli
           pkgs.openssl
           pkgs.pkg-config
-          pkgs.dioxus-cli
           ];
 
         tauriDeps = with pkgs; [
@@ -56,34 +53,14 @@
           ];
           inherit PKG_CONFIG_PATH;
 
-
           nativeBuildInputs = inputs;
 
           buildPhase = ''
-            echo 'Building backend'
-            
-            cargo build --features=ssr --release 
-            
-            echo 'Building web frontend'
-
-            dx bundle --platform=web --features=web --release
-
-            echo 'Creating out dir...'
-            mkdir -p $out/src;
-
-            # Optional, of course
-            # echo 'Copying package.json...'
-            # cp ./package.json $out/;
-
-            # echo 'Generating node module...'
-            # wasm-bindgen \
-            #   --target nodejs \
-            #   --out-dir $out/src \
-            #   target/wasm32-unknown-unknown/release/gcd.wasm;
+            echo 'Building server'
+            cargo build --release
           '';
           installPhase = "echo 'Skipping installPhase'";
         };
-
 
         devShell = pkgs.mkShell {
           packages = inputs ++ tauriDeps ++ [ pkgs.tailwindcss ];
@@ -92,14 +69,11 @@
             (writeShellScriptBin "watch-tailwind" ''
               tailwindcss -i ./input.css -o ./public/tailwind.css --watch
             '')
-            (writeShellScriptBin "watch-dx" ''
-              dx serve --platform=fullstack --server-feature=ssr
-            '')
             (writeShellScriptBin "run-server" ''
-              cargo run --features ssr
+              cargo run
             '')
             (writeShellScriptBin "watch-server" ''
-              cargo watch -x "run" --features ssr --clear -d 2.5 -w ./src
+              cargo watch -x "run" --clear -d 2.5 -w ./src
             '')
           ];
           inherit PKG_CONFIG_PATH;
