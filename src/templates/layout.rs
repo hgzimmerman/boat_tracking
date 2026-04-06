@@ -39,19 +39,33 @@ pub fn page(title: &str, content: Markup) -> Markup {
 /// Top-level navigation bar
 fn navbar() -> Markup {
     html! {
-        nav #main-nav .bg-ggrc .sticky .px-4 .top-0 .z-40
-            hx-boost="true" hx-target="#content" hx-swap="innerHTML" {
-            ul .flex .items-center {
-                li .mr-3 {
-                    a class="inline-block border border-blue-500 rounded py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white transition"
-                      href="/batches" {
+        nav #main-nav .bg-ggrc .sticky .px-4 .py-2 .top-0 .z-40 {
+            ul .flex .items-center .space-x-2 {
+                li {
+                    a class="inline-block border border-blue-500 rounded py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white transition font-semibold cursor-pointer"
+                      hx-get="/batches"
+                      hx-target="body"
+                      hx-push-url="true"
+                      {
                         "Practices and Regattas"
                     }
                 }
-                li .mr-3 {
-                    a class="inline-block border border-blue-500 rounded py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white transition"
-                      href="/boats" {
+                li {
+                    a class="inline-block border border-blue-500 rounded py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white transition font-semibold cursor-pointer"
+                      hx-get="/boats"
+                      hx-target="body"
+                      hx-push-url="true"
+                      {
                         "Boats"
+                    }
+                }
+                li {
+                    a class="inline-block border border-blue-500 rounded py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white transition font-semibold cursor-pointer"
+                      hx-get="/issues"
+                      hx-target="body"
+                      hx-push-url="true"
+                      {
+                        "Issues"
                     }
                 }
             }

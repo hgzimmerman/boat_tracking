@@ -5,7 +5,21 @@ pub mod boats;
 // - batches.rs
 
 use axum::{response::Html, routing::get, Router};
+use axum_htmx::HxRequest;
+use maud::Markup;
 use crate::{templates, ui::state::AppState};
+
+/// Helper to conditionally wrap content in full page layout
+/// Uses axum-htmx HxRequest extractor to detect HTMX requests
+pub fn maybe_page(title: &str, content: Markup, HxRequest(is_htmx): HxRequest) -> Html<String> {
+    if is_htmx {
+        // Return just the content for HTMX requests
+        Html(content.into_string())
+    } else {
+        // Return full page for direct browser requests
+        Html(templates::layout::page(title, content).into_string())
+    }
+}
 
 /// Test handler for proof-of-concept page
 pub async fn test_page_handler() -> Html<String> {

@@ -96,8 +96,6 @@ fn main() -> Result<(), Error> {
                     )
                     // Serve static files from public/ (HTMX, Alpine.js, Tailwind, etc.)
                     .nest_service("/", tower_http::services::ServeDir::new("public"))
-                    .serve_static_assets("dist")
-                    .await
                     // .connect_hot_reload()
                     // .register_server_fns_with_handler("", |func| {
                     //     let state = state.clone();

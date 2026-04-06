@@ -78,15 +78,14 @@ impl FromServerContext<dioxus_fullstack::prelude::Axum> for AppState {
     }
 }
 
-#[async_trait::async_trait]
 impl axum::extract::FromRequestParts<AppState> for AppState {
     type Rejection = String;
 
-    async fn from_request_parts(
+    fn from_request_parts(
         _parts: &mut axum::http::request::Parts,
         state: &AppState,
-    ) -> Result<Self, Self::Rejection> {
-        Ok(state.clone())
+    ) -> impl std::future::Future<Output = Result<Self, Self::Rejection>> + Send {
+        async move { Ok(state.clone()) }
     }
 }
 
