@@ -1,5 +1,9 @@
 use deadpool_diesel::sqlite::Pool;
+use diesel::Connection;
+use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use std::sync::Arc;
+
+pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!();
 
 pub type ArcPool = Arc<Pool>;
 
@@ -22,6 +26,20 @@ impl AppState {
             .max_size(40)
             .build()
             .expect("should build pool");
+
+        // Run pending migrations on startup
+        {
+            tracing::info!("Checking for pending database migrations...");
+            let mut conn = diesel::SqliteConnection::establish(conn_str)
+                .expect("should connect to database for migrations");
+            let applied = conn.run_pending_migrations(MIGRATIONS)
+                .expect("should run database migrations");
+            if applied.is_empty() {
+                tracing::info!("Database is up to date, no migrations needed");
+            } else {
+                tracing::info!("Applied {} migration(s)", applied.len());
+            }
+        }
 
         let pool = Arc::new(pool);
         Self { pool }
