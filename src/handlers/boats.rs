@@ -28,7 +28,7 @@ pub async fn boat_list_handler(
         })?;
 
     let boats = conn
-        .interact(|conn| BoatAndStats::get_boats(conn))
+        .interact(BoatAndStats::get_boats)
         .await
         .map_err(|e| {
             tracing::error!("Database interaction error: {}", e);
@@ -174,7 +174,7 @@ pub async fn create_boat_handler(
         })?;
 
     let boats = conn
-        .interact(|conn| BoatAndStats::get_boats(conn))
+        .interact(BoatAndStats::get_boats)
         .await
         .map_err(|e| {
             tracing::error!("Database interaction error: {}", e);
@@ -444,7 +444,7 @@ pub async fn update_boat_handler(
         })?;
 
     let boats = conn
-        .interact(|conn| BoatAndStats::get_boats(conn))
+        .interact(BoatAndStats::get_boats)
         .await
         .map_err(|e| {
             tracing::error!("Database interaction error: {}", e);
