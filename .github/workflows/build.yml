@@ -1,0 +1,61 @@
+name: Build
+
+on:
+  push:
+    branches: [master, feature/*]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev
+
+      - name: Build (server only)
+        run: cargo build --release
+
+      - name: Download Tailwind CSS standalone CLI
+        run: |
+          curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/download/v3.4.19/tailwindcss-linux-x64
+          chmod +x tailwindcss-linux-x64
+
+      - name: Build Tailwind CSS
+        run: ./tailwindcss-linux-x64 -i input.css -o public/tailwind.css --minify
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: boat-tracking-linux
+          path: |
+            target/release/boat_tracking
+            public/
+
+  build-windows-tauri:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Download Tailwind CSS standalone CLI
+        run: Invoke-WebRequest -Uri "https://github.com/tailwindlabs/tailwindcss/releases/download/v3.4.19/tailwindcss-windows-x64.exe" -OutFile "tailwindcss.exe"
+
+      - name: Build Tailwind CSS
+        run: .\tailwindcss.exe -i input.css -o public/tailwind.css --minify
+
+      - name: Build Tauri app
+        run: cargo build --release --features tauri
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: boat-tracking-windows
+          path: |
+            target/release/boat_tracking.exe
+            public/

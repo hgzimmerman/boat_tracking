@@ -1,6 +1,4 @@
 pub mod types;
-
-#[cfg(feature = "ssr")]
 pub mod queries;
 
 use types::{HasCox, OarsPerSeat, SeatCount, WeightClass};
@@ -10,16 +8,13 @@ use self::types::{BoatAttributes, BoatId, BoatType, OarConfiguration};
 use super::DbOrdering;
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-#[cfg_attr(
-    feature = "ssr",
-    derive(
-        diesel::Queryable,
-        diesel::Selectable,
-        diesel::Identifiable,
-        diesel::AsChangeset
-    )
+#[derive(
+    diesel::Queryable,
+    diesel::Selectable,
+    diesel::Identifiable,
+    diesel::AsChangeset
 )]
-#[cfg_attr(feature = "ssr", diesel(table_name = crate::schema::boat))]
+#[diesel(table_name = crate::schema::boat)]
 pub struct Boat {
     pub id: BoatId,
     /// The name of the boat.
@@ -40,9 +35,8 @@ pub struct Boat {
     pub relinquished_at: Option<chrono::NaiveDate>,
 }
 
-#[derive(Debug, Clone)]
-#[cfg_attr(feature = "ssr", derive(diesel::Insertable))]
-#[cfg_attr(feature = "ssr", diesel(table_name = crate::schema::boat))]
+#[derive(Debug, Clone, diesel::Insertable)]
+#[diesel(table_name = crate::schema::boat)]
 pub struct NewBoat {
     pub name: String,
     pub weight_class: WeightClass,
