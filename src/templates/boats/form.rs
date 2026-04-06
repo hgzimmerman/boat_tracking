@@ -104,8 +104,14 @@ pub fn boat_form_page(mode: BoatFormMode, data: BoatFormData, errors: BoatFormEr
 /// Boat form content (without page wrapper)
 pub fn boat_form_content(mode: BoatFormMode, data: BoatFormData, errors: BoatFormErrors) -> Markup {
     html! {
-        div class="flex-grow flex flex-col items-center bg-gray-50 dark:bg-gray-600 p-8" {
-            (boat_form(mode, data, errors))
+        div class="flex-grow flex flex-col bg-gray-50 dark:bg-gray-600" {
+            // Include tabs for edit mode
+            @if let BoatFormMode::Edit(boat_id) = mode {
+                (super::detail::boat_tabs(boat_id.as_int(), "edit"))
+            }
+            div class="flex-grow flex flex-col items-center p-8" {
+                (boat_form(mode, data, errors))
+            }
         }
     }
 }

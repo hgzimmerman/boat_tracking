@@ -201,6 +201,7 @@ pub async fn create_boat_handler(
 pub async fn boat_detail_handler(
     State(state): State<AppState>,
     Path(id): Path<i32>,
+    hx_request: HxRequest,
 ) -> Result<Html<String>, StatusCode> {
     let boat_id = BoatId::new(id);
     let conn = state.pool().get().await
@@ -222,7 +223,8 @@ pub async fn boat_detail_handler(
         })?;
 
     tracing::debug!("Retrieved boat details for {}", boat.boat.name);
-    Ok(Html(templates::boats::detail::boat_detail_page(&boat).into_string()))
+    let content = templates::boats::detail::boat_detail_content(&boat);
+    Ok(super::maybe_page(&format!("{} - Boat Details", boat.boat.name), content, hx_request))
 }
 
 /// Handler for edit boat form page

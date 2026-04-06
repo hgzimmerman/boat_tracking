@@ -2,18 +2,13 @@ use maud::{html, Markup};
 use crate::db::boat::BoatAndStats;
 
 /// Tab navigation for boat detail pages
-fn boat_tabs(boat_id: i32, active: &str) -> Markup {
-    let details_class = if active == "details" {
-        "inline-block py-2 px-4 border-b-4 border-blue-500 font-semibold text-blue-600 dark:text-blue-400"
-    } else {
-        "inline-block py-2 px-4 border-b-4 border-transparent hover:border-gray-300 font-semibold text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white"
-    };
+pub fn boat_tabs(boat_id: i32, active: &str) -> Markup {
+    let active_class = "inline-block py-2 px-4 border-b-4 border-blue-500 font-semibold text-blue-600 dark:text-blue-400";
+    let inactive_class = "inline-block py-2 px-4 border-b-4 border-transparent hover:border-gray-300 font-semibold text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white";
 
-    let issues_class = if active == "issues" {
-        "inline-block py-2 px-4 border-b-4 border-blue-500 font-semibold text-blue-600 dark:text-blue-400"
-    } else {
-        "inline-block py-2 px-4 border-b-4 border-transparent hover:border-gray-300 font-semibold text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white"
-    };
+    let details_class = if active == "details" { active_class } else { inactive_class };
+    let issues_class = if active == "issues" { active_class } else { inactive_class };
+    let edit_class = if active == "edit" { active_class } else { inactive_class };
 
     html! {
         nav class="bg-white dark:bg-slate-700 border-b border-gray-200 dark:border-gray-600"
@@ -25,8 +20,7 @@ fn boat_tabs(boat_id: i32, active: &str) -> Markup {
                 a href=(format!("/boats/{boat_id}/issues")) class=(issues_class) {
                     "Issues"
                 }
-                a href=(format!("/boats/{boat_id}/edit"))
-                  class="inline-block py-2 px-4 border-b-4 border-transparent hover:border-gray-300 font-semibold text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white" {
+                a href=(format!("/boats/{boat_id}/edit")) class=(edit_class) {
                     "Edit Boat"
                 }
                 a href=(format!("/uses_export.csv?id={boat_id}"))
@@ -45,15 +39,20 @@ fn boat_tabs(boat_id: i32, active: &str) -> Markup {
 pub fn boat_detail_page(boat: &BoatAndStats) -> Markup {
     crate::templates::layout::page(
         &format!("{} - Boat Details", boat.boat.name),
-        html! {
-            div class="flex-grow flex flex-col bg-gray-50 dark:bg-gray-600" {
-                (boat_tabs(boat.boat.id.as_int(), "details"))
-                div class="p-8" {
-                    (boat_detail(boat))
-                }
-            }
-        },
+        boat_detail_content(boat),
     )
+}
+
+/// Boat detail content (without page wrapper)
+pub fn boat_detail_content(boat: &BoatAndStats) -> Markup {
+    html! {
+        div class="flex-grow flex flex-col bg-gray-50 dark:bg-gray-600" {
+            (boat_tabs(boat.boat.id.as_int(), "details"))
+            div class="p-8" {
+                (boat_detail(boat))
+            }
+        }
+    }
 }
 
 /// Boat detail component
