@@ -8,6 +8,7 @@ use diesel::SqliteConnection;
 use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
 
 impl UseEvent {
+    #[tracing::instrument(level = "debug", skip(conn), err)]
     pub fn new_event(
         conn: &mut SqliteConnection,
         event: NewUseEvent,
@@ -17,6 +18,7 @@ impl UseEvent {
             .get_result(conn)
     }
 
+    #[tracing::instrument(level = "debug", skip_all, err)]
     pub fn events_for_boat(
         conn: &mut SqliteConnection,
         boat_id: BoatId,
@@ -30,6 +32,7 @@ impl UseEvent {
     /// Gets the counts per day of uses for a specified boat.
     ///
     /// The returned list will have empty 0s for dates
+    #[tracing::instrument(level = "debug", skip_all, err)]
     pub fn daily_timeseries_for_boat(
         conn: &mut SqliteConnection,
         boat_id: BoatId,
@@ -74,6 +77,7 @@ impl UseEvent {
     }
 
     /// Sums uses over a month for a specified boat
+    #[tracing::instrument(level = "debug", skip_all, err)]
     pub fn monthly_timeseries_for_boat(
         conn: &mut SqliteConnection,
         boat_id: BoatId,
@@ -124,6 +128,7 @@ impl UseEvent {
         Ok(list)
     }
 
+    #[tracing::instrument(level = "debug", skip_all, err)]
     pub fn export_events(
         conn: &mut SqliteConnection,
         date_start: Option<NaiveDateTime>,

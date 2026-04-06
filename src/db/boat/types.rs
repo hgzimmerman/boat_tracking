@@ -157,6 +157,7 @@ impl std::fmt::Display for BoatType {
     }
 }
 
+#[derive(Debug)]
 pub struct BoatAttributes {
     pub has_cox: HasCox,
     pub seats: SeatCount,

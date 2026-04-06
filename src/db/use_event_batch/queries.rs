@@ -15,6 +15,7 @@ use super::{BatchAndCounts, BatchId, NewBatchArgs, UseEventBatch, UseEventBatchC
 use crate::schema::{use_event, use_event_batch};
 
 impl UseEventBatch {
+    #[tracing::instrument(level = "debug", skip(conn), err)]
     pub fn create_batch(
         conn: &mut SqliteConnection,
         new_batch: NewBatchArgs,
@@ -43,6 +44,7 @@ impl UseEventBatch {
     }
 
     /// Gets a list of batches and their use count.
+    #[tracing::instrument(level = "debug", skip_all, err)]
     pub fn get_most_recent_batches_and_their_use_count(
         conn: &mut SqliteConnection,
         scenario: Option<UseScenario>,
@@ -78,6 +80,7 @@ impl UseEventBatch {
         }
     }
 
+    #[tracing::instrument(level = "debug", skip_all, err)]
     pub fn get_events_and_boats_for_batch(
         conn: &mut SqliteConnection,
         batch_id: BatchId,
@@ -89,6 +92,7 @@ impl UseEventBatch {
             .get_results(conn)
     }
 
+    #[tracing::instrument(level = "debug", skip_all, err)]
     pub fn get_batch(
         conn: &mut SqliteConnection,
         id: BatchId,
@@ -100,6 +104,7 @@ impl UseEventBatch {
     }
 
     /// Removes all events in a given batch, then creates new events to replace them.
+    #[tracing::instrument(level = "debug", skip(conn), err)]
     pub fn replace_batch_uses(
         conn: &mut SqliteConnection,
         batch_id: BatchId,

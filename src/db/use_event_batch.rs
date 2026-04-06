@@ -56,6 +56,7 @@ impl std::fmt::Display for BatchId {
     }
 }
 
+#[derive(Debug)]
 pub struct NewBatchArgs {
     pub boat_ids: Vec<BoatId>,
     pub batch: NewBatch,
