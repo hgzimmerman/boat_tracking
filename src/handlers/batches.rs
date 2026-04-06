@@ -6,7 +6,6 @@ use axum::{
 };
 use async_trait::async_trait;
 use serde::Deserialize;
-use maud::html;
 
 /// Custom form extractor that uses serde_qs to parse form data with array notation
 pub struct QsForm<T>(pub T);
@@ -326,4 +325,40 @@ pub async fn batch_detail_handler(
         })?;
 
     Ok(Html(templates::batches::detail::batch_detail_page(&batch, &boats).into_string()))
+}
+
+/// Handler for batch boats preview (HTMX hover endpoint)
+pub async fn batch_boats_preview_handler(
+    State(state): State<AppState>,
+    Path(batch_id): Path<i32>,
+) -> Result<Html<String>, StatusCode> {
+    let batch_id = BatchId::new(batch_id);
+
+    let conn = state.pool().get().await
+        .map_err(|e| {
+            tracing::error!("Failed to get database connection: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    // Fetch boats for this batch
+    let boats = conn
+        .interact(move |conn| {
+            UseEventBatch::get_events_and_boats_for_batch(conn, batch_id)
+        })
+        .await
+        .map_err(|e| {
+            tracing::error!("Database interaction error: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?
+        .map_err(|e| {
+            tracing::error!("Failed to get boats for batch: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    // Extract just the boat names
+    let boat_names: Vec<String> = boats.into_iter()
+        .map(|(_event, boat)| boat.name)
+        .collect();
+
+    Ok(Html(templates::batches::list::boats_preview_popup(&boat_names).into_string()))
 }

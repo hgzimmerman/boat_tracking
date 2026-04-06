@@ -49,12 +49,13 @@ pub fn batch_list(batches: &[BatchAndCounts]) -> Markup {
 
 /// Individual batch row
 fn batch_row(batch: &BatchAndCounts) -> Markup {
+    let batch_id = batch.batch.id.as_int();
     html! {
         div class="flex flex-row flex-grow gap-2.5 py-1.5 px-4" {
             div class="flex flex-col flex-grow gap-2.5" {
                 div class="text-xl font-medium min-w-40" {
                     a class="inline-flex items-center hover:underline"
-                      href=(format!("/batches/{}", batch.batch.id.as_int())) {
+                      href=(format!("/batches/{}", batch_id)) {
                         span { (batch.batch.recorded_at.format("%Y-%m-%d %H:%M")) }
                         // Link icon
                         svg class="w-4 h-4 ml-1 fill-current" viewBox="0 0 24 24" {
@@ -69,9 +70,34 @@ fn batch_row(batch: &BatchAndCounts) -> Markup {
                 (batch.batch.use_scenario.to_string())
             }
 
-            div {
+            div class="relative" {
                 label { "Boats: " }
-                (batch.use_counts)
+                span
+                    hx-get=(format!("/api/batches/{}/boats", batch_id))
+                    hx-trigger="mouseenter once"
+                    hx-target=(format!("#boats-preview-{}", batch_id))
+                    hx-swap="innerHTML"
+                    class="cursor-pointer"
+                {
+                    (batch.use_counts)
+                }
+                // Placeholder for the boat list popup
+                div id=(format!("boats-preview-{}", batch_id)) {}
+            }
+        }
+    }
+}
+
+/// Boat preview popup (rendered on hover)
+pub fn boats_preview_popup(boat_names: &[String]) -> Markup {
+    html! {
+        div class="relative" {
+            div class="absolute top-1 left-0 bg-slate-100 dark:bg-slate-600 rounded border-2 border-slate-200 dark:border-white z-50 p-2 min-w-48" {
+                ul {
+                    @for boat_name in boat_names {
+                        li { (boat_name) }
+                    }
+                }
             }
         }
     }

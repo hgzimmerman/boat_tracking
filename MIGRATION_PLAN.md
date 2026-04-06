@@ -1270,3 +1270,47 @@ Migration is complete when:
 6. Deploy once Phase 10 complete
 
 The migration path is clear, incremental, and testable. With aggressive timeline (3-4 weeks full-time), this is achievable by implementing 1-2 phases per week.
+
+## TODO: Outstanding Features
+
+### Batch Page Advanced Search
+The current batch creation page (Phase 7) includes basic filters for oars configuration and coxed/coxless, but is missing:
+
+- [ ] **Weight Class Filter** - Dropdown to filter boats by Light/Medium/Heavy weight class
+- [ ] **Boat Type Filter** - Dropdown to filter boats by specific boat type (1x, 2-, 4+, 8+, etc.)
+
+These filters should:
+1. Be added to the search pane in `src/templates/batches/creation.rs` alongside existing filters
+2. Follow the same HTMX pattern as oars_config filter (line 600-610 in this plan)
+3. Include all filter values in search requests using `hx-include="[name='search'], [name^='filter_']"`
+4. Update `BoatFilter` in database queries to support weight_class and boat_type filtering
+5. Be implemented in `src/handlers/batches.rs` search_boats_handler
+
+**Implementation Pattern:**
+```html
+<select name="filter_weight"
+       class="p-2 border rounded"
+       hx-get="/api/batch-session/search"
+       hx-trigger="change"
+       hx-target="#search-results"
+       hx-include="[name='search'], [name^='filter_']">
+    <option value="">All Weight Classes</option>
+    <option value="light">Light</option>
+    <option value="medium">Medium</option>
+    <option value="heavy">Heavy</option>
+</select>
+
+<select name="filter_boat_type"
+       class="p-2 border rounded"
+       hx-get="/api/batch-session/search"
+       hx-trigger="change"
+       hx-target="#search-results"
+       hx-include="[name='search'], [name^='filter_']">
+    <option value="">All Boat Types</option>
+    <option value="1x">1x</option>
+    <option value="2-">2-</option>
+    <option value="4+">4+</option>
+    <option value="8+">8+</option>
+    <!-- etc for all boat types -->
+</select>
+```
