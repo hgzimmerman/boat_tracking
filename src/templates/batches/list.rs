@@ -21,14 +21,24 @@ pub fn batch_list_content(batches: &[BatchAndCounts]) -> Markup {
 pub fn batch_list(batches: &[BatchAndCounts]) -> Markup {
     html! {
         div class="flex flex-col flex-grow xl:px-12 w-full bg-gray-50 dark:bg-slate-600 md:min-w-96 max-w-xxl" {
-            // Header with Add New button
+            // Header with Add New button and Export
             div class="flex justify-between items-center p-4 bg-white dark:bg-slate-700 shadow-md" {
                 h2 class="text-2xl font-bold text-gray-900 dark:text-white" { "Batches" }
-                a
-                    href="/batches/new"
-                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition"
+                div class="flex gap-2" {
+                    a
+                        href="/uses_export.csv"
+                        target="_blank"
+                        class="inline-flex items-center bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded transition"
                     {
-                    "+ Add New Batch"
+                        img src="/download.svg" alt="Download" class="w-4 h-4 mr-2 invert";
+                        "Export CSV"
+                    }
+                    a
+                        href="/batches/new"
+                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition"
+                    {
+                        "+ Add New Batch"
+                    }
                 }
             }
             // Batch list

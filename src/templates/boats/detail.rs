@@ -29,6 +29,13 @@ fn boat_tabs(boat_id: i32, active: &str) -> Markup {
                   class="inline-block py-2 px-4 border-b-4 border-transparent hover:border-gray-300 font-semibold text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white" {
                     "Edit Boat"
                 }
+                a href=(format!("/uses_export.csv?id={boat_id}"))
+                  target="_blank"
+                  hx-boost="false"
+                  class="inline-flex items-center py-2 px-4 border-b-4 border-transparent hover:border-gray-300 font-semibold text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white" {
+                    img src="/download.svg" alt="Download" class="w-4 h-4 mr-1 opacity-60";
+                    "Export CSV"
+                }
             }
         }
     }
