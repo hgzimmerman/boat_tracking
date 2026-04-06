@@ -1,7 +1,7 @@
 use axum::{
     extract::{Path, State},
     response::{Html, Redirect, Response, IntoResponse},
-    http::{StatusCode, header},
+    http::{StatusCode, header, HeaderMap},
     Form,
 };
 use serde::Deserialize;
@@ -67,7 +67,7 @@ pub async fn new_boat_handler() -> Html<String> {
 pub async fn create_boat_handler(
     State(state): State<AppState>,
     Form(input): Form<BoatFormInput>,
-) -> Result<Html<String>, Html<String>> {
+) -> Result<impl IntoResponse, Html<String>> {
     // Validate input
     let mut errors = templates::boats::form::BoatFormErrors::default();
 
@@ -163,11 +163,16 @@ pub async fn create_boat_handler(
 
     tracing::info!("Successfully created boat");
 
-    // Return redirect with success toast
-    Ok(Html(html! {
-        div hx-redirect="/boats" {}
-        (crate::templates::components::toast::success_toast("Boat created successfully!"))
-    }.into_string()))
+    // Return redirect header with success toast
+    let mut headers = HeaderMap::new();
+    headers.insert("HX-Redirect", "/boats".parse().unwrap());
+
+    Ok((
+        headers,
+        Html(html! {
+            (crate::templates::components::toast::success_toast("Boat created successfully!"))
+        }.into_string())
+    ))
 }
 
 /// Handler for boat detail page
@@ -234,7 +239,7 @@ pub async fn update_boat_handler(
     State(state): State<AppState>,
     Path(id): Path<i32>,
     Form(input): Form<BoatFormInput>,
-) -> Result<Html<String>, Html<String>> {
+) -> Result<impl IntoResponse, Html<String>> {
     let boat_id = BoatId::new(id);
 
     // Validate input (similar to create)
@@ -371,11 +376,16 @@ pub async fn update_boat_handler(
 
     tracing::info!("Successfully updated boat {}", boat_id.as_int());
 
-    // Return redirect with success toast
-    Ok(Html(html! {
-        div hx-redirect="/boats" {}
-        (crate::templates::components::toast::success_toast("Boat updated successfully!"))
-    }.into_string()))
+    // Return redirect header with success toast
+    let mut headers = HeaderMap::new();
+    headers.insert("HX-Redirect", "/boats".parse().unwrap());
+
+    Ok((
+        headers,
+        Html(html! {
+            (crate::templates::components::toast::success_toast("Boat updated successfully!"))
+        }.into_string())
+    ))
 }
 
 /// Handler for daily usage chart (30 days)
