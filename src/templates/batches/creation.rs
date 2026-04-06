@@ -66,11 +66,12 @@ pub fn batch_creation_content(template_boats: Option<&[(UseEvent, Boat)]>) -> Ma
                             div class="flex gap-2" {
                                 select
                                     name="filter_weight"
-                                    class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-slate-600 dark:text-white text-sm"
+                                    class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-slate-600 text-gray-400 text-sm"
                                     hx-post="/api/batches/search"
                                     hx-trigger="change"
                                     hx-target="#boat-search-results"
                                     hx-include="[name='search'], [name^='filter_']"
+                                    hx-on:change="this.classList.toggle('text-gray-400', this.value === ''); this.classList.toggle('text-gray-900', this.value !== ''); this.classList.toggle('dark:text-white', this.value !== '')"
                                 {
                                     option value="" { "All Weight Classes" }
                                     option value="Light" { "Light" }
@@ -81,11 +82,12 @@ pub fn batch_creation_content(template_boats: Option<&[(UseEvent, Boat)]>) -> Ma
 
                                 select
                                     name="filter_oars"
-                                    class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-slate-600 dark:text-white text-sm"
+                                    class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-slate-600 text-gray-400 text-sm"
                                     hx-post="/api/batches/search"
                                     hx-trigger="change"
                                     hx-target="#boat-search-results"
                                     hx-include="[name='search'], [name^='filter_']"
+                                    hx-on:change="this.classList.toggle('text-gray-400', this.value === ''); this.classList.toggle('text-gray-900', this.value !== ''); this.classList.toggle('dark:text-white', this.value !== '')"
                                 {
                                     option value="" { "All Oar Configs" }
                                     option value="Scull" { "Sculling (2 oars)" }
@@ -97,11 +99,12 @@ pub fn batch_creation_content(template_boats: Option<&[(UseEvent, Boat)]>) -> Ma
                             div class="flex gap-2" {
                                 select
                                     name="filter_cox"
-                                    class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-slate-600 dark:text-white text-sm"
+                                    class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-slate-600 text-gray-400 text-sm"
                                     hx-post="/api/batches/search"
                                     hx-trigger="change"
                                     hx-target="#boat-search-results"
                                     hx-include="[name='search'], [name^='filter_']"
+                                    hx-on:change="this.classList.toggle('text-gray-400', this.value === ''); this.classList.toggle('text-gray-900', this.value !== ''); this.classList.toggle('dark:text-white', this.value !== '')"
                                 {
                                     option value="" { "Coxed/Coxless" }
                                     option value="coxed" { "Coxed" }
@@ -110,11 +113,12 @@ pub fn batch_creation_content(template_boats: Option<&[(UseEvent, Boat)]>) -> Ma
 
                                 select
                                     name="filter_boat_type"
-                                    class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-slate-600 dark:text-white text-sm"
+                                    class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-slate-600 text-gray-400 text-sm"
                                     hx-post="/api/batches/search"
                                     hx-trigger="change"
                                     hx-target="#boat-search-results"
                                     hx-include="[name='search'], [name^='filter_']"
+                                    hx-on:change="this.classList.toggle('text-gray-400', this.value === ''); this.classList.toggle('text-gray-900', this.value !== ''); this.classList.toggle('dark:text-white', this.value !== '')"
                                 {
                                     option value="" { "All Boat Types" }
                                     option value="Single" { "1x (Single)" }
