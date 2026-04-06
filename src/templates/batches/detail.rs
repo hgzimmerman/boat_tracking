@@ -1,5 +1,6 @@
 use maud::{html, Markup};
 use crate::db::{boat::Boat, use_event::UseEvent, use_event_batch::UseEventBatch};
+use crate::templates::components::common::{page_content, card_mb, card, section_title, BTN_PRIMARY};
 
 /// Batch detail page
 pub fn batch_detail_page(
@@ -14,81 +15,73 @@ pub fn batch_detail_content(
     batch: &UseEventBatch,
     boats: &[(UseEvent, Boat)],
 ) -> Markup {
-    html! {
-        div class="overflow-y-auto flex flex-col flex-grow max-h-[calc(100vh-42px)]" {
-            div class="flex-grow flex flex-col items-center bg-gray-50 dark:bg-gray-600 p-4" {
-                div class="w-full max-w-6xl" {
-                    // Header with back button and template button
-                    div class="mb-4 flex items-center justify-between" {
-                        a
-                            href="/batches"
-                            class="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-                        {
-                            "← Back to Batches"
+    page_content(html! {
+        div class="w-full max-w-6xl p-4" {
+            // Header with back button and template button
+            div class="mb-4 flex items-center justify-between" {
+                a
+                    href="/batches"
+                    class="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                {
+                    "\u{2190} Back to Batches"
+                }
+                a
+                    href=(format!("/batches/new?template={}", batch.id.as_int()))
+                    class=(BTN_PRIMARY)
+                {
+                    "Use as Template"
+                }
+            }
+
+            // Batch metadata card
+            (card_mb(html! {
+                (section_title("Batch Details"))
+                div class="grid grid-cols-1 md:grid-cols-3 gap-4" {
+                    div {
+                        label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1" {
+                            "Batch ID"
                         }
-                        a
-                            href=(format!("/batches/new?template={}", batch.id.as_int()))
-                            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition"
-                        {
-                            "Use as Template"
+                        p class="text-lg text-gray-900 dark:text-white" {
+                            (batch.id.as_int())
                         }
                     }
-
-                    // Batch metadata card
-                    div class="bg-white dark:bg-slate-700 rounded-lg shadow-md p-6 mb-4" {
-                        h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4" {
-                            "Batch Details"
+                    div {
+                        label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1" {
+                            "Date & Time"
                         }
-                        div class="grid grid-cols-1 md:grid-cols-3 gap-4" {
-                            div {
-                                label class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1" {
-                                    "Batch ID"
-                                }
-                                p class="text-lg text-gray-900 dark:text-white" {
-                                    (batch.id.as_int())
-                                }
-                            }
-                            div {
-                                label class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1" {
-                                    "Date & Time"
-                                }
-                                p class="text-lg text-gray-900 dark:text-white" {
-                                    (batch.recorded_at.format("%Y-%m-%d %H:%M"))
-                                }
-                            }
-                            div {
-                                label class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1" {
-                                    "Use Scenario"
-                                }
-                                p class="text-lg text-gray-900 dark:text-white" {
-                                    (batch.use_scenario.to_string())
-                                }
-                            }
+                        p class="text-lg text-gray-900 dark:text-white" {
+                            (batch.recorded_at.format("%Y-%m-%d %H:%M"))
                         }
                     }
-
-                    // Boats used in this batch
-                    div class="bg-white dark:bg-slate-700 rounded-lg shadow-md p-6" {
-                        h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4" {
-                            "Boats Used ("(boats.len())")"
+                    div {
+                        label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1" {
+                            "Use Scenario"
                         }
-
-                        @if boats.is_empty() {
-                            p class="text-gray-500 dark:text-gray-400 text-center py-8" {
-                                "No boats were used in this batch."
-                            }
-                        } @else {
-                            div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" {
-                                @for (_event, boat) in boats {
-                                    (boat_card(boat))
-                                }
-                            }
+                        p class="text-lg text-gray-900 dark:text-white" {
+                            (batch.use_scenario.to_string())
                         }
                     }
                 }
-            }
+            }))
+
+            // Boats used in this batch
+            (card(html! {
+                (section_title(&format!("Boats Used ({})", boats.len())))
+
+                @if boats.is_empty() {
+                    p class="text-gray-500 dark:text-gray-400 text-center py-8" {
+                        "No boats were used in this batch."
+                    }
+                } @else {
+                    div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" {
+                        @for (_event, boat) in boats {
+                            (boat_card(boat))
+                        }
+                    }
+                }
+            }))
         }
-    }
+    })
 }
 
 /// Individual boat card

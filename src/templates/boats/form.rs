@@ -1,5 +1,6 @@
 use maud::{html, Markup};
 use crate::db::boat::{Boat, types::{BoatId, BoatType, WeightClass}};
+use crate::templates::components::common::{form_card, form_label, form_error, input_class, BTN_PRIMARY};
 
 /// Form mode - creating new boat or editing existing
 #[derive(Debug, Clone, Copy)]
@@ -25,6 +26,16 @@ impl BoatFormErrors {
             || self.boat_type.is_some()
             || self.acquired_at.is_some()
             || self.manufactured_at.is_some()
+    }
+
+    fn error_list(&self) -> Vec<&str> {
+        let mut errors = Vec::new();
+        if let Some(e) = &self.name { errors.push(e.as_str()); }
+        if let Some(e) = &self.weight_class { errors.push(e.as_str()); }
+        if let Some(e) = &self.boat_type { errors.push(e.as_str()); }
+        if let Some(e) = &self.acquired_at { errors.push(e.as_str()); }
+        if let Some(e) = &self.manufactured_at { errors.push(e.as_str()); }
+        errors
     }
 }
 
@@ -104,7 +115,7 @@ pub fn boat_form_page(mode: BoatFormMode, data: BoatFormData, errors: BoatFormEr
 /// Boat form content (without page wrapper)
 pub fn boat_form_content(mode: BoatFormMode, data: BoatFormData, errors: BoatFormErrors) -> Markup {
     html! {
-        div class="flex-grow flex flex-col bg-gray-50 dark:bg-gray-600" {
+        div class="flex-grow flex flex-col bg-gray-50 dark:bg-slate-600" {
             // Include tabs for edit mode
             @if let BoatFormMode::Edit(boat_id) = mode {
                 (super::detail::boat_tabs(boat_id.as_int(), "edit"))
@@ -133,16 +144,6 @@ pub fn boat_form(mode: BoatFormMode, data: BoatFormData, errors: BoatFormErrors)
         BoatFormMode::Edit(_) => "Update Boat",
     };
 
-    // Compute CSS classes for error states
-    let name_border_class = if errors.name.is_some() { "border-red-500" } else { "border-gray-300" };
-    let name_input_class = format!("w-full bg-white border {name_border_class} rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-600 dark:border-gray-500 dark:text-white");
-
-    let acquired_border_class = if errors.acquired_at.is_some() { "border-red-500" } else { "border-gray-300" };
-    let acquired_input_class = format!("w-full bg-white border {acquired_border_class} rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-600 dark:border-gray-500 dark:text-white");
-
-    let manufactured_border_class = if errors.manufactured_at.is_some() { "border-red-500" } else { "border-gray-300" };
-    let manufactured_input_class = format!("w-full bg-white border {manufactured_border_class} rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-600 dark:border-gray-500 dark:text-white");
-
     // Compute dropdown selected values
     let weight_class_selected = data.weight_class.map(|wc| match wc {
         WeightClass::Light => "Light",
@@ -166,133 +167,101 @@ pub fn boat_form(mode: BoatFormMode, data: BoatFormData, errors: BoatFormErrors)
         BoatType::PairPlus => "PairPlus",
     });
 
-    html! {
-        form
-            action=(action)
-            method=(method)
-            class="bg-white shadow-md rounded-lg px-8 pt-6 pb-8 w-full max-w-2xl dark:bg-gray-700"
-            hx-post=(action)
-            hx-target="#content"
-            {
-            h2 class="mb-6 text-3xl font-extrabold text-gray-900 dark:text-white" {
-                (title)
-            }
-
-            @if errors.has_errors() {
-                div class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded" {
-                    p class="font-bold" { "Please fix the following errors:" }
-                    ul class="list-disc list-inside mt-2" {
-                        @if let Some(err) = &errors.name {
-                            li { (err) }
-                        }
-                        @if let Some(err) = &errors.weight_class {
-                            li { (err) }
-                        }
-                        @if let Some(err) = &errors.boat_type {
-                            li { (err) }
-                        }
-                        @if let Some(err) = &errors.acquired_at {
-                            li { (err) }
-                        }
-                        @if let Some(err) = &errors.manufactured_at {
-                            li { (err) }
-                        }
+    let errors_markup = if errors.has_errors() {
+        let error_list = errors.error_list();
+        html! {
+            div class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded" {
+                p class="font-bold" { "Please fix the following errors:" }
+                ul class="list-disc list-inside mt-2" {
+                    @for err in &error_list {
+                        li { (err) }
                     }
                 }
             }
+        }
+    } else {
+        html! {}
+    };
 
+    let form_content = html! {
+        form
+            action=(action)
+            method=(method)
+            hx-post=(action)
+            hx-target="#content"
+            {
             // Name field
             div class="mb-4" {
-                label for="name" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white" {
-                    "Boat Name"
-                    span class="text-red-500" { "*" }
-                }
+                (form_label("name", "Boat Name", true))
                 input
                     type="text"
                     id="name"
                     name="name"
                     value=(data.name)
                     required
-                    class=(name_input_class);
-                @if let Some(err) = &errors.name {
-                    p class="mt-1 text-sm text-red-600" { (err) }
-                }
+                    class=(input_class(errors.name.is_some()));
+                (form_error(errors.name.as_ref()))
             }
 
             // Weight Class dropdown
             (crate::templates::components::simple_select("weight_class", "Weight Class *", &WEIGHT_CLASSES, weight_class_selected))
-            @if let Some(err) = &errors.weight_class {
-                p class="mt-1 text-sm text-red-600" { (err) }
-            }
+            (form_error(errors.weight_class.as_ref()))
 
             // Boat Type dropdown
             (crate::templates::components::simple_select("boat_type", "Boat Type", &BOAT_TYPES, boat_type_selected))
-            @if let Some(err) = &errors.boat_type {
-                p class="mt-1 text-sm text-red-600" { (err) }
-            }
+            (form_error(errors.boat_type.as_ref()))
 
             // Acquired At date field
             div class="mb-4" {
-                label for="acquired_at" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white" {
-                    "Acquired Date"
-                }
+                (form_label("acquired_at", "Acquired Date", false))
                 input
                     type="date"
                     id="acquired_at"
                     name="acquired_at"
                     value=(data.acquired_at)
-                    class=(acquired_input_class);
-                @if let Some(err) = &errors.acquired_at {
-                    p class="mt-1 text-sm text-red-600" { (err) }
-                }
+                    class=(input_class(errors.acquired_at.is_some()));
+                (form_error(errors.acquired_at.as_ref()))
             }
 
             // Manufactured At date field
             div class="mb-4" {
-                label for="manufactured_at" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white" {
-                    "Manufactured Date"
-                }
+                (form_label("manufactured_at", "Manufactured Date", false))
                 input
                     type="date"
                     id="manufactured_at"
                     name="manufactured_at"
                     value=(data.manufactured_at)
-                    class=(manufactured_input_class);
-                @if let Some(err) = &errors.manufactured_at {
-                    p class="mt-1 text-sm text-red-600" { (err) }
-                }
+                    class=(input_class(errors.manufactured_at.is_some()));
+                (form_error(errors.manufactured_at.as_ref()))
             }
 
             // Relinquished At date field (only for edit mode)
             @if let BoatFormMode::Edit(_) = mode {
                 div class="mb-4" {
-                    label for="relinquished_at" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white" {
-                        "Relinquished Date"
-                    }
+                    (form_label("relinquished_at", "Relinquished Date", false))
                     input
                         type="date"
                         id="relinquished_at"
                         name="relinquished_at"
                         value=(data.relinquished_at.as_deref().unwrap_or(""))
-                        class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-600 dark:border-gray-500 dark:text-white";
+                        class=(input_class(false));
                 }
             }
 
             // Submit and Cancel buttons
             div class="flex items-center justify-between mt-6" {
-                button
-                    type="submit"
-                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg focus:outline-none focus:shadow-outline transition"
-                    {
+                button type="submit" class=(BTN_PRIMARY) {
                     (submit_text)
                 }
                 a
                     href="/boats"
-                    class="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                    class="font-bold text-sm text-blue-500 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
                     {
                     "Cancel"
                 }
             }
         }
-    }
+    };
+
+    form_card(&title, errors_markup, form_content)
 }

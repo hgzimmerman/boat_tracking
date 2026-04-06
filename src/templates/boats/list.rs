@@ -1,5 +1,6 @@
 use maud::{html, Markup};
 use crate::db::boat::BoatAndStats;
+use crate::templates::components::common::{page_content, page_header, empty_state, csv_export_link, BTN_PRIMARY};
 
 /// Boat list page with statistics
 pub fn boat_list_page(boats: &[BoatAndStats]) -> Markup {
@@ -8,48 +9,42 @@ pub fn boat_list_page(boats: &[BoatAndStats]) -> Markup {
 
 /// Boat list content (without page wrapper)
 pub fn boat_list_content(boats: &[BoatAndStats]) -> Markup {
-    html! {
-        div class="overflow-y-auto flex flex-col flex-grow max-h-[calc(100vh-42px)]" {
-            div class="flex-grow flex flex-col items-center bg-gray-50 dark:bg-gray-600" {
-                (boat_list(boats))
-            }
-        }
-    }
+    page_content(boat_list(boats))
 }
 
 /// Boat list component
 pub fn boat_list(boats: &[BoatAndStats]) -> Markup {
     html! {
         div class="flex flex-col flex-grow xl:px-12 w-full bg-gray-50 dark:bg-slate-600 md:min-w-96 max-w-xxl" {
-            // Header with Add New button and Export
-            div class="flex justify-between items-center p-4 bg-white dark:bg-slate-700 shadow-md" {
-                h2 class="text-2xl font-bold text-gray-900 dark:text-white" { "Boats" }
-                div class="flex gap-2" {
-                    a
-                        href="/boats_export.csv"
-                        target="_blank"
-                        class="inline-flex items-center bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded transition"
-                    {
-                        img src="/download.svg" alt="Download" class="w-4 h-4 mr-2 invert";
-                        "Export CSV"
-                    }
-                    a
-                        href="/boats/new"
-                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition"
-                    {
-                        "+ Add New Boat"
-                    }
+            (page_header("Boats", html! {
+                (csv_export_link("/boats_export.csv"))
+                a href="/boats/new" class=(BTN_PRIMARY) {
+                    "+ Add New Boat"
                 }
-            }
-            // Boat list
-            div class="flex-grow divide-y-2 dark:divide-white dark:text-white dark:bg-slate-700 shadow-md" {
-                @if boats.is_empty() {
-                    div .p-8 .text-center {
-                        p class="text-gray-500 dark:text-gray-300" { "No boats found." }
-                    }
-                } @else {
-                    @for boat in boats {
-                        (boat_row(boat))
+            }))
+
+            @if boats.is_empty() {
+                div class="p-4" {
+                    (empty_state("No boats found."))
+                }
+            } @else {
+                div class="bg-white dark:bg-slate-700 shadow-md overflow-x-auto" {
+                    table class="w-full" {
+                        thead class="dark:text-white" {
+                            tr {
+                                th class="px-4 py-3 text-left font-bold uppercase text-xs tracking-wider" { "Name" }
+                                th class="px-4 py-3 text-left font-bold uppercase text-xs tracking-wider" { "Type" }
+                                th class="px-4 py-3 text-left font-bold uppercase text-xs tracking-wider" { "Acquired" }
+                                th class="px-4 py-3 text-right font-bold uppercase text-xs tracking-wider" { "Uses" }
+                                th class="px-4 py-3 text-right font-bold uppercase text-xs tracking-wider" { "Monthly" }
+                                th class="px-4 py-3 text-right font-bold uppercase text-xs tracking-wider" { "Open Issues" }
+                            }
+                        }
+                        tbody class="divide-y dark:divide-gray-600" {
+                            @for boat in boats {
+                                (boat_row(boat))
+                            }
+                        }
                     }
                 }
             }
@@ -59,49 +54,37 @@ pub fn boat_list(boats: &[BoatAndStats]) -> Markup {
 
 /// Individual boat row
 fn boat_row(boat: &BoatAndStats) -> Markup {
+    let boat_type_str = if let Some(boat_type) = boat.boat.boat_type() {
+        format!("{} {}", boat.boat.weight_class, boat_type)
+    } else {
+        boat.boat.weight_class.to_string()
+    };
+
     html! {
-        div class="flex flex-row flex-grow gap-2.5 py-1.5 px-4" {
-            div class="flex flex-col flex-grow gap-2.5" {
-                div class="text-xl font-medium min-w-40" {
-                    a class="inline-flex items-center hover:underline"
-                      href=(format!("/boats/{}", boat.boat.id.as_int())) {
-                        span { (boat.boat.name) }
-                        // Link icon
-                        svg class="w-4 h-4 ml-1 fill-current" viewBox="0 0 24 24" {
-                            path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" {}
-                        }
-                    }
-                }
-                div {
-                    @if let Some(boat_type) = boat.boat.boat_type() {
-                        (boat.boat.weight_class.to_string())
-                        " "
-                        (boat_type.to_string())
-                    } @else {
-                        (boat.boat.weight_class.to_string())
-                    }
+        tr class="hover:bg-gray-50 dark:hover:bg-gray-600 dark:text-white" {
+            td class="px-4 py-3 text-sm" {
+                a class="text-blue-600 hover:underline dark:text-blue-400 font-medium"
+                  href=(format!("/boats/{}", boat.boat.id.as_int())) {
+                    (boat.boat.name)
                 }
             }
-
-            @if let Some(acquired) = boat.boat.acquired_at {
-                div {
-                    "Acquired at: "
+            td class="px-4 py-3 text-sm" {
+                (boat_type_str)
+            }
+            td class="px-4 py-3 text-sm" {
+                @if let Some(acquired) = boat.boat.acquired_at {
                     (acquired.to_string())
+                } @else {
+                    span class="text-gray-400" { "-" }
                 }
             }
-
-            div {
-                label { "Uses: " }
+            td class="px-4 py-3 text-sm text-right" {
                 (boat.total_uses.unwrap_or_default())
             }
-
-            div {
-                label { "Monthly Uses: " }
+            td class="px-4 py-3 text-sm text-right" {
                 (boat.uses_last_thirty_days.unwrap_or_default())
             }
-
-            div {
-                label { "Open Issues: " }
+            td class="px-4 py-3 text-sm text-right" {
                 @if let Some(issues) = boat.open_issues {
                     @if issues > 0 {
                         span class="font-bold text-red-600" { (issues) }

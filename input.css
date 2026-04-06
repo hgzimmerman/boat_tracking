@@ -2,24 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Button system */
 .btn {
-    @apply font-bold py-2 px-4;
+    @apply inline-flex items-center font-bold py-2 px-4 rounded transition;
 }
-.btn-blue {
-    @apply bg-blue-500 text-white fill-white stroke-white;
+.btn-primary {
+    @apply bg-blue-500 hover:bg-blue-700 text-white;
 }
-.btn-blue:hover {
-    @apply bg-blue-700;
+.btn-secondary {
+    @apply bg-gray-500 hover:bg-gray-700 text-white;
+}
+.btn-danger {
+    @apply bg-red-500 hover:bg-red-700 text-white;
+}
+.btn-sm {
+    @apply text-xs px-3 py-1 rounded font-semibold transition;
 }
 
-.btn-red {
-    @apply bg-red-500 text-white fill-white stroke-white;
-}
-.btn-red:hover {
-    @apply bg-red-700;
-}
-
-
+/* Brand color */
 .bg-ggrc {
     background: #771877;
 }
@@ -31,22 +31,9 @@
     overflow-y: hidden;
 }
 
-.dx-grid-label {
-    font-size: x-small;
-}
-.dx-bar-label {
-    font-size: x-small;
-}
-
-.dx-bar-label {
-    font-size: x-small;
-}
-
 .mask-icon {
     mask-size: 100%;
     -webkit-mask-repeat: no-repeat;
     mask-repeat: no-repeat;
     mask-position: center;
-    /* width: 24px; */
-    /* height: 24px;  */
 }
