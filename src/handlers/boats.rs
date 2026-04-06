@@ -10,6 +10,7 @@ use maud::html;
 use crate::{
     db::{
         boat::{Boat, BoatAndStats, NewBoat, types::{BoatId, BoatType, WeightClass}},
+        issue::Issue,
         use_event::UseEvent,
     },
     ui::state::AppState,
@@ -225,6 +226,39 @@ pub async fn boat_detail_handler(
     tracing::debug!("Retrieved boat details for {}", boat.boat.name);
     let content = templates::boats::detail::boat_detail_content(&boat);
     Ok(super::maybe_page(&format!("{} - Boat Details", boat.boat.name), content, hx_request))
+}
+
+/// Handler for boat issues page
+pub async fn boat_issues_handler(
+    State(state): State<AppState>,
+    Path(id): Path<i32>,
+    hx_request: HxRequest,
+) -> Result<Html<String>, StatusCode> {
+    let boat_id = BoatId::new(id);
+    let conn = state.pool().get().await
+        .map_err(|e| {
+            tracing::error!("Failed to get database connection: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    let (boat, issues) = conn
+        .interact(move |conn| {
+            let boat = Boat::get_boat(conn, boat_id)?;
+            let issues = Issue::get_open_issues_for_boat(conn, boat_id)?;
+            Ok::<_, diesel::result::Error>((boat, issues))
+        })
+        .await
+        .map_err(|e| {
+            tracing::error!("Database interaction error: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?
+        .map_err(|e| {
+            tracing::warn!("Boat not found: {}", e);
+            StatusCode::NOT_FOUND
+        })?;
+
+    let content = templates::boats::issues::boat_issues_content(boat_id, &boat.name, &issues);
+    Ok(super::maybe_page(&format!("{} - Issues", boat.name), content, hx_request))
 }
 
 /// Handler for edit boat form page
