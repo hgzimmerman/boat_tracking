@@ -11,7 +11,7 @@ use diesel::{
 use diesel::{QueryDsl, SqliteConnection, TextExpressionMethods};
 
 impl Boat {
-    #[tracing::instrument(level = "debug", skip(conn))]
+    #[tracing::instrument(level = "debug", skip(conn), err)]
     pub fn new_boat(
         conn: &mut SqliteConnection,
         boat: NewBoat,
@@ -23,7 +23,7 @@ impl Boat {
 
     /// Replaces the old boat with a new one.
     /// No selective updates (double-optional) or anything.
-    #[tracing::instrument(level = "debug", skip(conn))]
+    #[tracing::instrument(level = "debug", skip(conn), err)]
     pub fn update_boat(
         conn: &mut SqliteConnection,
         boat: &Boat,
@@ -31,7 +31,7 @@ impl Boat {
         diesel::update(boat).set(boat).get_result(conn)
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
+    #[tracing::instrument(level = "debug", skip_all, err)]
     pub fn get_filtered_boats(
         conn: &mut SqliteConnection,
         filter: BoatFilter,
@@ -67,7 +67,7 @@ impl Boat {
         query.get_results(conn)
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
+    #[tracing::instrument(level = "debug", skip_all, err)]
     pub fn get_boat(
         conn: &mut SqliteConnection,
         id: BoatId,
@@ -76,7 +76,7 @@ impl Boat {
     }
 
     /// Gets rid of the boat by setting its relinquished_at value to today's date
-    #[tracing::instrument(level = "debug", skip(conn))]
+    #[tracing::instrument(level = "debug", skip(conn), err)]
     pub fn get_rid_of_boat(
         conn: &mut SqliteConnection,
         id: BoatId,
@@ -90,7 +90,7 @@ impl Boat {
 }
 
 impl BoatAndStats {
-    #[tracing::instrument(level = "debug", skip_all)]
+    #[tracing::instrument(level = "debug", skip_all, err)]
     pub fn get_boat(
         conn: &mut SqliteConnection,
         id: BoatId,
@@ -120,7 +120,7 @@ impl BoatAndStats {
             .get_result::<BoatAndStats>(conn)
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
+    #[tracing::instrument(level = "debug", skip_all, err)]
     pub fn get_boats(conn: &mut SqliteConnection) -> Result<Vec<Self>, diesel::result::Error> {
         let ago_30_d = chrono::Utc::now().naive_utc() - chrono::TimeDelta::days(30);
         boat::table

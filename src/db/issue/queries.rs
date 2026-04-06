@@ -4,7 +4,7 @@ use diesel::SqliteConnection;
 use diesel::{BoolExpressionMethods, ExpressionMethods, QueryDsl, RunQueryDsl};
 
 impl Issue {
-    #[tracing::instrument(level = "debug", skip(conn))]
+    #[tracing::instrument(level = "debug", skip(conn), err)]
     pub fn add_issue(
         conn: &mut SqliteConnection,
         new: NewIssue,
@@ -14,7 +14,7 @@ impl Issue {
             .get_result(conn)
     }
 
-    #[tracing::instrument(level = "debug", skip(conn))]
+    #[tracing::instrument(level = "debug", skip(conn), err)]
     pub fn resolve_issue(
         conn: &mut SqliteConnection,
         issue_id: IssueId,
@@ -25,7 +25,7 @@ impl Issue {
             .get_result(conn)
     }
 
-    #[tracing::instrument(level = "debug", skip(conn))]
+    #[tracing::instrument(level = "debug", skip(conn), err)]
     pub fn unresolve_issue(
         conn: &mut SqliteConnection,
         issue_id: IssueId,
@@ -35,7 +35,7 @@ impl Issue {
             .get_result(conn)
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
+    #[tracing::instrument(level = "debug", skip_all, err)]
     pub fn get_open_issues_for_boat(
         conn: &mut SqliteConnection,
         boat_id: BoatId,
@@ -45,7 +45,7 @@ impl Issue {
             .order_by(issue::recorded_at.desc())
             .get_results(conn)
     }
-    #[tracing::instrument(level = "debug", skip_all)]
+    #[tracing::instrument(level = "debug", skip_all, err)]
     pub fn get_resolved_issues_for_boat(
         conn: &mut SqliteConnection,
         boat_id: BoatId,
@@ -59,7 +59,7 @@ impl Issue {
             .order_by(issue::recorded_at.desc())
             .get_results(conn)
     }
-    #[tracing::instrument(level = "debug", skip_all)]
+    #[tracing::instrument(level = "debug", skip_all, err)]
     pub fn get_all_unresolved_issues(
         conn: &mut SqliteConnection,
         order: DbOrdering,
@@ -75,7 +75,7 @@ impl Issue {
                 .get_results(conn),
         }
     }
-    #[tracing::instrument(level = "debug", skip_all)]
+    #[tracing::instrument(level = "debug", skip_all, err)]
     pub fn get_all_issues(
         conn: &mut SqliteConnection,
         order: DbOrdering,
@@ -92,7 +92,7 @@ impl Issue {
         }
     }
 
-    #[tracing::instrument(level = "debug", skip_all)]
+    #[tracing::instrument(level = "debug", skip_all, err)]
     pub fn get_all_issues_with_boats(
         conn: &mut SqliteConnection,
         order: DbOrdering,
