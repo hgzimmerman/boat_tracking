@@ -193,10 +193,42 @@ pub async fn create_batch_handler(
     Ok(response)
 }
 
+/// Cox filter for boat search
+#[derive(Debug, Clone, Copy, Deserialize)]
+pub enum CoxFilter {
+    #[serde(rename = "coxed")]
+    Coxed,
+    #[serde(rename = "coxless")]
+    Coxless,
+}
+
+/// Deserialize empty string as None for optional enum fields
+fn empty_string_as_none<'de, D, T>(deserializer: D) -> Result<Option<T>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+    T: serde::Deserialize<'de>,
+{
+    let s = String::deserialize(deserializer)?;
+    if s.is_empty() {
+        Ok(None)
+    } else {
+        T::deserialize(serde::de::value::StringDeserializer::new(s)).map(Some)
+    }
+}
+
 /// Form data for boat search
 #[derive(Debug, Deserialize)]
 pub struct BoatSearchInput {
+    #[serde(default, deserialize_with = "empty_string_as_none")]
     pub search: Option<String>,
+    #[serde(default, deserialize_with = "empty_string_as_none")]
+    pub filter_weight: Option<crate::db::boat::types::WeightClass>,
+    #[serde(default, deserialize_with = "empty_string_as_none")]
+    pub filter_oars: Option<crate::db::boat::types::OarConfiguration>,
+    #[serde(default, deserialize_with = "empty_string_as_none")]
+    pub filter_cox: Option<CoxFilter>,
+    #[serde(default, deserialize_with = "empty_string_as_none")]
+    pub filter_boat_type: Option<crate::db::boat::types::BoatType>,
 }
 
 /// Handler for listing all boats (HTMX endpoint)
@@ -229,6 +261,7 @@ pub async fn search_boats_handler(
     State(state): State<AppState>,
     Form(input): Form<BoatSearchInput>,
 ) -> Result<Html<String>, StatusCode> {
+
     let conn = state.pool().get().await
         .map_err(|e| {
             tracing::error!("Failed to get database connection: {}", e);
@@ -247,21 +280,66 @@ pub async fn search_boats_handler(
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
-    // Filter boats by search query if provided
-    let filtered_boats: Vec<_> = if let Some(search) = &input.search {
-        let search_lower: String = search.to_lowercase();
-        boats.into_iter()
-            .filter(|boat| {
-                boat.boat.name.to_lowercase().contains(&search_lower)
-                    || boat.boat.weight_class.to_string().to_lowercase().contains(&search_lower)
-                    || boat.boat.boat_type()
-                        .map(|bt| bt.to_string().to_lowercase().contains(&search_lower))
+    // Apply all filters
+    let filtered_boats: Vec<_> = boats.into_iter()
+        .filter(|boat| {
+            // Text search filter
+            let matches_search = input.search
+                .as_ref()
+                .map(|search| {
+                    let search_lower = search.to_lowercase();
+                    boat.boat.name.to_lowercase().contains(&search_lower)
+                        || boat.boat.weight_class.to_string().to_lowercase().contains(&search_lower)
+                        || boat.boat.boat_type()
+                            .map(|bt| bt.to_string().to_lowercase().contains(&search_lower))
+                            .unwrap_or(false)
+                })
+                .unwrap_or(true);
+
+            // Weight class filter
+            let matches_weight = input.filter_weight
+                .map(|weight| boat.boat.weight_class == weight)
+                .unwrap_or(true);
+
+            // Oars config filter
+            let matches_oars = input.filter_oars
+                .map(|oars_config| {
+                    boat.boat.boat_type()
+                        .map(|bt| {
+                            let (_, _, oars_per_seat) = bt.into_values();
+                            oars_per_seat.configuration() == oars_config
+                        })
                         .unwrap_or(false)
-            })
-            .collect()
-    } else {
-        boats
-    };
+                })
+                .unwrap_or(true);
+
+            // Cox filter
+            let matches_cox = input.filter_cox
+                .map(|cox_filter| {
+                    boat.boat.boat_type()
+                        .map(|bt| {
+                            let (has_cox, _, _) = bt.into_values();
+                            match cox_filter {
+                                CoxFilter::Coxed => has_cox.as_bool(),
+                                CoxFilter::Coxless => !has_cox.as_bool(),
+                            }
+                        })
+                        .unwrap_or(false)
+                })
+                .unwrap_or(true);
+
+            // Boat type filter
+            let matches_boat_type = input.filter_boat_type
+                .map(|filter_type| {
+                    boat.boat.boat_type()
+                        .map(|bt| bt == filter_type)
+                        .unwrap_or(false)
+                })
+                .unwrap_or(true);
+
+            matches_search && matches_weight && matches_oars && matches_cox && matches_boat_type
+        })
+        .collect();
 
     Ok(Html(templates::batches::creation::boat_search_results(
         &filtered_boats,

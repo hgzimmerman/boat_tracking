@@ -51,7 +51,7 @@ pub fn batch_creation_content(template_boats: Option<&[(UseEvent, Boat)]>) -> Ma
                         }
 
                         // Search and filters
-                        div class="mb-4" {
+                        div class="mb-4 space-y-2" {
                             input
                                 type="text"
                                 placeholder="Search boats..."
@@ -59,7 +59,78 @@ pub fn batch_creation_content(template_boats: Option<&[(UseEvent, Boat)]>) -> Ma
                                 hx-post="/api/batches/search"
                                 hx-trigger="keyup changed delay:300ms"
                                 hx-target="#boat-search-results"
+                                hx-include="[name^='filter_']"
                                 name="search";
+
+                            // Filter row 1: Weight Class and Oars Config
+                            div class="flex gap-2" {
+                                select
+                                    name="filter_weight"
+                                    class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-slate-600 dark:text-white text-sm"
+                                    hx-post="/api/batches/search"
+                                    hx-trigger="change"
+                                    hx-target="#boat-search-results"
+                                    hx-include="[name='search'], [name^='filter_']"
+                                {
+                                    option value="" { "All Weight Classes" }
+                                    option value="Light" { "Light" }
+                                    option value="Medium" { "Medium" }
+                                    option value="Heavy" { "Heavy" }
+                                    option value="Tubby" { "Tubby" }
+                                }
+
+                                select
+                                    name="filter_oars"
+                                    class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-slate-600 dark:text-white text-sm"
+                                    hx-post="/api/batches/search"
+                                    hx-trigger="change"
+                                    hx-target="#boat-search-results"
+                                    hx-include="[name='search'], [name^='filter_']"
+                                {
+                                    option value="" { "All Oar Configs" }
+                                    option value="Scull" { "Sculling (2 oars)" }
+                                    option value="Sweep" { "Sweep (1 oar)" }
+                                }
+                            }
+
+                            // Filter row 2: Cox and Boat Type
+                            div class="flex gap-2" {
+                                select
+                                    name="filter_cox"
+                                    class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-slate-600 dark:text-white text-sm"
+                                    hx-post="/api/batches/search"
+                                    hx-trigger="change"
+                                    hx-target="#boat-search-results"
+                                    hx-include="[name='search'], [name^='filter_']"
+                                {
+                                    option value="" { "Coxed/Coxless" }
+                                    option value="coxed" { "Coxed" }
+                                    option value="coxless" { "Coxless" }
+                                }
+
+                                select
+                                    name="filter_boat_type"
+                                    class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-slate-600 dark:text-white text-sm"
+                                    hx-post="/api/batches/search"
+                                    hx-trigger="change"
+                                    hx-target="#boat-search-results"
+                                    hx-include="[name='search'], [name^='filter_']"
+                                {
+                                    option value="" { "All Boat Types" }
+                                    option value="Single" { "1x (Single)" }
+                                    option value="Double" { "2x (Double)" }
+                                    option value="DoublePlus" { "2x+ (Double+)" }
+                                    option value="Pair" { "2- (Pair)" }
+                                    option value="PairPlus" { "2+ (Pair+)" }
+                                    option value="Quad" { "4x (Quad)" }
+                                    option value="QuadPlus" { "4x+ (Quad+)" }
+                                    option value="Four" { "4- (Four)" }
+                                    option value="FourPlus" { "4+ (Four+)" }
+                                    option value="Octo" { "8x (Octo)" }
+                                    option value="OctoPlus" { "8x+ (Octo+)" }
+                                    option value="Eight" { "8+ (Eight)" }
+                                }
+                            }
                         }
 
                         // Boat list (will be populated by HTMX)
