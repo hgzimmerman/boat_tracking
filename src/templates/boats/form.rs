@@ -165,7 +165,6 @@ pub fn boat_form(mode: BoatFormMode, data: BoatFormData, errors: BoatFormErrors)
             class="bg-white shadow-md rounded-lg px-8 pt-6 pb-8 w-full max-w-2xl dark:bg-gray-700"
             hx-post=(action)
             hx-target="#content"
-            hx-swap="innerHTML"
             {
             h2 class="mb-6 text-3xl font-extrabold text-gray-900 dark:text-white" {
                 (title)

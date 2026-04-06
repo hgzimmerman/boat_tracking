@@ -3,13 +3,18 @@ use crate::db::boat::BoatAndStats;
 
 /// Boat list page with statistics
 pub fn boat_list_page(boats: &[BoatAndStats]) -> Markup {
-    crate::templates::layout::page("Boats", html! {
+    crate::templates::layout::page("Boats", boat_list_content(boats))
+}
+
+/// Boat list content (without page wrapper)
+pub fn boat_list_content(boats: &[BoatAndStats]) -> Markup {
+    html! {
         div class="overflow-y-auto flex flex-col flex-grow max-h-[calc(100vh-42px)]" {
             div class="flex-grow flex flex-col items-center bg-gray-50 dark:bg-gray-600" {
                 (boat_list(boats))
             }
         }
-    })
+    }
 }
 
 /// Boat list component

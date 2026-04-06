@@ -1,6 +1,6 @@
 use axum::{
     extract::{Path, State},
-    response::{Html, Redirect, Response, IntoResponse},
+    response::{Html, Response, IntoResponse},
     http::{StatusCode, header, HeaderMap},
     Form,
 };
@@ -163,13 +163,33 @@ pub async fn create_boat_handler(
 
     tracing::info!("Successfully created boat");
 
-    // Return redirect header with success toast
+    // Get boats list to return
+    let conn = state.pool().get().await
+        .map_err(|e| {
+            tracing::error!("Failed to get database connection: {}", e);
+            Html("Database connection error".to_string())
+        })?;
+
+    let boats = conn
+        .interact(|conn| BoatAndStats::get_boats(conn))
+        .await
+        .map_err(|e| {
+            tracing::error!("Database interaction error: {}", e);
+            Html("Database error".to_string())
+        })?
+        .map_err(|e| {
+            tracing::error!("Failed to get boats: {}", e);
+            Html("Failed to get boats".to_string())
+        })?;
+
+    // Return content portion with toast as OOB swap
     let mut headers = HeaderMap::new();
-    headers.insert("HX-Redirect", "/boats".parse().unwrap());
+    headers.insert("HX-Push-Url", "/boats".parse().unwrap());
 
     Ok((
         headers,
         Html(html! {
+            (templates::boats::list::boat_list_content(&boats))
             (crate::templates::components::toast::success_toast("Boat created successfully!"))
         }.into_string())
     ))
@@ -376,13 +396,33 @@ pub async fn update_boat_handler(
 
     tracing::info!("Successfully updated boat {}", boat_id.as_int());
 
-    // Return redirect header with success toast
+    // Get boats list to return
+    let conn = state.pool().get().await
+        .map_err(|e| {
+            tracing::error!("Failed to get database connection: {}", e);
+            Html("Database connection error".to_string())
+        })?;
+
+    let boats = conn
+        .interact(|conn| BoatAndStats::get_boats(conn))
+        .await
+        .map_err(|e| {
+            tracing::error!("Database interaction error: {}", e);
+            Html("Database error".to_string())
+        })?
+        .map_err(|e| {
+            tracing::error!("Failed to get boats: {}", e);
+            Html("Failed to get boats".to_string())
+        })?;
+
+    // Return content portion with toast as OOB swap
     let mut headers = HeaderMap::new();
-    headers.insert("HX-Redirect", "/boats".parse().unwrap());
+    headers.insert("HX-Push-Url", "/boats".parse().unwrap());
 
     Ok((
         headers,
         Html(html! {
+            (templates::boats::list::boat_list_content(&boats))
             (crate::templates::components::toast::success_toast("Boat updated successfully!"))
         }.into_string())
     ))
