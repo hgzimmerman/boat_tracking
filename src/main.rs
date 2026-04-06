@@ -52,8 +52,20 @@ async fn main() -> Result<(), Error> {
             "/boats_export.csv",
             get(boat_tracking::api::export_boats_csv_handler),
         )
-        // Serve static files from public/
-        .fallback_service(tower_http::services::ServeDir::new("public"))
+        // Serve static files from public/ relative to the executable, with
+        // fallback to cwd for development builds.
+        .fallback_service({
+            let exe_relative = std::env::current_exe()?
+                .parent()
+                .expect("executable must have a parent directory")
+                .join("public");
+            let public_dir = if exe_relative.is_dir() {
+                exe_relative
+            } else {
+                std::path::PathBuf::from("public")
+            };
+            tower_http::services::ServeDir::new(public_dir)
+        })
         .with_state(state)
         .layer(tower_http::trace::TraceLayer::new_for_http());
 
