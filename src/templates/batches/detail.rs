@@ -18,13 +18,19 @@ pub fn batch_detail_content(
         div class="overflow-y-auto flex flex-col flex-grow max-h-[calc(100vh-42px)]" {
             div class="flex-grow flex flex-col items-center bg-gray-50 dark:bg-gray-600 p-4" {
                 div class="w-full max-w-6xl" {
-                    // Header with back button
-                    div class="mb-4 flex items-center gap-4" {
+                    // Header with back button and template button
+                    div class="mb-4 flex items-center justify-between" {
                         a
                             href="/batches"
                             class="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
                         {
                             "← Back to Batches"
+                        }
+                        a
+                            href=(format!("/batches/new?template={}", batch.id.as_int()))
+                            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition"
+                        {
+                            "Use as Template"
                         }
                     }
 

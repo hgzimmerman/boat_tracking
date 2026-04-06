@@ -1,13 +1,33 @@
-use maud::{html, Markup};
-use crate::db::{boat::BoatAndStats, use_event::UseScenario};
+use maud::{html, Markup, PreEscaped};
+use crate::db::{boat::{Boat, BoatAndStats}, use_event::UseEvent};
 
 /// Batch creation page with two-pane interface
-pub fn batch_creation_page() -> Markup {
-    crate::templates::layout::page("Create Batch", batch_creation_content())
+pub fn batch_creation_page(template_boats: Option<&[(UseEvent, Boat)]>) -> Markup {
+    crate::templates::layout::page("Create Batch", batch_creation_content(template_boats))
 }
 
 /// Batch creation content
-pub fn batch_creation_content() -> Markup {
+pub fn batch_creation_content(template_boats: Option<&[(UseEvent, Boat)]>) -> Markup {
+    // Build initial selectedBoats JSON array for Alpine.js
+    let initial_boats_json = if let Some(boats) = template_boats {
+        let boats_array: Vec<String> = boats.iter().map(|(_event, boat)| {
+            let boat_type = if let Some(bt) = boat.boat_type() {
+                format!("{} {}", boat.weight_class, bt)
+            } else {
+                boat.weight_class.to_string()
+            };
+            format!(
+                r#"{{ id: {}, name: '{}', type: '{}' }}"#,
+                boat.id.as_int(),
+                boat.name.replace('\'', "\\'"),
+                boat_type.replace('\'', "\\'")
+            )
+        }).collect();
+        format!("[{}]", boats_array.join(", "))
+    } else {
+        "[]".to_string()
+    };
+
     html! {
         div class="overflow-y-auto flex flex-col flex-grow max-h-[calc(100vh-42px)]" {
             div class="flex-grow flex flex-col bg-gray-50 dark:bg-gray-600 p-4" {
@@ -21,7 +41,7 @@ pub fn batch_creation_content() -> Markup {
 
                 // Alpine.js data store for selected boats
                 div
-                    x-data="{ selectedBoats: [], useScenario: 'Adult', recordedAt: '' }"
+                    x-data=(format!("{{ selectedBoats: {}, useScenario: 'Adult', recordedAt: '' }}", initial_boats_json))
                     class="flex flex-col md:flex-row gap-4 flex-grow"
                 {
                     // Left pane: Search and boat list

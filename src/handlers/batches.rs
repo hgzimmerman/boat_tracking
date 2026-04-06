@@ -73,11 +73,41 @@ pub async fn batch_list_handler(
     Ok(Html(templates::batches::list::batch_list_page(&batches).into_string()))
 }
 
+/// Query parameters for batch creation page
+#[derive(Debug, Deserialize)]
+pub struct NewBatchQuery {
+    pub template: Option<i32>,
+}
+
 /// Handler for new batch creation page
 pub async fn new_batch_handler(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
+    axum::extract::Query(query): axum::extract::Query<NewBatchQuery>,
 ) -> Result<Html<String>, StatusCode> {
-    Ok(Html(templates::batches::creation::batch_creation_page().into_string()))
+    // If template ID is provided, fetch boats from that batch
+    let template_boats = if let Some(template_id) = query.template {
+        let batch_id = BatchId::new(template_id);
+
+        let conn = state.pool().get().await
+            .map_err(|e| {
+                tracing::error!("Failed to get database connection: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?;
+
+        conn.interact(move |conn| {
+            UseEventBatch::get_events_and_boats_for_batch(conn, batch_id)
+        })
+        .await
+        .map_err(|e| {
+            tracing::error!("Database interaction error: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?
+        .ok() // Convert Result to Option, ignoring errors for template
+    } else {
+        None
+    };
+
+    Ok(Html(templates::batches::creation::batch_creation_page(template_boats.as_deref()).into_string()))
 }
 
 /// Form data for creating a batch
