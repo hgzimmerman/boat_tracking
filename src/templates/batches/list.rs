@@ -4,7 +4,7 @@ use crate::templates::components::common::{page_content, page_header, empty_stat
 
 /// Batch list page
 pub fn batch_list_page(batches: &[BatchAndCounts]) -> Markup {
-    crate::templates::layout::page("Batches", batch_list_content(batches))
+    crate::templates::layout::page("Boat Uses", batch_list_content(batches))
 }
 
 /// Batch list content (without page wrapper)
@@ -16,10 +16,10 @@ pub fn batch_list_content(batches: &[BatchAndCounts]) -> Markup {
 pub fn batch_list(batches: &[BatchAndCounts]) -> Markup {
     html! {
         div class="flex flex-col flex-grow xl:px-12 w-full bg-gray-50 dark:bg-slate-600 md:min-w-96 max-w-xxl" {
-            (page_header("Batches", html! {
+            (page_header("Boat Uses", html! {
                 (csv_export_link("/uses_export.csv"))
                 a href="/batches/new" class=(BTN_PRIMARY) {
-                    "+ Add New Batch"
+                    "+ Record Boat Uses"
                 }
             }))
 

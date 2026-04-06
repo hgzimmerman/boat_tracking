@@ -4,7 +4,7 @@ use crate::templates::components::common::{boat_indicator, boat_indicator_raw};
 
 /// Batch creation page with two-pane interface
 pub fn batch_creation_page(template_boats: Option<&[(UseEvent, Boat)]>) -> Markup {
-    crate::templates::layout::page("Create Batch", batch_creation_content(template_boats))
+    crate::templates::layout::page("Record Boat Uses", batch_creation_content(template_boats))
 }
 
 /// Batch creation content
@@ -40,7 +40,7 @@ pub fn batch_creation_content(template_boats: Option<&[(UseEvent, Boat)]>) -> Ma
             div class="flex-grow flex flex-col bg-gray-50 dark:bg-gray-600 p-4" {
                 // Header
                 div class="mb-4" {
-                    h2 class="text-2xl font-bold text-gray-900 dark:text-white" { "Create New Batch" }
+                    h2 class="text-2xl font-bold text-gray-900 dark:text-white" { "Record Boat Uses" }
                     p class="text-sm text-gray-600 dark:text-gray-300 mt-1" {
                         "Select boats for this practice or regatta session"
                     }
@@ -218,7 +218,7 @@ pub fn batch_creation_content(template_boats: Option<&[(UseEvent, Boat)]>) -> Ma
                                     class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition disabled:opacity-50 disabled:cursor-not-allowed"
                                     x-bind:disabled="selectedBoats.length === 0"
                                 {
-                                    "Create Batch"
+                                    "Record Boat Uses"
                                 }
                             }
                         }

@@ -23,7 +23,7 @@ pub fn batch_detail_content(
                     href="/batches"
                     class="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
                 {
-                    "\u{2190} Back to Batches"
+                    "\u{2190} Back to Boat Uses"
                 }
                 a
                     href=(format!("/batches/new?template={}", batch.id.as_int()))
