@@ -1,6 +1,6 @@
 use maud::{html, Markup};
 use crate::db::{boat::Boat, use_event::UseEvent, use_event_batch::UseEventBatch};
-use crate::templates::components::common::{page_content, card_mb, card, section_title, BTN_PRIMARY};
+use crate::templates::components::common::{page_content, card_mb, card, section_title, boat_indicator, BTN_PRIMARY};
 
 /// Batch detail page
 pub fn batch_detail_page(
@@ -103,6 +103,11 @@ fn boat_card(boat: &Boat) -> Markup {
             div class="text-sm text-gray-600 dark:text-gray-400" {
                 (boat_type)
             }
+            (boat_indicator(
+                boat.weight_class,
+                boat.seat_count.count(),
+                boat.oars_per_seat.count() == 2,
+            ))
         }
     }
 }

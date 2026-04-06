@@ -34,9 +34,9 @@ pub enum UseScenario {
 impl std::fmt::Display for UseScenario {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let s = match self {
-            UseScenario::YouthGgrc => "Youth-GGRC",
-            UseScenario::YouthSomerville => "Youth-Somerville",
-            UseScenario::Adult => "Adult",
+            UseScenario::YouthGgrc => "Youth GGRC Practice",
+            UseScenario::YouthSomerville => "Youth Somerville Practice",
+            UseScenario::Adult => "Adult Practice",
             UseScenario::LearnToRow => "Learn To Row",
             UseScenario::ScullingSaturday => "Sculling Saturday",
             UseScenario::PrivateSession => "Private Session",

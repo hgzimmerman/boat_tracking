@@ -1,5 +1,6 @@
 use maud::{html, Markup};
 use crate::db::{boat::{Boat, BoatAndStats}, use_event::UseEvent};
+use crate::templates::components::common::{boat_indicator, boat_indicator_raw};
 
 /// Batch creation page with two-pane interface
 pub fn batch_creation_page(template_boats: Option<&[(UseEvent, Boat)]>) -> Markup {
@@ -16,11 +17,17 @@ pub fn batch_creation_content(template_boats: Option<&[(UseEvent, Boat)]>) -> Ma
             } else {
                 boat.weight_class.to_string()
             };
+            let indicator = boat_indicator_raw(
+                boat.weight_class,
+                boat.seat_count.count(),
+                boat.oars_per_seat.count() == 2,
+            );
             format!(
-                r#"{{ id: {}, name: '{}', type: '{}' }}"#,
+                r#"{{ id: {}, name: '{}', type: '{}', indicator: '{}' }}"#,
                 boat.id.as_int(),
                 boat.name.replace('\'', "\\'"),
-                boat_type.replace('\'', "\\'")
+                boat_type.replace('\'', "\\'"),
+                indicator.replace('\'', "\\'")
             )
         }).collect();
         format!("[{}]", boats_array.join(", "))
@@ -176,9 +183,9 @@ pub fn batch_creation_content(template_boats: Option<&[(UseEvent, Boat)]>) -> Ma
                                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-slate-600 dark:text-white"
                                     required
                                 {
-                                    option value="YouthGgrc" { "Youth-GGRC" }
-                                    option value="YouthSomerville" { "Youth-Somerville" }
-                                    option value="Adult" selected { "Adult" }
+                                    option value="YouthGgrc" { "Youth GGRC Practice" }
+                                    option value="YouthSomerville" { "Youth Somerville Practice" }
+                                    option value="Adult" selected { "Adult Practice" }
                                     option value="LearnToRow" { "Learn to Row" }
                                     option value="ScullingSaturday" { "Sculling Saturday" }
                                     option value="PrivateSession" { "Private Session" }
@@ -230,6 +237,7 @@ pub fn batch_creation_content(template_boats: Option<&[(UseEvent, Boat)]>) -> Ma
                                             div class="flex-grow" {
                                                 div class="font-medium text-gray-900 dark:text-white" x-text="boat.name" {}
                                                 div class="text-sm text-gray-600 dark:text-gray-400" x-text="boat.type" {}
+                                                div x-html="boat.indicator" {}
                                             }
                                             button
                                                 type="button"
@@ -278,16 +286,22 @@ fn boat_selectable_row(boat: &BoatAndStats) -> Markup {
     } else {
         boat.boat.weight_class.to_string()
     };
+    let indicator_svg = boat_indicator_raw(
+        boat.boat.weight_class,
+        boat.boat.seat_count.count(),
+        boat.boat.oars_per_seat.count() == 2,
+    );
 
     html! {
         div
             class="flex items-center justify-between p-2 bg-gray-50 dark:bg-slate-600 rounded hover:bg-gray-100 dark:hover:bg-slate-500 cursor-pointer transition"
             x-on:click=(format!(
-                "if (!selectedBoats.find(b => b.id === {})) {{ selectedBoats.push({{ id: {}, name: '{}', type: '{}' }}) }}",
+                "if (!selectedBoats.find(b => b.id === {})) {{ selectedBoats.push({{ id: {}, name: '{}', type: '{}', indicator: '{}' }}) }}",
                 boat.boat.id.as_int(),
                 boat.boat.id.as_int(),
                 boat.boat.name.replace('\'', "\\'"),
-                boat_type.replace('\'', "\\'")
+                boat_type.replace('\'', "\\'"),
+                indicator_svg.replace('\'', "\\'"),
             ))
         {
             div class="flex-grow" {
@@ -297,6 +311,11 @@ fn boat_selectable_row(boat: &BoatAndStats) -> Markup {
                 div class="text-sm text-gray-600 dark:text-gray-400" {
                     (boat_type)
                 }
+                (boat_indicator(
+                    boat.boat.weight_class,
+                    boat.boat.seat_count.count(),
+                    boat.boat.oars_per_seat.count() == 2,
+                ))
             }
             span class="text-blue-500 text-xl" { "+" }
         }

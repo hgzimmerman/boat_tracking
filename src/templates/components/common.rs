@@ -1,4 +1,5 @@
-use maud::{html, Markup};
+use maud::{html, Markup, PreEscaped};
+use crate::db::boat::types::WeightClass;
 
 /// Standard page content wrapper — consistent outer shell for all pages
 pub fn page_content(content: Markup) -> Markup {
@@ -177,4 +178,59 @@ pub fn csv_export_link(href: &str) -> Markup {
             "Export CSV"
         }
     }
+}
+
+// -- Boat indicator --
+
+/// Color for weight class
+fn weight_color(wc: WeightClass) -> &'static str {
+    match wc {
+        WeightClass::Light => "#22c55e",  // green-500
+        WeightClass::Medium => "#3b82f6", // blue-500
+        WeightClass::Heavy => "#f97316",  // orange-500
+        WeightClass::Tubby => "#ef4444",  // red-500
+    }
+}
+
+/// Build the raw SVG string for the boat indicator.
+///
+/// Renders an SVG bar with N dashes colored by weight class.
+/// Dash count = seat_count (number of rowers).
+/// Sculling dashes are rounded, sweep dashes are square.
+fn boat_indicator_svg(weight_class: WeightClass, seat_count: i32, is_sculling: bool) -> String {
+    let color = weight_color(weight_class);
+    let dash_count = seat_count as usize;
+
+    // SVG dimensions
+    let svg_width = 120;
+    let svg_height = 6;
+    let gap = 3;
+    let total_gaps = if dash_count > 1 { (dash_count - 1) * gap } else { 0 };
+    let dash_width = (svg_width - total_gaps) / dash_count;
+    let rx = if is_sculling { svg_height / 2 } else { 0 };
+
+    let mut rects = String::new();
+    for i in 0..dash_count {
+        let x = i * (dash_width + gap);
+        rects.push_str(&format!(
+            r#"<rect x="{x}" y="0" width="{dash_width}" height="{svg_height}" rx="{rx}" fill="{color}"/>"#,
+        ));
+    }
+
+    let label = format!("{} weight, {} seat{}", weight_class, seat_count, if seat_count == 1 { "" } else { "s" });
+    format!(
+        r#"<svg width="{svg_width}" height="{svg_height}" class="mt-1" aria-label="{label}">{rects}</svg>"#,
+    )
+}
+
+/// Bottom dash indicator for a boat (as Markup for templates).
+pub fn boat_indicator(weight_class: WeightClass, seat_count: i32, is_sculling: bool) -> Markup {
+    html! {
+        (PreEscaped(boat_indicator_svg(weight_class, seat_count, is_sculling)))
+    }
+}
+
+/// Bottom dash indicator as a raw string (for embedding in JS/Alpine.js data).
+pub fn boat_indicator_raw(weight_class: WeightClass, seat_count: i32, is_sculling: bool) -> String {
+    boat_indicator_svg(weight_class, seat_count, is_sculling)
 }

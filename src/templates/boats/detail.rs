@@ -1,6 +1,6 @@
 use maud::{html, Markup};
 use crate::db::boat::BoatAndStats;
-use crate::templates::components::common::{card_mb, card, detail_field, section_title, BTN_PRIMARY, BTN_SECONDARY};
+use crate::templates::components::common::{card_mb, card, detail_field, section_title, boat_indicator, BTN_PRIMARY, BTN_SECONDARY};
 
 /// Tab navigation for boat detail pages
 pub fn boat_tabs(boat_id: i32, active: &str) -> Markup {
@@ -62,8 +62,15 @@ pub fn boat_detail(boat: &BoatAndStats) -> Markup {
         div class="max-w-6xl mx-auto" {
             // Header with boat name and actions
             div class="flex justify-between items-center mb-6" {
-                h1 class="text-2xl font-bold text-gray-900 dark:text-white" {
-                    (boat.boat.name)
+                div {
+                    h1 class="text-2xl font-bold text-gray-900 dark:text-white" {
+                        (boat.boat.name)
+                    }
+                    (boat_indicator(
+                        boat.boat.weight_class,
+                        boat.boat.seat_count.count(),
+                        boat.boat.oars_per_seat.count() == 2,
+                    ))
                 }
                 div class="flex gap-2" {
                     a href=(format!("/boats/{}/edit", boat.boat.id.as_int())) class=(BTN_PRIMARY) {

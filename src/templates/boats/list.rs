@@ -1,6 +1,6 @@
 use maud::{html, Markup};
 use crate::db::boat::BoatAndStats;
-use crate::templates::components::common::{page_content, page_header, empty_state, csv_export_link, BTN_PRIMARY};
+use crate::templates::components::common::{page_content, page_header, empty_state, csv_export_link, boat_indicator, BTN_PRIMARY};
 
 /// Boat list page with statistics
 pub fn boat_list_page(boats: &[BoatAndStats]) -> Markup {
@@ -67,6 +67,11 @@ fn boat_row(boat: &BoatAndStats) -> Markup {
                   href=(format!("/boats/{}", boat.boat.id.as_int())) {
                     (boat.boat.name)
                 }
+                (boat_indicator(
+                    boat.boat.weight_class,
+                    boat.boat.seat_count.count(),
+                    boat.boat.oars_per_seat.count() == 2,
+                ))
             }
             td class="px-4 py-3 text-sm" {
                 (boat_type_str)
