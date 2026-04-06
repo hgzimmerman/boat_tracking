@@ -43,9 +43,9 @@ pub fn create_router() -> Router<AppState> {
         // Boats routes
         .route("/boats", get(boats::boat_list_handler).post(boats::create_boat_handler))
         .route("/boats/new", get(boats::new_boat_handler))
-        .route("/boats/:id", get(boats::boat_detail_handler).post(boats::update_boat_handler))
-        .route("/boats/:id/edit", get(boats::edit_boat_handler))
+        .route("/boats/{id}", get(boats::boat_detail_handler).post(boats::update_boat_handler))
+        .route("/boats/{id}/edit", get(boats::edit_boat_handler))
         // Chart routes
-        .route("/boats/:id/chart/daily", get(boats::daily_chart_handler))
-        .route("/boats/:id/chart/monthly", get(boats::monthly_chart_handler))
+        .route("/boats/{id}/chart/daily", get(boats::daily_chart_handler))
+        .route("/boats/{id}/chart/monthly", get(boats::monthly_chart_handler))
 }

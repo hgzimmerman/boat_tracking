@@ -94,8 +94,8 @@ fn main() -> Result<(), Error> {
                         "/boats_export.csv",
                         get(boat_tracking::api::export_boats_csv_handler),
                     )
-                    // Serve static files from public/ (HTMX, Alpine.js, Tailwind, etc.)
-                    .nest_service("/", tower_http::services::ServeDir::new("public"))
+                    // Serve static files from public/ (HTMX, Alpine.js, Tailwind, etc.) as fallback
+                    .fallback_service(tower_http::services::ServeDir::new("public"))
                     // .connect_hot_reload()
                     // .register_server_fns_with_handler("", |func| {
                     //     let state = state.clone();
