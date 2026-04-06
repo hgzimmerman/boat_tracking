@@ -39,7 +39,7 @@ use crate::{
     db::{
         boat::types::BoatId,
         use_event::UseScenario,
-        use_event_batch::{BatchAndCounts, NewBatch, NewBatchArgs, UseEventBatch},
+        use_event_batch::{BatchId, NewBatch, NewBatchArgs, UseEventBatch},
     },
     ui::state::AppState,
     templates,
@@ -258,4 +258,42 @@ pub async fn remove_boat_from_session_handler(
 ) -> Result<Html<String>, StatusCode> {
     // TODO: Implement session management with cookies/session storage
     Ok(Html(format!("<p>Removed boat {} from session</p>", boat_id)))
+}
+
+/// Handler for batch detail page
+pub async fn batch_detail_handler(
+    State(state): State<AppState>,
+    Path(batch_id): Path<i32>,
+) -> Result<Html<String>, StatusCode> {
+    let batch_id = BatchId::new(batch_id);
+
+    let conn = state.pool().get().await
+        .map_err(|e| {
+            tracing::error!("Failed to get database connection: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    // Fetch batch metadata and boats used
+    let (batch, boats) = conn
+        .interact(move |conn| {
+            let batch = UseEventBatch::get_batch(conn, batch_id)?
+                .ok_or_else(|| diesel::result::Error::NotFound)?;
+            let boats = UseEventBatch::get_events_and_boats_for_batch(conn, batch_id)?;
+            Ok::<_, diesel::result::Error>((batch, boats))
+        })
+        .await
+        .map_err(|e| {
+            tracing::error!("Database interaction error: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?
+        .map_err(|e| {
+            tracing::error!("Failed to get batch details: {}", e);
+            if matches!(e, diesel::result::Error::NotFound) {
+                StatusCode::NOT_FOUND
+            } else {
+                StatusCode::INTERNAL_SERVER_ERROR
+            }
+        })?;
+
+    Ok(Html(templates::batches::detail::batch_detail_page(&batch, &boats).into_string()))
 }

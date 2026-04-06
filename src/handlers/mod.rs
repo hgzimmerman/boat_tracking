@@ -50,6 +50,7 @@ pub fn create_router() -> Router<AppState> {
         // Batch routes
         .route("/batches", get(batches::batch_list_handler).post(batches::create_batch_handler))
         .route("/batches/new", get(batches::new_batch_handler))
+        .route("/batches/{id}", get(batches::batch_detail_handler))
         // Batch API routes (HTMX endpoints)
         .route("/api/batches/boats", get(batches::list_boats_handler))
         .route("/api/batches/search", axum::routing::post(batches::search_boats_handler))
