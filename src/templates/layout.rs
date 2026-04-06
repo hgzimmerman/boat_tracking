@@ -42,7 +42,8 @@ fn navbar() -> Markup {
         nav #main-nav .bg-ggrc .sticky .px-6 .py-3 .top-0 .z-40 {
             ul .flex .items-center .space-x-6 {
                 li {
-                    a class="text-white font-semibold px-3 py-2 rounded hover:bg-white/25 cursor-pointer transition"
+                    a href="/batches"
+                      class="text-white font-semibold px-3 py-2 rounded hover:bg-white/25 cursor-pointer transition"
                       hx-get="/batches"
                       hx-target="body"
                       hx-push-url="true"
@@ -51,7 +52,8 @@ fn navbar() -> Markup {
                     }
                 }
                 li {
-                    a class="text-white font-semibold px-3 py-2 rounded hover:bg-white/25 cursor-pointer transition"
+                    a href="/boats"
+                      class="text-white font-semibold px-3 py-2 rounded hover:bg-white/25 cursor-pointer transition"
                       hx-get="/boats"
                       hx-target="body"
                       hx-push-url="true"
@@ -60,7 +62,8 @@ fn navbar() -> Markup {
                     }
                 }
                 li {
-                    a class="text-white font-semibold px-3 py-2 rounded hover:bg-white/25 cursor-pointer transition"
+                    a href="/issues"
+                      class="text-white font-semibold px-3 py-2 rounded hover:bg-white/25 cursor-pointer transition"
                       hx-get="/issues"
                       hx-target="body"
                       hx-push-url="true"
