@@ -75,13 +75,13 @@ fn batch_row(batch: &BatchAndCounts) -> Markup {
                 hx-trigger="mouseenter delay:500ms"
                 hx-target=(format!("#boats-preview-{}", batch_id))
                 hx-swap="innerHTML"
-                _=(format!("on mouseleave wait 200ms then set #boats-preview-{}.innerHTML to '' end on click from:body set #boats-preview-{}.innerHTML to ''", batch_id, batch_id))
+                onmouseleave=(format!("document.getElementById('boats-preview-{}').innerHTML = ''", batch_id))
             {
                 label { "Boats: " }
                 span class="cursor-pointer" {
                     (batch.use_counts)
                 }
-                // Placeholder for the boat list popup
+                // Boat list popup
                 div id=(format!("boats-preview-{}", batch_id)) {}
             }
         }
