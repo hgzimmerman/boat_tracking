@@ -17,7 +17,7 @@ fn events_for_boat_returns_newest_first() {
             boat_id: boat.id,
             batch_id: None,
             recorded_at: old_time,
-            use_scenario: UseScenario::Adult,
+            use_scenario_id: masters_am_scenario_id(),
             note: Some("Old".to_string()),
         },
     )
@@ -29,7 +29,7 @@ fn events_for_boat_returns_newest_first() {
             boat_id: boat.id,
             batch_id: None,
             recorded_at: new_time,
-            use_scenario: UseScenario::Adult,
+            use_scenario_id: masters_am_scenario_id(),
             note: Some("New".to_string()),
         },
     )
@@ -56,7 +56,7 @@ fn events_scoped_to_their_boat() {
             boat_id: boat_a.id,
             batch_id: None,
             recorded_at: chrono::Utc::now(),
-            use_scenario: UseScenario::Adult,
+            use_scenario_id: masters_am_scenario_id(),
             note: None,
         },
     )
@@ -68,7 +68,7 @@ fn events_scoped_to_their_boat() {
             boat_id: boat_b.id,
             batch_id: None,
             recorded_at: chrono::Utc::now(),
-            use_scenario: UseScenario::Regatta,
+            use_scenario_id: regatta_scenario_id(),
             note: None,
         },
     )
@@ -80,9 +80,9 @@ fn events_scoped_to_their_boat() {
         .expect("should get events");
 
     assert_eq!(alpha_events.len(), 1);
-    assert_eq!(alpha_events[0].use_scenario, UseScenario::Adult);
+    assert_eq!(alpha_events[0].use_scenario_id, masters_am_scenario_id());
     assert_eq!(bravo_events.len(), 1);
-    assert_eq!(bravo_events[0].use_scenario, UseScenario::Regatta);
+    assert_eq!(bravo_events[0].use_scenario_id, regatta_scenario_id());
 }
 
 /// The daily timeseries fills in zero-count entries for days with no activity.
@@ -101,7 +101,7 @@ fn daily_timeseries_includes_zero_days() {
             boat_id: boat.id,
             batch_id: None,
             recorded_at: start + chrono::TimeDelta::hours(1),
-            use_scenario: UseScenario::Adult,
+            use_scenario_id: masters_am_scenario_id(),
             note: None,
         },
     )
@@ -135,7 +135,7 @@ fn export_events_joins_boat_data() {
             boat_id: boat.id,
             batch_id: None,
             recorded_at: chrono::Utc::now(),
-            use_scenario: UseScenario::LearnToRow,
+            use_scenario_id: masters_am_scenario_id(),
             note: None,
         },
     )
@@ -146,7 +146,7 @@ fn export_events_joins_boat_data() {
 
     assert_eq!(rows.len(), 1);
     assert_eq!(rows[0].boat_name, "Alpha");
-    assert_eq!(rows[0].use_scenario, UseScenario::LearnToRow);
+    assert_eq!(rows[0].use_scenario, "Masters AM Practice");
     assert_eq!(rows[0].boat_id, boat.id);
 }
 
@@ -164,7 +164,7 @@ fn export_events_filters_by_boat_ids() {
                 boat_id: boat.id,
                 batch_id: None,
                 recorded_at: chrono::Utc::now(),
-                use_scenario: UseScenario::Adult,
+                use_scenario_id: masters_am_scenario_id(),
                 note: None,
             },
         )
@@ -199,7 +199,7 @@ fn export_events_filters_by_date_range() {
             boat_id: boat.id,
             batch_id: None,
             recorded_at: old_time,
-            use_scenario: UseScenario::Adult,
+            use_scenario_id: masters_am_scenario_id(),
             note: None,
         },
     )
@@ -211,7 +211,7 @@ fn export_events_filters_by_date_range() {
             boat_id: boat.id,
             batch_id: None,
             recorded_at: recent_time,
-            use_scenario: UseScenario::Adult,
+            use_scenario_id: masters_am_scenario_id(),
             note: None,
         },
     )

@@ -1,6 +1,6 @@
 pub mod queries;
 
-use super::{boat::types::BoatId, use_event_batch::BatchId};
+use super::{boat::types::BoatId, use_event_batch::BatchId, use_scenario::UseScenarioId};
 
 /// Whenever the equipment is used, it can be recorded that it was used
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -11,40 +11,8 @@ pub struct UseEvent {
     pub boat_id: BoatId,
     pub batch_id: Option<BatchId>,
     pub recorded_at: chrono::DateTime<chrono::Utc>,
-    pub use_scenario: UseScenario,
+    pub use_scenario_id: UseScenarioId,
     pub note: Option<String>,
-}
-
-// use_scenario TEXT CHECK( use_scenario IN ('Youth', 'Adult', 'LearnToRow', 'ScullingSaturday', 'PrivateSession', 'Regatta', 'Other') ) NOT NULL
-#[derive(
-    Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize, Hash,
-    diesel_derive_enum::DbEnum,
-)]
-#[DbValueStyle = "verbatim"]
-pub enum UseScenario {
-    YouthGgrc,
-    YouthSomerville,
-    Adult,
-    LearnToRow,
-    ScullingSaturday,
-    PrivateSession,
-    Regatta,
-    Other,
-}
-impl std::fmt::Display for UseScenario {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = match self {
-            UseScenario::YouthGgrc => "Youth GGRC Practice",
-            UseScenario::YouthSomerville => "Youth Somerville Practice",
-            UseScenario::Adult => "Adult Practice",
-            UseScenario::LearnToRow => "Learn To Row",
-            UseScenario::ScullingSaturday => "Sculling Saturday",
-            UseScenario::PrivateSession => "Private Session",
-            UseScenario::Regatta => "Regatta",
-            UseScenario::Other => "Other",
-        };
-        f.write_str(s)
-    }
 }
 
 #[derive(Debug, Clone, diesel::Insertable)]
@@ -53,7 +21,7 @@ pub struct NewUseEvent {
     pub boat_id: BoatId,
     pub batch_id: Option<BatchId>,
     pub recorded_at: chrono::DateTime<chrono::Utc>,
-    pub use_scenario: UseScenario,
+    pub use_scenario_id: UseScenarioId,
     pub note: Option<String>,
 }
 

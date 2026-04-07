@@ -12,7 +12,7 @@ fn create_batch_creates_use_events_for_each_boat() {
     let batch_id = create_batch(
         &mut conn,
         vec![boat_a.id, boat_b.id],
-        UseScenario::Adult,
+        masters_am_scenario_id(),
     );
 
     let events_and_boats =
@@ -31,7 +31,7 @@ fn create_batch_creates_use_events_for_each_boat() {
     // All events should reference the batch
     for (event, _) in &events_and_boats {
         assert_eq!(event.batch_id, Some(batch_id));
-        assert_eq!(event.use_scenario, UseScenario::Adult);
+        assert_eq!(event.use_scenario_id, masters_am_scenario_id());
     }
 }
 
@@ -46,7 +46,7 @@ fn batch_appears_in_recent_list_with_correct_count() {
     let _batch_id = create_batch(
         &mut conn,
         vec![boat_a.id, boat_b.id, boat_c.id],
-        UseScenario::Regatta,
+        regatta_scenario_id(),
     );
 
     let batches = UseEventBatch::get_most_recent_batches_and_their_use_count(
@@ -59,7 +59,7 @@ fn batch_appears_in_recent_list_with_correct_count() {
 
     assert_eq!(batches.len(), 1);
     assert_eq!(batches[0].use_counts, 3);
-    assert_eq!(batches[0].batch.use_scenario, UseScenario::Regatta);
+    assert_eq!(batches[0].batch.use_scenario_id, regatta_scenario_id());
 }
 
 /// Batch listing can be narrowed to a single use scenario.
@@ -68,13 +68,13 @@ fn filter_batches_by_scenario() {
     let mut conn = test_conn();
     let boat = create_boat(&mut conn, "Alpha");
 
-    create_batch(&mut conn, vec![boat.id], UseScenario::Adult);
-    create_batch(&mut conn, vec![boat.id], UseScenario::Regatta);
-    create_batch(&mut conn, vec![boat.id], UseScenario::Adult);
+    create_batch(&mut conn, vec![boat.id], masters_am_scenario_id());
+    create_batch(&mut conn, vec![boat.id], regatta_scenario_id());
+    create_batch(&mut conn, vec![boat.id], masters_am_scenario_id());
 
     let adult_batches = UseEventBatch::get_most_recent_batches_and_their_use_count(
         &mut conn,
-        Some(UseScenario::Adult),
+        Some(masters_am_scenario_id()),
         0,
         100,
     )
@@ -82,7 +82,7 @@ fn filter_batches_by_scenario() {
 
     assert_eq!(adult_batches.len(), 2);
     for b in &adult_batches {
-        assert_eq!(b.batch.use_scenario, UseScenario::Adult);
+        assert_eq!(b.batch.use_scenario_id, masters_am_scenario_id());
     }
 }
 
@@ -97,7 +97,7 @@ fn replace_batch_uses_swaps_boats() {
     let batch_id = create_batch(
         &mut conn,
         vec![boat_a.id, boat_b.id],
-        UseScenario::Adult,
+        masters_am_scenario_id(),
     );
 
     // Replace with a different set of boats
@@ -130,13 +130,13 @@ fn replace_batch_uses_can_update_scenario() {
     let mut conn = test_conn();
     let boat = create_boat(&mut conn, "Alpha");
 
-    let batch_id = create_batch(&mut conn, vec![boat.id], UseScenario::Adult);
+    let batch_id = create_batch(&mut conn, vec![boat.id], masters_am_scenario_id());
 
     UseEventBatch::replace_batch_uses(
         &mut conn,
         batch_id,
         vec![boat.id],
-        Some(UseScenario::Regatta),
+        Some(regatta_scenario_id()),
         None,
     )
     .expect("should replace");
@@ -144,13 +144,13 @@ fn replace_batch_uses_can_update_scenario() {
     let batch = UseEventBatch::get_batch(&mut conn, batch_id)
         .expect("should get batch")
         .expect("batch should exist");
-    assert_eq!(batch.use_scenario, UseScenario::Regatta);
+    assert_eq!(batch.use_scenario_id, regatta_scenario_id());
 
     // The new events should also have the updated scenario
     let events = UseEventBatch::get_events_and_boats_for_batch(&mut conn, batch_id)
         .expect("should get events");
     for (event, _) in &events {
-        assert_eq!(event.use_scenario, UseScenario::Regatta);
+        assert_eq!(event.use_scenario_id, regatta_scenario_id());
     }
 }
 
@@ -171,14 +171,14 @@ fn events_for_boat_includes_batch_events() {
     let boat = create_boat(&mut conn, "Alpha");
 
     // Create a batch event and a standalone event
-    create_batch(&mut conn, vec![boat.id], UseScenario::Adult);
+    create_batch(&mut conn, vec![boat.id], masters_am_scenario_id());
     UseEvent::new_event(
         &mut conn,
         NewUseEvent {
             boat_id: boat.id,
             batch_id: None,
             recorded_at: chrono::Utc::now(),
-            use_scenario: UseScenario::Other,
+            use_scenario_id: masters_pm_scenario_id(),
             note: None,
         },
     )

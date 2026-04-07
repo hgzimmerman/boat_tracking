@@ -6,7 +6,8 @@ use diesel::{
 use crate::{
     db::{
         boat::{types::BoatId, Boat},
-        use_event::{NewUseEvent, UseEvent, UseScenario},
+        use_event::NewUseEvent,
+        use_scenario::UseScenarioId,
     },
     schema::boat,
 };
@@ -32,7 +33,7 @@ impl UseEventBatch {
                     boat_id,
                     batch_id: Some(batch_id),
                     recorded_at: batch.recorded_at,
-                    use_scenario: batch.use_scenario,
+                    use_scenario_id: batch.use_scenario_id,
                     note: None,
                 })
                 .collect::<Vec<_>>();
@@ -47,18 +48,14 @@ impl UseEventBatch {
     #[tracing::instrument(level = "debug", skip_all, err)]
     pub fn get_most_recent_batches_and_their_use_count(
         conn: &mut SqliteConnection,
-        scenario: Option<UseScenario>,
+        scenario: Option<UseScenarioId>,
         offset: usize,
         limit: usize,
     ) -> Result<Vec<BatchAndCounts>, diesel::result::Error> {
         match scenario {
-            Some(scenario) => {
-                // This inner_join should exclude batches without any events.
-                // This is desirable because:
-                // * A we don't allow creation of empty batches based on rules in the UI.
-                // * An empty batch is useless anyways.
+            Some(scenario_id) => {
                 use_event_batch::table
-                    .filter(use_event_batch::use_scenario.eq(scenario))
+                    .filter(use_event_batch::use_scenario_id.eq(scenario_id))
                     .inner_join(use_event::table)
                     .order_by(use_event_batch::recorded_at.desc())
                     .group_by(use_event_batch::id)
@@ -84,11 +81,11 @@ impl UseEventBatch {
     pub fn get_events_and_boats_for_batch(
         conn: &mut SqliteConnection,
         batch_id: BatchId,
-    ) -> Result<Vec<(UseEvent, Boat)>, diesel::result::Error> {
+    ) -> Result<Vec<(crate::db::use_event::UseEvent, Boat)>, diesel::result::Error> {
         use_event::table
             .filter(use_event::batch_id.eq(batch_id))
             .inner_join(boat::table.on(boat::id.eq(use_event::boat_id)))
-            .select((UseEvent::as_select(), Boat::as_select()))
+            .select((crate::db::use_event::UseEvent::as_select(), Boat::as_select()))
             .get_results(conn)
     }
 
@@ -109,18 +106,18 @@ impl UseEventBatch {
         conn: &mut SqliteConnection,
         batch_id: BatchId,
         boat_ids: Vec<BoatId>,
-        use_type: Option<UseScenario>,
+        use_scenario_id: Option<UseScenarioId>,
         recorded_at: Option<chrono::DateTime<chrono::Utc>>,
     ) -> Result<BatchId, diesel::result::Error> {
         conn.transaction(|conn| {
             let target = use_event::table.filter(use_event::batch_id.eq(batch_id));
             diesel::delete(target).execute(conn)?;
 
-            let batch: UseEventBatch = if use_type.is_some() || recorded_at.is_some() {
+            let batch: UseEventBatch = if use_scenario_id.is_some() || recorded_at.is_some() {
                 let changeset = UseEventBatchChangeset {
                     id: batch_id,
                     recorded_at,
-                    use_scenario: use_type,
+                    use_scenario_id,
                 };
                 diesel::update(&changeset)
                     .set(&changeset)
@@ -136,7 +133,7 @@ impl UseEventBatch {
                     boat_id,
                     batch_id: Some(batch_id),
                     recorded_at: recorded_at.unwrap_or(batch.recorded_at),
-                    use_scenario: use_type.unwrap_or(batch.use_scenario),
+                    use_scenario_id: use_scenario_id.unwrap_or(batch.use_scenario_id),
                     note: None,
                 })
                 .collect::<Vec<_>>();
