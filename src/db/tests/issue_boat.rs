@@ -104,7 +104,7 @@ fn get_all_issues_with_boats_joins_correctly() {
     )
     .expect("should create orphan issue");
 
-    let all = Issue::get_all_issues_with_boats(&mut conn, DbOrdering::Desc)
+    let all = Issue::get_all_issues_with_boats(&mut conn, DbOrdering::Desc, 0, 100)
         .expect("should get issues with boats");
 
     assert_eq!(all.len(), 2);

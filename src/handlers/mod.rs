@@ -7,7 +7,51 @@ pub mod scenarios;
 use axum::{response::{Html, Redirect}, routing::get, Router};
 use axum_htmx::HxRequest;
 use maud::Markup;
+use serde::Deserialize;
 use crate::{templates, db::state::AppState};
+
+/// Query parameters for paginated list endpoints.
+#[derive(Debug, Deserialize)]
+pub struct PaginationParams {
+    #[serde(default = "default_page")]
+    pub page: u64,
+    #[serde(default = "default_per_page")]
+    pub per_page: u64,
+}
+
+fn default_page() -> u64 { 1 }
+fn default_per_page() -> u64 { 50 }
+
+impl PaginationParams {
+    /// Computes the SQL OFFSET from the 1-indexed page number.
+    pub fn offset(&self) -> u64 {
+        self.page.saturating_sub(1) * self.per_page
+    }
+
+    /// Computes pagination metadata from the total count of items.
+    pub fn metadata(&self, total_count: u64) -> PaginationMeta {
+        let total_pages = total_count.div_ceil(self.per_page).max(1);
+        PaginationMeta {
+            current_page: self.page,
+            per_page: self.per_page,
+            total_count,
+            total_pages,
+        }
+    }
+}
+
+/// Pagination metadata for templates to render controls.
+pub struct PaginationMeta {
+    pub current_page: u64,
+    pub per_page: u64,
+    pub total_count: u64,
+    pub total_pages: u64,
+}
+
+impl PaginationMeta {
+    pub fn has_previous(&self) -> bool { self.current_page > 1 }
+    pub fn has_next(&self) -> bool { self.current_page < self.total_pages }
+}
 
 /// Helper to conditionally wrap content in full page layout
 /// Uses axum-htmx HxRequest extractor to detect HTMX requests

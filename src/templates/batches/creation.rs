@@ -139,7 +139,7 @@ pub fn batch_creation_content(scenarios: &[UseScenario], selected_boats: &[Boat]
                         // Form for batch metadata + selected boats
                         form
                             hx-post="/batches"
-                            hx-target="body"
+                            hx-target="#content"
                             class="flex flex-col flex-grow"
                         {
                             // Alpine.js only for scenario selector and datetime picker

@@ -2,9 +2,9 @@ use maud::{html, Markup};
 use crate::db::use_scenario::UseScenario;
 use crate::templates::components::common::{page_content, page_header, empty_state, BTN_PRIMARY};
 
-/// Scenario list page
-pub fn scenario_list_page(scenarios: &[UseScenario]) -> Markup {
-    crate::templates::layout::page("Scenarios", page_content(html! {
+/// Scenario list content (without page wrapper)
+pub fn scenario_list_content(scenarios: &[UseScenario]) -> Markup {
+    page_content(html! {
         div class="flex flex-col flex-grow xl:px-12 w-full bg-gray-50 dark:bg-slate-600 md:min-w-96 max-w-xxl" {
             (page_header("Scenarios", html! {
                 a href="/scenarios/new" class=(BTN_PRIMARY) {
@@ -54,5 +54,5 @@ pub fn scenario_list_page(scenarios: &[UseScenario]) -> Markup {
                 }
             }
         }
-    }))
+    })
 }

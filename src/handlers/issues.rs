@@ -1,9 +1,10 @@
 use axum::{
-    extract::{State, Path},
+    extract::{Query, State, Path},
     response::{Html, IntoResponse, Response},
     http::{StatusCode, header},
     Form,
 };
+use axum_htmx::HxRequest;
 use chrono::TimeZone;
 use serde::Deserialize;
 use crate::{
@@ -19,6 +20,8 @@ use crate::{
 /// Handler for issue list page
 pub async fn issue_list_handler(
     State(state): State<AppState>,
+    hx_request: HxRequest,
+    Query(pagination): Query<super::PaginationParams>,
 ) -> Result<Html<String>, StatusCode> {
     let conn = state.pool().get().await
         .map_err(|error| {
@@ -26,8 +29,15 @@ pub async fn issue_list_handler(
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
-    let issues = conn
-        .interact(|conn| Issue::get_all_issues_with_boats(conn, DbOrdering::Desc))
+    let offset = pagination.offset() as usize;
+    let limit = pagination.per_page as usize;
+
+    let (issues, total_count) = conn
+        .interact(move |conn| {
+            let issues = Issue::get_all_issues_with_boats(conn, DbOrdering::Desc, offset, limit)?;
+            let total_count = Issue::count_all_issues(conn)?;
+            Ok::<_, diesel::result::Error>((issues, total_count))
+        })
         .await
         .map_err(|error| {
             tracing::error!(?error, "Database interaction error");
@@ -38,7 +48,9 @@ pub async fn issue_list_handler(
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
-    Ok(Html(templates::issues::issue_list_page(&issues).into_string()))
+    let meta = pagination.metadata(total_count);
+    let content = templates::issues::issue_list_content(&issues, &meta);
+    Ok(super::maybe_page("Issues", content, hx_request))
 }
 
 /// Handler for new issue page

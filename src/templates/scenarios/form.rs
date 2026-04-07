@@ -18,7 +18,7 @@ pub fn new_scenario_page() -> Markup {
             (form_card("New Scenario", html! {}, html! {
                 form
                     hx-post="/scenarios"
-                    hx-target="body"
+                    hx-target="#content"
                     class="space-y-4"
                 {
                     (scenario_form_fields(None))
@@ -53,7 +53,7 @@ pub fn edit_scenario_page(scenario: &UseScenario) -> Markup {
             (form_card("Edit Scenario", html! {}, html! {
                 form
                     hx-post=(format!("/scenarios/{}", scenario.id.as_int()))
-                    hx-target="body"
+                    hx-target="#content"
                     class="space-y-4"
                 {
                     (scenario_form_fields(Some(scenario)))

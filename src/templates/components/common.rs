@@ -1,5 +1,6 @@
 use maud::{html, Markup, PreEscaped};
 use crate::db::boat::types::WeightClass;
+use crate::handlers::PaginationMeta;
 
 /// Standard page content wrapper — consistent outer shell for all pages
 pub fn page_content(content: Markup) -> Markup {
@@ -232,4 +233,43 @@ pub fn boat_indicator(weight_class: WeightClass, seat_count: i32, is_sculling: b
 /// Bottom dash indicator as a raw string (for embedding in JS/Alpine.js data).
 pub fn boat_indicator_raw(weight_class: WeightClass, seat_count: i32, is_sculling: bool) -> String {
     boat_indicator_svg(weight_class, seat_count, is_sculling)
+}
+
+/// Pagination controls: Previous / "Page X of Y" / Next
+///
+/// Uses HTMX to swap page content without a full reload.
+/// `base_url` is the path without query params (e.g., "/batches").
+pub fn pagination_controls(meta: &PaginationMeta, base_url: &str) -> Markup {
+    if meta.total_pages <= 1 {
+        return html! {};
+    }
+    html! {
+        div class="flex justify-between items-center px-4 py-3 bg-white dark:bg-slate-700 border-t dark:border-gray-600" {
+            @if meta.has_previous() {
+                a class="text-sm text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+                    hx-get=(format!("{}?page={}&per_page={}", base_url, meta.current_page - 1, meta.per_page))
+                    hx-target="#content"
+                    hx-push-url="true"
+                {
+                    "Previous"
+                }
+            } @else {
+                span class="text-sm text-gray-400 dark:text-gray-500" { "Previous" }
+            }
+            span class="text-sm text-gray-600 dark:text-gray-300" {
+                "Page " (meta.current_page) " of " (meta.total_pages)
+            }
+            @if meta.has_next() {
+                a class="text-sm text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+                    hx-get=(format!("{}?page={}&per_page={}", base_url, meta.current_page + 1, meta.per_page))
+                    hx-target="#content"
+                    hx-push-url="true"
+                {
+                    "Next"
+                }
+            } @else {
+                span class="text-sm text-gray-400 dark:text-gray-500" { "Next" }
+            }
+        }
+    }
 }
