@@ -26,6 +26,7 @@ pub struct NewIssue {
 
 #[derive(
     Clone,
+    Copy,
     Debug,
     PartialEq,
     Eq,
@@ -44,5 +45,17 @@ impl IssueId {
     }
     pub fn as_int(&self) -> i32 {
         self.0
+    }
+}
+impl std::str::FromStr for IssueId {
+    type Err = std::num::ParseIntError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        i32::from_str(s).map(Self)
+    }
+}
+impl std::fmt::Display for IssueId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
     }
 }
