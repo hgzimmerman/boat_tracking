@@ -53,7 +53,7 @@ pub fn batch_creation_content(scenarios: &[UseScenario], template_boats: Option<
                         initial_boats_json,
                         scenarios.first().map(|s| s.id.as_int()).unwrap_or(0),
                         scenarios.iter()
-                            .filter_map(|s| s.default_time.as_ref().map(|t| format!("'{}': '{}'", s.id.as_int(), t)))
+                            .filter_map(|s| s.default_time.map(|t| format!("'{}': '{}'", s.id.as_int(), t.format("%H:%M"))))
                             .collect::<Vec<_>>()
                             .join(", ")
                     ))

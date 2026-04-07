@@ -3,6 +3,7 @@ use axum::{
     response::Html,
     http::StatusCode,
 };
+use chrono::NaiveTime;
 use serde::Deserialize;
 
 use crate::{
@@ -50,6 +51,13 @@ pub struct ScenarioFormInput {
     pub default_time: Option<String>,
 }
 
+fn parse_default_time(input: &Option<String>) -> Option<NaiveTime> {
+    input
+        .as_deref()
+        .filter(|t| !t.is_empty())
+        .and_then(|t| NaiveTime::parse_from_str(t, "%H:%M").ok())
+}
+
 /// Handler for creating a new scenario
 pub async fn create_scenario_handler(
     State(state): State<AppState>,
@@ -61,7 +69,7 @@ pub async fn create_scenario_handler(
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
-    let default_time = input.default_time.filter(|t| !t.is_empty());
+    let default_time = parse_default_time(&input.default_time);
 
     conn
         .interact(move |conn| {
@@ -135,7 +143,7 @@ pub async fn update_scenario_handler(
     Form(input): Form<ScenarioFormInput>,
 ) -> Result<Html<String>, StatusCode> {
     let scenario_id = UseScenarioId::new(id);
-    let default_time = input.default_time.filter(|t| !t.is_empty());
+    let default_time = parse_default_time(&input.default_time);
 
     let conn = state.pool().get().await
         .map_err(|e| {

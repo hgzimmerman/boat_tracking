@@ -44,7 +44,7 @@ impl std::fmt::Display for UseScenarioId {
 pub struct UseScenario {
     pub id: UseScenarioId,
     pub name: String,
-    pub default_time: Option<String>,
+    pub default_time: Option<chrono::NaiveTime>,
 }
 
 /// For inserting new scenarios.
@@ -52,7 +52,7 @@ pub struct UseScenario {
 #[diesel(table_name = crate::schema::use_scenario)]
 pub struct NewUseScenario {
     pub name: String,
-    pub default_time: Option<String>,
+    pub default_time: Option<chrono::NaiveTime>,
 }
 
 /// For updating existing scenarios.
@@ -60,5 +60,5 @@ pub struct NewUseScenario {
 #[diesel(table_name = crate::schema::use_scenario)]
 pub struct UseScenarioChangeset {
     pub name: Option<String>,
-    pub default_time: Option<Option<String>>,
+    pub default_time: Option<Option<chrono::NaiveTime>>,
 }

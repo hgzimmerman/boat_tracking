@@ -32,7 +32,7 @@ diesel::table! {
     use_scenario (id) {
         id -> Integer,
         name -> Text,
-        default_time -> Nullable<Text>,
+        default_time -> Nullable<Time>,
     }
 }
 

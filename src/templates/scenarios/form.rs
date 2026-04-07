@@ -94,7 +94,7 @@ fn scenario_form_fields(existing: Option<&UseScenario>) -> Markup {
                 name="default_time"
                 id="default_time"
                 class=(INPUT_CLASS)
-                value=[existing.and_then(|s| s.default_time.as_deref())];
+                value=[existing.and_then(|s| s.default_time.map(|t| t.format("%H:%M").to_string()))];
             p class="text-xs text-gray-500 dark:text-gray-400 mt-1" {
                 "Pre-populates the time field when this scenario is selected during batch creation"
             }
