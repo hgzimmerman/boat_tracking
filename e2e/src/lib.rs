@@ -1,5 +1,6 @@
 use fantoccini::{Client, ClientBuilder};
 use std::net::TcpListener;
+use std::os::unix::process::CommandExt;
 use std::path::PathBuf;
 use std::process::{Child, Command};
 use tokio::time::{sleep, Duration};
@@ -67,18 +68,26 @@ impl TestInstance {
             }
         }
 
-        let tauri_driver = Command::new("tauri-driver")
-            .arg("--port")
-            .arg(driver_port.to_string())
-            .arg("--native-port")
-            .arg(native_port.to_string())
-            .env("PORT", app_port.to_string())
-            .env("DATABASE_URL", db_path.to_str().unwrap())
-            .env("FULLSCREEN", "false")
-            .stdout(std::process::Stdio::null())
-            .stderr(std::process::Stdio::null())
-            .spawn()
-            .expect("tauri-driver must be installed (`cargo install tauri-driver --locked`)");
+        let tauri_driver = unsafe {
+            Command::new("tauri-driver")
+                .arg("--port")
+                .arg(driver_port.to_string())
+                .arg("--native-port")
+                .arg(native_port.to_string())
+                .env("PORT", app_port.to_string())
+                .env("DATABASE_URL", db_path.to_str().unwrap())
+                .env("FULLSCREEN", "false")
+                .stdout(std::process::Stdio::null())
+                .stderr(std::process::Stdio::null())
+                // Start as a new process group so we can kill the entire tree
+                // (tauri-driver + the app it spawns) on cleanup.
+                .pre_exec(|| {
+                    libc::setpgid(0, 0);
+                    Ok(())
+                })
+                .spawn()
+                .expect("tauri-driver must be installed (`cargo install tauri-driver --locked`)")
+        };
 
         // Give tauri-driver a moment to start listening.
         sleep(Duration::from_millis(500)).await;
@@ -109,6 +118,14 @@ impl TestInstance {
         // Wait for the app's Axum server to be ready.
         self.wait_for_server().await;
 
+        // Set a consistent window size so elements are interactable.
+        client
+            .set_window_size(1280, 1024)
+            .await
+            .unwrap_or_else(|_| {
+                // WebKitWebDriver may not support this; ignore errors.
+            });
+
         client
     }
 
@@ -133,9 +150,44 @@ impl TestInstance {
     }
 }
 
+/// Sets a `<select>` element's value via JavaScript, bypassing visibility
+/// constraints that cause `ElementNotInteractable` in WebKitWebDriver.
+pub async fn select_value(client: &Client, css_selector: &str, value: &str) {
+    let js = format!(
+        r#"document.querySelector("{}").value = "{}";"#,
+        css_selector, value
+    );
+    client.execute(&js, vec![]).await.unwrap();
+}
+
+/// Scrolls an element into view and clicks it. Works around
+/// `ElementNotInteractable` errors when elements are off-screen.
+pub async fn scroll_and_click(client: &Client, css_selector: &str) {
+    let js = format!(
+        r#"var el = document.querySelector("{}"); el.scrollIntoView(); el.click();"#,
+        css_selector
+    );
+    client.execute(&js, vec![]).await.unwrap();
+}
+
+/// Sets an input element's value via JavaScript, clearing it first.
+/// Works around `ElementNotInteractable` for off-screen inputs.
+pub async fn set_input_value(client: &Client, css_selector: &str, value: &str) {
+    let js = format!(
+        r#"var el = document.querySelector("{}"); el.scrollIntoView(); el.value = "{}"; el.dispatchEvent(new Event("input", {{ bubbles: true }}));"#,
+        css_selector, value
+    );
+    client.execute(&js, vec![]).await.unwrap();
+}
+
 impl Drop for TestInstance {
     fn drop(&mut self) {
-        let _ = self.tauri_driver.kill();
+        // Kill the entire process group (tauri-driver + the app binary it spawned).
+        let pid = self.tauri_driver.id() as i32;
+        unsafe {
+            libc::kill(-pid, libc::SIGKILL);
+        }
+        let _ = self.tauri_driver.wait();
         let _ = std::fs::remove_file(&self.db_path);
     }
 }

@@ -283,6 +283,7 @@ name = "boat_tracking_e2e"
 version = "0.1.0"
 dependencies = [
  "fantoccini",
+ "libc",
  "serde_json",
  "tokio",
 ]

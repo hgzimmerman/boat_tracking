@@ -8,3 +8,4 @@ publish = false
 fantoccini = "0.22"
 tokio = { version = "1", features = ["full"] }
 serde_json = "1"
+libc = "0.2.184"
