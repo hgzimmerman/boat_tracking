@@ -3,6 +3,7 @@ use crate::db::boat::BoatAndStats;
 use crate::db::issue::Issue;
 use crate::db::use_event::{NewUseEvent, UseEvent};
 
+/// A boat with no issues or use events reports all stat counters as zero.
 #[test]
 fn boat_stats_zero_when_no_activity() {
     let mut conn = test_conn();
@@ -17,6 +18,7 @@ fn boat_stats_zero_when_no_activity() {
     assert_eq!(stats.uses_last_thirty_days.unwrap_or(0), 0);
 }
 
+/// Only unresolved issues are counted in the open_issues stat; resolved ones are excluded.
 #[test]
 fn boat_stats_counts_open_issues_only() {
     let mut conn = test_conn();
@@ -35,6 +37,7 @@ fn boat_stats_counts_open_issues_only() {
     assert_eq!(stats.open_issues.unwrap_or(0), 2);
 }
 
+/// total_uses reflects every use event recorded for the boat.
 #[test]
 fn boat_stats_counts_total_uses() {
     let mut conn = test_conn();
@@ -62,6 +65,7 @@ fn boat_stats_counts_total_uses() {
     assert_eq!(stats.uses_last_thirty_days.unwrap_or(0), 5);
 }
 
+/// uses_last_thirty_days excludes events older than 30 days while total_uses includes them.
 #[test]
 fn boat_stats_last_thirty_days_excludes_old_events() {
     let mut conn = test_conn();
@@ -101,6 +105,7 @@ fn boat_stats_last_thirty_days_excludes_old_events() {
     assert_eq!(stats.uses_last_thirty_days.unwrap_or(0), 1);
 }
 
+/// The all-boats stats query returns one entry per boat, including boats with no activity.
 #[test]
 fn get_boats_returns_stats_for_all_boats() {
     let mut conn = test_conn();
@@ -135,6 +140,7 @@ fn get_boats_returns_stats_for_all_boats() {
     assert_eq!(bravo.open_issues.unwrap_or(0), 0);
 }
 
+/// Use events created via a batch are counted in the boat's stats.
 #[test]
 fn batch_events_count_toward_boat_stats() {
     let mut conn = test_conn();

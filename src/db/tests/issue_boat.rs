@@ -2,6 +2,7 @@ use super::*;
 use crate::db::issue::Issue;
 use crate::db::DbOrdering;
 
+/// A new issue records its boat association and starts unresolved.
 #[test]
 fn issue_linked_to_boat() {
     let mut conn = test_conn();
@@ -13,6 +14,7 @@ fn issue_linked_to_boat() {
     assert!(issue.resolved_at.is_none());
 }
 
+/// Resolving sets a timestamp; unresolving clears it back to None.
 #[test]
 fn resolve_and_unresolve_issue() {
     let mut conn = test_conn();
@@ -30,6 +32,7 @@ fn resolve_and_unresolve_issue() {
     assert!(unresolved.resolved_at.is_none());
 }
 
+/// The open-issues query omits issues that have been resolved.
 #[test]
 fn open_issues_for_boat_excludes_resolved() {
     let mut conn = test_conn();
@@ -45,6 +48,7 @@ fn open_issues_for_boat_excludes_resolved() {
     assert_eq!(open[0].id, issue_a.id);
 }
 
+/// The resolved-issues query omits issues that are still open.
 #[test]
 fn resolved_issues_for_boat_excludes_open() {
     let mut conn = test_conn();
@@ -60,6 +64,7 @@ fn resolved_issues_for_boat_excludes_open() {
     assert_eq!(resolved[0].id, resolved_issue.id);
 }
 
+/// Issues for one boat are not visible when querying another boat.
 #[test]
 fn issues_scoped_to_their_boat() {
     let mut conn = test_conn();
@@ -79,6 +84,7 @@ fn issues_scoped_to_their_boat() {
     assert_eq!(bravo_issues.len(), 1);
 }
 
+/// The issues-with-boats join returns boat data for linked issues and None for orphan issues.
 #[test]
 fn get_all_issues_with_boats_joins_correctly() {
     let mut conn = test_conn();
@@ -114,6 +120,7 @@ fn get_all_issues_with_boats_joins_correctly() {
     assert_eq!(orphan[0].0.note, "Orphan issue");
 }
 
+/// Issue listing respects the requested sort direction.
 #[test]
 fn get_all_issues_ordering() {
     let mut conn = test_conn();

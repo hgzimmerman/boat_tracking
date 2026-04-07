@@ -2,6 +2,7 @@ use super::*;
 use crate::db::boat::Boat;
 use crate::db::use_event::{NewUseEvent, UseEvent};
 
+/// Use events are returned newest-first when querying by boat.
 #[test]
 fn events_for_boat_returns_newest_first() {
     let mut conn = test_conn();
@@ -42,6 +43,7 @@ fn events_for_boat_returns_newest_first() {
     assert_eq!(events[1].note.as_deref(), Some("Old"));
 }
 
+/// Events for one boat are not visible when querying a different boat.
 #[test]
 fn events_scoped_to_their_boat() {
     let mut conn = test_conn();
@@ -83,6 +85,7 @@ fn events_scoped_to_their_boat() {
     assert_eq!(bravo_events[0].use_scenario, UseScenario::Regatta);
 }
 
+/// The daily timeseries fills in zero-count entries for days with no activity.
 #[test]
 fn daily_timeseries_includes_zero_days() {
     let mut conn = test_conn();
@@ -120,6 +123,7 @@ fn daily_timeseries_includes_zero_days() {
     assert_eq!(total, 1);
 }
 
+/// CSV export joins boat metadata (name, type, weight class) onto each use event.
 #[test]
 fn export_events_joins_boat_data() {
     let mut conn = test_conn();
@@ -146,6 +150,7 @@ fn export_events_joins_boat_data() {
     assert_eq!(rows[0].boat_id, boat.id);
 }
 
+/// CSV export can be filtered to specific boats by ID.
 #[test]
 fn export_events_filters_by_boat_ids() {
     let mut conn = test_conn();
@@ -178,6 +183,7 @@ fn export_events_filters_by_boat_ids() {
     assert_eq!(rows[0].boat_name, "Alpha");
 }
 
+/// CSV export respects date_start, excluding events before the cutoff.
 #[test]
 fn export_events_filters_by_date_range() {
     let mut conn = test_conn();
@@ -223,6 +229,7 @@ fn export_events_filters_by_date_range() {
     assert_eq!(rows.len(), 1);
 }
 
+/// Relinquished (retired) boats are excluded from filtered boat listings.
 #[test]
 fn relinquished_boat_excluded_from_filtered_list() {
     let mut conn = test_conn();

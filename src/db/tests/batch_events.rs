@@ -2,6 +2,7 @@ use super::*;
 use crate::db::use_event::UseEvent;
 use crate::db::use_event_batch::UseEventBatch;
 
+/// Creating a batch produces one use event per boat, each linked back to the batch.
 #[test]
 fn create_batch_creates_use_events_for_each_boat() {
     let mut conn = test_conn();
@@ -34,6 +35,7 @@ fn create_batch_creates_use_events_for_each_boat() {
     }
 }
 
+/// The batch listing reports the correct number of boats used in each batch.
 #[test]
 fn batch_appears_in_recent_list_with_correct_count() {
     let mut conn = test_conn();
@@ -60,6 +62,7 @@ fn batch_appears_in_recent_list_with_correct_count() {
     assert_eq!(batches[0].batch.use_scenario, UseScenario::Regatta);
 }
 
+/// Batch listing can be narrowed to a single use scenario.
 #[test]
 fn filter_batches_by_scenario() {
     let mut conn = test_conn();
@@ -83,6 +86,7 @@ fn filter_batches_by_scenario() {
     }
 }
 
+/// Replacing a batch's uses deletes the old events and creates new ones for the new set of boats.
 #[test]
 fn replace_batch_uses_swaps_boats() {
     let mut conn = test_conn();
@@ -120,6 +124,7 @@ fn replace_batch_uses_swaps_boats() {
     assert!(!boat_names.contains(&"Alpha"));
 }
 
+/// Replacing batch uses with a new scenario updates both the batch and its child events.
 #[test]
 fn replace_batch_uses_can_update_scenario() {
     let mut conn = test_conn();
@@ -149,6 +154,7 @@ fn replace_batch_uses_can_update_scenario() {
     }
 }
 
+/// Looking up a batch that doesn't exist returns None rather than an error.
 #[test]
 fn get_batch_returns_none_for_missing_id() {
     let mut conn = test_conn();
@@ -158,6 +164,7 @@ fn get_batch_returns_none_for_missing_id() {
     assert!(result.is_none());
 }
 
+/// Querying events for a boat returns both batch-created and standalone events.
 #[test]
 fn events_for_boat_includes_batch_events() {
     let mut conn = test_conn();
