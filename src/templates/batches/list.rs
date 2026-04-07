@@ -54,13 +54,32 @@ pub fn batch_list(batches: &[BatchAndCounts], scenarios: &[UseScenario]) -> Mark
                 div id="boats-tooltip"
                     class="fixed z-50 bg-slate-100 dark:bg-slate-600 dark:text-white rounded border-2 border-slate-200 dark:border-white p-2 min-w-48 pointer-events-none empty:hidden"
                 {}
+                style {
+                    (maud::PreEscaped(r#"
+                        #boats-tooltip::after {
+                            content: '';
+                            position: absolute;
+                            top: 50%;
+                            right: -12px;
+                            transform: translateY(-50%);
+                            border: 6px solid transparent;
+                            border-left-color: rgb(203 213 225);
+                        }
+                        @media (prefers-color-scheme: dark) {
+                            #boats-tooltip::after {
+                                border-left-color: white;
+                            }
+                        }
+                    "#))
+                }
                 script {
                     (maud::PreEscaped(r#"
                         function positionTooltip(cell) {
                             var tip = document.getElementById('boats-tooltip');
                             var rect = cell.getBoundingClientRect();
-                            tip.style.top = (rect.bottom + 4) + 'px';
-                            tip.style.right = (window.innerWidth - rect.right + 40) + 'px';
+                            tip.style.top = (rect.top + rect.height / 2) + 'px';
+                            tip.style.transform = 'translateY(-50%)';
+                            tip.style.right = (window.innerWidth - rect.left + 8) + 'px';
                             tip.style.left = '';
                             tip.innerHTML = '';
                         }
