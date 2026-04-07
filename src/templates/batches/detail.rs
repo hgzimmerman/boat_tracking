@@ -6,14 +6,16 @@ use crate::templates::components::common::{page_content, card_mb, card, section_
 pub fn batch_detail_page(
     batch: &UseEventBatch,
     boats: &[(UseEvent, Boat)],
+    scenario_name: &str,
 ) -> Markup {
-    crate::templates::layout::page("Batch Details", batch_detail_content(batch, boats))
+    crate::templates::layout::page("Batch Details", batch_detail_content(batch, boats, scenario_name))
 }
 
 /// Batch detail content (without page wrapper)
 pub fn batch_detail_content(
     batch: &UseEventBatch,
     boats: &[(UseEvent, Boat)],
+    scenario_name: &str,
 ) -> Markup {
     page_content(html! {
         div class="w-full max-w-6xl p-4" {
@@ -58,7 +60,7 @@ pub fn batch_detail_content(
                             "Use Scenario"
                         }
                         p class="text-lg text-gray-900 dark:text-white" {
-                            (batch.use_scenario.to_string())
+                            (scenario_name)
                         }
                     }
                 }

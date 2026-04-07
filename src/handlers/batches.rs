@@ -36,7 +36,7 @@ use crate::{
     db::{
         boat::types::BoatId,
         state::AppState,
-        use_event::UseScenario,
+        use_scenario::{UseScenario, UseScenarioId},
         use_event_batch::{BatchId, NewBatch, NewBatchArgs, UseEventBatch},
     },
     templates,
@@ -52,9 +52,11 @@ pub async fn batch_list_handler(
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
-    let batches = conn
+    let (batches, scenarios) = conn
         .interact(|conn| {
-            UseEventBatch::get_most_recent_batches_and_their_use_count(conn, None, 0, 100)
+            let batches = UseEventBatch::get_most_recent_batches_and_their_use_count(conn, None, 0, 100)?;
+            let scenarios = UseScenario::get_all(conn)?;
+            Ok::<_, diesel::result::Error>((batches, scenarios))
         })
         .await
         .map_err(|e| {
@@ -67,7 +69,7 @@ pub async fn batch_list_handler(
         })?;
 
     tracing::debug!("Retrieved {} batches", batches.len());
-    Ok(Html(templates::batches::list::batch_list_page(&batches).into_string()))
+    Ok(Html(templates::batches::list::batch_list_page(&batches, &scenarios).into_string()))
 }
 
 /// Query parameters for batch creation page
@@ -81,15 +83,15 @@ pub async fn new_batch_handler(
     State(state): State<AppState>,
     axum::extract::Query(query): axum::extract::Query<NewBatchQuery>,
 ) -> Result<Html<String>, StatusCode> {
+    let conn = state.pool().get().await
+        .map_err(|e| {
+            tracing::error!("Failed to get database connection: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
     // If template ID is provided, fetch boats from that batch
     let template_boats = if let Some(template_id) = query.template {
         let batch_id = BatchId::new(template_id);
-
-        let conn = state.pool().get().await
-            .map_err(|e| {
-                tracing::error!("Failed to get database connection: {}", e);
-                StatusCode::INTERNAL_SERVER_ERROR
-            })?;
 
         conn.interact(move |conn| {
             UseEventBatch::get_events_and_boats_for_batch(conn, batch_id)
@@ -104,13 +106,25 @@ pub async fn new_batch_handler(
         None
     };
 
-    Ok(Html(templates::batches::creation::batch_creation_page(template_boats.as_deref()).into_string()))
+    let scenarios = conn
+        .interact(UseScenario::get_all)
+        .await
+        .map_err(|e| {
+            tracing::error!("Database interaction error: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?
+        .map_err(|e| {
+            tracing::error!("Failed to get scenarios: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    Ok(Html(templates::batches::creation::batch_creation_page(&scenarios, template_boats.as_deref()).into_string()))
 }
 
 /// Form data for creating a batch
 #[derive(Debug, Deserialize)]
 pub struct BatchFormInput {
-    pub use_scenario: String,
+    pub use_scenario_id: i32,
     pub recorded_at: Option<String>,
     pub boat_ids: Vec<i32>,
 }
@@ -120,20 +134,7 @@ pub async fn create_batch_handler(
     State(state): State<AppState>,
     QsForm(input): QsForm<BatchFormInput>,
 ) -> Result<impl IntoResponse, Html<String>> {
-    // Parse use scenario
-    let use_scenario = match input.use_scenario.as_str() {
-        "YouthGgrc" => UseScenario::YouthGgrc,
-        "YouthSomerville" => UseScenario::YouthSomerville,
-        "Adult" => UseScenario::Adult,
-        "LearnToRow" => UseScenario::LearnToRow,
-        "ScullingSaturday" => UseScenario::ScullingSaturday,
-        "PrivateSession" => UseScenario::PrivateSession,
-        "Regatta" => UseScenario::Regatta,
-        "Other" => UseScenario::Other,
-        _ => {
-            return Err(Html("<p>Invalid use scenario</p>".to_string()));
-        }
-    };
+    let use_scenario_id = UseScenarioId::new(input.use_scenario_id);
 
     // Parse datetime (local time from form) and convert to UTC, or use current time
     let recorded_at = if let Some(dt_str) = input.recorded_at {
@@ -165,7 +166,7 @@ pub async fn create_batch_handler(
     let new_batch = NewBatchArgs {
         boat_ids,
         batch: NewBatch {
-            use_scenario,
+            use_scenario_id,
             recorded_at,
         },
     };
@@ -381,13 +382,16 @@ pub async fn batch_detail_handler(
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
-    // Fetch batch metadata and boats used
-    let (batch, boats) = conn
+    // Fetch batch metadata, boats used, and scenario name
+    let (batch, boats, scenario_name) = conn
         .interact(move |conn| {
             let batch = UseEventBatch::get_batch(conn, batch_id)?
                 .ok_or_else(|| diesel::result::Error::NotFound)?;
             let boats = UseEventBatch::get_events_and_boats_for_batch(conn, batch_id)?;
-            Ok::<_, diesel::result::Error>((batch, boats))
+            let scenario_name = UseScenario::get_by_id(conn, batch.use_scenario_id)?
+                .map(|s| s.name)
+                .unwrap_or_else(|| "Unknown".to_string());
+            Ok::<_, diesel::result::Error>((batch, boats, scenario_name))
         })
         .await
         .map_err(|e| {
@@ -403,7 +407,7 @@ pub async fn batch_detail_handler(
             }
         })?;
 
-    Ok(Html(templates::batches::detail::batch_detail_page(&batch, &boats).into_string()))
+    Ok(Html(templates::batches::detail::batch_detail_page(&batch, &boats, &scenario_name).into_string()))
 }
 
 /// Handler for batch boats preview (HTMX hover endpoint)

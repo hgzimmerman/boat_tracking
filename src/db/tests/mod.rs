@@ -4,13 +4,20 @@ use diesel_migrations::MigrationHarness;
 use crate::db::boat::types::{BoatId, BoatType, WeightClass};
 use crate::db::boat::{Boat, NewBoat};
 use crate::db::issue::NewIssue;
-use crate::db::use_event::{NewUseEvent, UseScenario};
+use crate::db::use_event::NewUseEvent;
+use crate::db::use_scenario::UseScenarioId;
 use crate::db::use_event_batch::{BatchId, NewBatch, NewBatchArgs};
 
 mod batch_events;
 mod boat_stats;
 mod issue_boat;
 mod use_event_boat;
+
+/// Seeded scenario IDs from the migration.
+fn masters_am_scenario_id() -> UseScenarioId { UseScenarioId::new(3) }
+fn masters_pm_scenario_id() -> UseScenarioId { UseScenarioId::new(4) }
+fn regatta_scenario_id() -> UseScenarioId { UseScenarioId::new(8) }
+
 
 /// Creates an in-memory SQLite connection with migrations applied.
 ///
@@ -42,7 +49,7 @@ fn create_boat(conn: &mut SqliteConnection, name: &str) -> Boat {
 fn create_batch(
     conn: &mut SqliteConnection,
     boat_ids: Vec<BoatId>,
-    scenario: UseScenario,
+    scenario_id: UseScenarioId,
 ) -> BatchId {
     use crate::db::use_event_batch::UseEventBatch;
     UseEventBatch::create_batch(
@@ -50,7 +57,7 @@ fn create_batch(
         NewBatchArgs {
             boat_ids,
             batch: NewBatch {
-                use_scenario: scenario,
+                use_scenario_id: scenario_id,
                 recorded_at: chrono::Utc::now(),
             },
         },

@@ -71,6 +71,16 @@ fn navbar() -> Markup {
                         "Issues"
                     }
                 }
+                li {
+                    a href="/scenarios"
+                      class="text-white font-semibold px-3 py-2 rounded hover:bg-white/25 cursor-pointer transition"
+                      hx-get="/scenarios"
+                      hx-target="body"
+                      hx-push-url="true"
+                      {
+                        "Scenarios"
+                    }
+                }
             }
         }
     }

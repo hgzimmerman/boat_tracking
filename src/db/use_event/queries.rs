@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use super::*;
 use crate::api::wire::BoatUseCsvRow;
+use crate::db::use_scenario::{UseScenario, UseScenarioId};
 use crate::schema::{boat, use_event};
 use chrono::{DateTime, Datelike, NaiveDate, Utc};
 use diesel::SqliteConnection;
@@ -133,6 +134,13 @@ impl UseEvent {
         date_end: Option<DateTime<Utc>>,
         boat_ids: Option<Vec<BoatId>>,
     ) -> Result<Vec<BoatUseCsvRow>, diesel::result::Error> {
+        // Load scenario names for lookup
+        let scenarios = UseScenario::get_all(conn)?;
+        let scenario_names: std::collections::HashMap<UseScenarioId, &str> = scenarios
+            .iter()
+            .map(|s| (s.id, s.name.as_str()))
+            .collect();
+
         let mut query = use_event::table.inner_join(boat::table).into_boxed();
         if let Some(date_start) = date_start {
             query = query.filter(use_event::recorded_at.ge(date_start));
@@ -156,12 +164,16 @@ impl UseEvent {
                         }
                         bt?
                     };
+                    let scenario_name = scenario_names
+                        .get(&event.use_scenario_id)
+                        .unwrap_or(&"Unknown")
+                        .to_string();
                     Some(BoatUseCsvRow{
                         boat_name: boat.name,
                         boat_type,
                         boat_weight_class: boat.weight_class,
                         used_at: event.recorded_at,
-                        use_scenario: event.use_scenario,
+                        use_scenario: scenario_name,
                         boat_id: boat.id,
                         batch_id: event.batch_id,
                     })

@@ -51,7 +51,7 @@ fn boat_stats_counts_total_uses() {
                 boat_id: boat.id,
                 batch_id: None,
                 recorded_at: chrono::Utc::now(),
-                use_scenario: UseScenario::Adult,
+                use_scenario_id: masters_am_scenario_id(),
                 note: None,
             },
         )
@@ -78,7 +78,7 @@ fn boat_stats_last_thirty_days_excludes_old_events() {
             boat_id: boat.id,
             batch_id: None,
             recorded_at: chrono::Utc::now(),
-            use_scenario: UseScenario::Adult,
+            use_scenario_id: masters_am_scenario_id(),
             note: None,
         },
     )
@@ -92,7 +92,7 @@ fn boat_stats_last_thirty_days_excludes_old_events() {
             boat_id: boat.id,
             batch_id: None,
             recorded_at: old_time,
-            use_scenario: UseScenario::Adult,
+            use_scenario_id: masters_am_scenario_id(),
             note: None,
         },
     )
@@ -119,7 +119,7 @@ fn get_boats_returns_stats_for_all_boats() {
             boat_id: boat_a.id,
             batch_id: None,
             recorded_at: chrono::Utc::now(),
-            use_scenario: UseScenario::Adult,
+            use_scenario_id: masters_am_scenario_id(),
             note: None,
         },
     )
@@ -147,7 +147,7 @@ fn batch_events_count_toward_boat_stats() {
     let boat = create_boat(&mut conn, "Alpha");
 
     // Create a batch (which internally creates use events)
-    create_batch(&mut conn, vec![boat.id], UseScenario::Regatta);
+    create_batch(&mut conn, vec![boat.id], regatta_scenario_id());
 
     let stats = BoatAndStats::get_boat(&mut conn, boat.id)
         .expect("should get stats");

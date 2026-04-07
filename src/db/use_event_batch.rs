@@ -1,4 +1,4 @@
-use super::{boat::types::BoatId, use_event::UseScenario};
+use super::{boat::types::BoatId, use_scenario::UseScenarioId};
 
 pub mod queries;
 
@@ -8,7 +8,7 @@ pub mod queries;
 pub struct UseEventBatch {
     pub id: BatchId,
     pub recorded_at: chrono::DateTime<chrono::Utc>,
-    pub use_scenario: UseScenario,
+    pub use_scenario_id: UseScenarioId,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -17,7 +17,7 @@ pub struct UseEventBatch {
 pub struct UseEventBatchChangeset {
     pub id: BatchId,
     pub recorded_at: Option<chrono::DateTime<chrono::Utc>>,
-    pub use_scenario: Option<UseScenario>,
+    pub use_scenario_id: Option<UseScenarioId>,
 }
 
 #[derive(
@@ -65,7 +65,7 @@ pub struct NewBatchArgs {
 #[derive(Debug, Clone, diesel::Insertable)]
 #[diesel(table_name = crate::schema::use_event_batch)]
 pub struct NewBatch {
-    pub use_scenario: UseScenario,
+    pub use_scenario_id: UseScenarioId,
     pub recorded_at: chrono::DateTime<chrono::Utc>,
 }
 

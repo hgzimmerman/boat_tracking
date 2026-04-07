@@ -1,6 +1,5 @@
 use crate::db::{
     boat::types::{BoatId, BoatType, WeightClass},
-    use_event::UseScenario,
     use_event_batch::BatchId,
 };
 use chrono::{DateTime, NaiveDate, Utc};
@@ -20,7 +19,7 @@ pub struct BoatUseCsvRow {
     pub boat_weight_class: WeightClass,
     pub used_at: DateTime<Utc>,
     pub batch_id: Option<BatchId>,
-    pub use_scenario: UseScenario,
+    pub use_scenario: String,
 }
 
 #[derive(Debug, Clone, serde::Serialize)]

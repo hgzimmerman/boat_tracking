@@ -4,3 +4,4 @@ pub mod layout;
 pub mod issues;
 pub mod boats;
 pub mod batches;
+pub mod scenarios;

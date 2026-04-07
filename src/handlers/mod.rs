@@ -2,6 +2,7 @@
 pub mod issues;
 pub mod boats;
 pub mod batches;
+pub mod scenarios;
 
 use axum::{response::{Html, Redirect}, routing::get, Router};
 use axum_htmx::HxRequest;
@@ -57,6 +58,11 @@ pub fn create_router() -> Router<AppState> {
         .route("/batches/{id}", get(batches::batch_detail_handler))
         // Batch API routes
         .route("/api/batches/{id}/boats", get(batches::batch_boats_preview_handler))
+        // Scenario routes
+        .route("/scenarios", get(scenarios::scenario_list_handler).post(scenarios::create_scenario_handler))
+        .route("/scenarios/new", get(scenarios::new_scenario_handler))
+        .route("/scenarios/{id}/edit", get(scenarios::edit_scenario_handler))
+        .route("/scenarios/{id}", axum::routing::post(scenarios::update_scenario_handler))
         // Batch API routes (HTMX endpoints)
         .route("/api/batches/boats", get(batches::list_boats_handler))
         .route("/api/batches/search", axum::routing::post(batches::search_boats_handler))

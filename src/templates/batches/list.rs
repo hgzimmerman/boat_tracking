@@ -1,19 +1,26 @@
 use maud::{html, Markup};
 use crate::db::use_event_batch::BatchAndCounts;
+use crate::db::use_scenario::{UseScenario, UseScenarioId};
 use crate::templates::components::common::{page_content, page_header, empty_state, csv_export_link, BTN_PRIMARY};
+use std::collections::HashMap;
 
 /// Batch list page
-pub fn batch_list_page(batches: &[BatchAndCounts]) -> Markup {
-    crate::templates::layout::page("Boat Uses", batch_list_content(batches))
+pub fn batch_list_page(batches: &[BatchAndCounts], scenarios: &[UseScenario]) -> Markup {
+    crate::templates::layout::page("Boat Uses", batch_list_content(batches, scenarios))
 }
 
 /// Batch list content (without page wrapper)
-pub fn batch_list_content(batches: &[BatchAndCounts]) -> Markup {
-    page_content(batch_list(batches))
+pub fn batch_list_content(batches: &[BatchAndCounts], scenarios: &[UseScenario]) -> Markup {
+    page_content(batch_list(batches, scenarios))
 }
 
 /// Batch list component
-pub fn batch_list(batches: &[BatchAndCounts]) -> Markup {
+pub fn batch_list(batches: &[BatchAndCounts], scenarios: &[UseScenario]) -> Markup {
+    let scenario_names: HashMap<UseScenarioId, &str> = scenarios
+        .iter()
+        .map(|s| (s.id, s.name.as_str()))
+        .collect();
+
     html! {
         div class="flex flex-col flex-grow xl:px-12 w-full bg-gray-50 dark:bg-slate-600 md:min-w-96 max-w-xxl" {
             (page_header("Boat Uses", html! {
@@ -39,7 +46,7 @@ pub fn batch_list(batches: &[BatchAndCounts]) -> Markup {
                         }
                         tbody class="divide-y dark:divide-gray-600" {
                             @for batch in batches {
-                                (batch_row(batch))
+                                (batch_row(batch, &scenario_names))
                             }
                         }
                     }
@@ -50,8 +57,12 @@ pub fn batch_list(batches: &[BatchAndCounts]) -> Markup {
 }
 
 /// Individual batch row
-fn batch_row(batch: &BatchAndCounts) -> Markup {
+fn batch_row(batch: &BatchAndCounts, scenario_names: &HashMap<UseScenarioId, &str>) -> Markup {
     let batch_id = batch.batch.id.as_int();
+    let scenario_name = scenario_names
+        .get(&batch.batch.use_scenario_id)
+        .unwrap_or(&"Unknown");
+
     html! {
         tr class="hover:bg-gray-50 dark:hover:bg-gray-600 dark:text-white" {
             td class="px-4 py-3 text-sm" {
@@ -61,7 +72,7 @@ fn batch_row(batch: &BatchAndCounts) -> Markup {
                 }
             }
             td class="px-4 py-3 text-sm" {
-                (batch.batch.use_scenario.to_string())
+                (scenario_name)
             }
             td class="px-4 py-3 text-sm text-right relative cursor-pointer"
                 onmouseenter="document.querySelectorAll('[id^=\"boats-preview-\"]').forEach(el => el.innerHTML = '')"

@@ -1,14 +1,14 @@
 use maud::{html, Markup};
-use crate::db::{boat::{Boat, BoatAndStats}, use_event::UseEvent};
+use crate::db::{boat::{Boat, BoatAndStats}, use_event::UseEvent, use_scenario::UseScenario};
 use crate::templates::components::common::{boat_indicator, boat_indicator_raw};
 
 /// Batch creation page with two-pane interface
-pub fn batch_creation_page(template_boats: Option<&[(UseEvent, Boat)]>) -> Markup {
-    crate::templates::layout::page("Record Boat Uses", batch_creation_content(template_boats))
+pub fn batch_creation_page(scenarios: &[UseScenario], template_boats: Option<&[(UseEvent, Boat)]>) -> Markup {
+    crate::templates::layout::page("Record Boat Uses", batch_creation_content(scenarios, template_boats))
 }
 
 /// Batch creation content
-pub fn batch_creation_content(template_boats: Option<&[(UseEvent, Boat)]>) -> Markup {
+pub fn batch_creation_content(scenarios: &[UseScenario], template_boats: Option<&[(UseEvent, Boat)]>) -> Markup {
     // Build initial selectedBoats JSON array for Alpine.js
     let initial_boats_json = if let Some(boats) = template_boats {
         let boats_array: Vec<String> = boats.iter().map(|(_event, boat)| {
@@ -48,7 +48,15 @@ pub fn batch_creation_content(template_boats: Option<&[(UseEvent, Boat)]>) -> Ma
 
                 // Alpine.js data store for selected boats
                 div
-                    x-data=(format!("{{ selectedBoats: {}, useScenario: 'Adult', recordedAt: '' }}", initial_boats_json))
+                    x-data=(format!(
+                        "{{ selectedBoats: {}, useScenarioId: '{}', recordedAt: '', scenarioDefaults: {{{}}} }}",
+                        initial_boats_json,
+                        scenarios.first().map(|s| s.id.as_int()).unwrap_or(0),
+                        scenarios.iter()
+                            .filter_map(|s| s.default_time.as_ref().map(|t| format!("'{}': '{}'", s.id.as_int(), t)))
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    ))
                     class="flex flex-col md:flex-row gap-4 flex-grow"
                 {
                     // Left pane: Search and boat list
@@ -178,19 +186,15 @@ pub fn batch_creation_content(template_boats: Option<&[(UseEvent, Boat)]>) -> Ma
                                     "Use Scenario"
                                 }
                                 select
-                                    name="use_scenario"
-                                    x-model="useScenario"
+                                    name="use_scenario_id"
+                                    x-model="useScenarioId"
+                                    x-on:change="if (recordedAt === '' && scenarioDefaults[useScenarioId]) { const now = new Date(); recordedAt = now.toISOString().slice(0,11) + scenarioDefaults[useScenarioId] }"
                                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-slate-600 dark:text-white"
                                     required
                                 {
-                                    option value="YouthGgrc" { "Youth GGRC Practice" }
-                                    option value="YouthSomerville" { "Youth Somerville Practice" }
-                                    option value="Adult" selected { "Adult Practice" }
-                                    option value="LearnToRow" { "Learn to Row" }
-                                    option value="ScullingSaturday" { "Sculling Saturday" }
-                                    option value="PrivateSession" { "Private Session" }
-                                    option value="Regatta" { "Regatta" }
-                                    option value="Other" { "Other" }
+                                    @for scenario in scenarios {
+                                        option value=(scenario.id.as_int()) { (scenario.name) }
+                                    }
                                 }
                             }
 
