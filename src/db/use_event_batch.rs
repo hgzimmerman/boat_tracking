@@ -7,7 +7,7 @@ pub mod queries;
 #[diesel(table_name = crate::schema::use_event_batch)]
 pub struct UseEventBatch {
     pub id: BatchId,
-    pub recorded_at: chrono::NaiveDateTime,
+    pub recorded_at: chrono::DateTime<chrono::Utc>,
     pub use_scenario: UseScenario,
 }
 
@@ -16,7 +16,7 @@ pub struct UseEventBatch {
 #[diesel(table_name = crate::schema::use_event_batch)]
 pub struct UseEventBatchChangeset {
     pub id: BatchId,
-    pub recorded_at: Option<chrono::NaiveDateTime>,
+    pub recorded_at: Option<chrono::DateTime<chrono::Utc>>,
     pub use_scenario: Option<UseScenario>,
 }
 
@@ -66,7 +66,7 @@ pub struct NewBatchArgs {
 #[diesel(table_name = crate::schema::use_event_batch)]
 pub struct NewBatch {
     pub use_scenario: UseScenario,
-    pub recorded_at: chrono::NaiveDateTime,
+    pub recorded_at: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]

@@ -29,7 +29,7 @@ CREATE TABLE use_event (
     use_scenario TEXT CHECK( use_scenario IN ('YouthGgrc', 'YouthSomerville', 'Adult', 'LearnToRow', 'ScullingSaturday', 'PrivateSession', 'Regatta', 'Other') ) NOT NULL,
     note TEXT,
     FOREIGN KEY (boat_id) REFERENCES boat(id),
-    FOREIGN KEY (batch_id) REFERENCES batch(id)
+    FOREIGN KEY (batch_id) REFERENCES use_event_batch(id)
 );
 
 

@@ -10,7 +10,7 @@ pub struct UseEvent {
     pub id: UseEventId,
     pub boat_id: BoatId,
     pub batch_id: Option<BatchId>,
-    pub recorded_at: chrono::NaiveDateTime,
+    pub recorded_at: chrono::DateTime<chrono::Utc>,
     pub use_scenario: UseScenario,
     pub note: Option<String>,
 }
@@ -52,7 +52,7 @@ impl std::fmt::Display for UseScenario {
 pub struct NewUseEvent {
     pub boat_id: BoatId,
     pub batch_id: Option<BatchId>,
-    pub recorded_at: chrono::NaiveDateTime,
+    pub recorded_at: chrono::DateTime<chrono::Utc>,
     pub use_scenario: UseScenario,
     pub note: Option<String>,
 }

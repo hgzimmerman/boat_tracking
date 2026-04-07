@@ -481,7 +481,7 @@ pub async fn daily_chart_handler(
         })?;
 
     // Get last 30 days of data
-    let start = chrono::Utc::now().naive_local() - chrono::TimeDelta::try_days(30).unwrap();
+    let start = chrono::Utc::now() - chrono::TimeDelta::try_days(30).unwrap();
     let data = conn
         .interact(move |conn| {
             UseEvent::daily_timeseries_for_boat(conn, boat_id, start, None)
@@ -529,7 +529,7 @@ pub async fn monthly_chart_handler(
         })?;
 
     // Get last 12 months of data
-    let start = chrono::Utc::now().naive_local() - chrono::TimeDelta::try_days(365).unwrap();
+    let start = chrono::Utc::now() - chrono::TimeDelta::try_days(365).unwrap();
     let data = conn
         .interact(move |conn| {
             UseEvent::monthly_timeseries_for_boat(conn, boat_id, start, None)

@@ -48,7 +48,7 @@ fn issue_card(issue: &Issue) -> Markup {
                     div class="flex items-center gap-2 mb-2" {
                         (status_badge(is_resolved))
                         span class="text-sm text-gray-500 dark:text-gray-400" {
-                            "Recorded: " (issue.recorded_at.format("%Y-%m-%d %H:%M"))
+                            "Recorded: " (issue.recorded_at.with_timezone(&chrono::Local).format("%Y-%m-%d %H:%M"))
                         }
                     }
                     p class="text-gray-900 dark:text-white" {
@@ -56,7 +56,7 @@ fn issue_card(issue: &Issue) -> Markup {
                     }
                     @if let Some(resolved) = issue.resolved_at {
                         p class="text-sm text-gray-500 dark:text-gray-400 mt-2" {
-                            "Resolved: " (resolved.format("%Y-%m-%d %H:%M"))
+                            "Resolved: " (resolved.with_timezone(&chrono::Local).format("%Y-%m-%d %H:%M"))
                         }
                     }
                 }

@@ -25,9 +25,9 @@ diesel::table! {
         id -> Integer,
         boat_id -> Nullable<Integer>,
         use_event_id -> Nullable<Integer>,
-        recorded_at -> Timestamp,
+        recorded_at -> TimestamptzSqlite,
         note -> Text,
-        resolved_at -> Nullable<Timestamp>,
+        resolved_at -> Nullable<TimestamptzSqlite>,
     }
 }
 
@@ -39,7 +39,7 @@ diesel::table! {
         id -> Integer,
         boat_id -> Integer,
         batch_id -> Nullable<Integer>,
-        recorded_at -> Timestamp,
+        recorded_at -> TimestamptzSqlite,
         use_scenario -> UseScenarioMapping,
         note -> Nullable<Text>,
     }
@@ -51,7 +51,7 @@ diesel::table! {
 
     use_event_batch (id) {
         id -> Integer,
-        recorded_at -> Timestamp,
+        recorded_at -> TimestamptzSqlite,
         use_scenario -> UseScenarioMapping,
     }
 }
