@@ -96,8 +96,13 @@ impl Issue {
     pub fn get_all_issues_with_boats(
         conn: &mut SqliteConnection,
         order: DbOrdering,
+        offset: usize,
+        limit: usize,
     ) -> Result<Vec<(Issue, Option<Boat>)>, diesel::result::Error> {
         use diesel::SelectableHelper;
+
+        let offset = i64::try_from(offset).unwrap_or_default();
+        let limit = i64::try_from(limit).unwrap_or(50);
 
         match order {
             DbOrdering::Asc => issue::table
@@ -105,13 +110,26 @@ impl Issue {
                 .select((Issue::as_select(), Option::<Boat>::as_select()))
                 .order_by(issue::recorded_at.asc())
                 .then_order_by(issue::resolved_at.asc())
+                .offset(offset)
+                .limit(limit)
                 .load(conn),
             DbOrdering::Desc => issue::table
                 .left_outer_join(boat::table)
                 .select((Issue::as_select(), Option::<Boat>::as_select()))
                 .order_by(issue::recorded_at.desc())
                 .then_order_by(issue::resolved_at.desc())
+                .offset(offset)
+                .limit(limit)
                 .load(conn),
         }
+    }
+
+    /// Returns the total count of all issues.
+    #[tracing::instrument(level = "debug", skip_all, err)]
+    pub fn count_all_issues(
+        conn: &mut SqliteConnection,
+    ) -> Result<u64, diesel::result::Error> {
+        let count: i64 = issue::table.count().get_result(conn)?;
+        Ok(count as u64)
     }
 }

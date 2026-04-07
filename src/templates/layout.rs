@@ -45,7 +45,7 @@ fn navbar() -> Markup {
                     a href="/batches"
                       class="text-white font-semibold px-3 py-2 rounded hover:bg-white/25 cursor-pointer transition"
                       hx-get="/batches"
-                      hx-target="body"
+                      hx-target="#content"
                       hx-push-url="true"
                       {
                         "Practices & Regattas"
@@ -55,7 +55,7 @@ fn navbar() -> Markup {
                     a href="/boats"
                       class="text-white font-semibold px-3 py-2 rounded hover:bg-white/25 cursor-pointer transition"
                       hx-get="/boats"
-                      hx-target="body"
+                      hx-target="#content"
                       hx-push-url="true"
                       {
                         "Boats"
@@ -65,7 +65,7 @@ fn navbar() -> Markup {
                     a href="/issues"
                       class="text-white font-semibold px-3 py-2 rounded hover:bg-white/25 cursor-pointer transition"
                       hx-get="/issues"
-                      hx-target="body"
+                      hx-target="#content"
                       hx-push-url="true"
                       {
                         "Issues"
@@ -75,7 +75,7 @@ fn navbar() -> Markup {
                     a href="/scenarios"
                       class="text-white font-semibold px-3 py-2 rounded hover:bg-white/25 cursor-pointer transition"
                       hx-get="/scenarios"
-                      hx-target="body"
+                      hx-target="#content"
                       hx-push-url="true"
                       {
                         "Scenarios"

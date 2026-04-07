@@ -77,6 +77,22 @@ impl UseEventBatch {
         }
     }
 
+    /// Returns the total number of batches, optionally filtered by scenario.
+    #[tracing::instrument(level = "debug", skip_all, err)]
+    pub fn count_batches(
+        conn: &mut SqliteConnection,
+        scenario: Option<UseScenarioId>,
+    ) -> Result<u64, diesel::result::Error> {
+        let count: i64 = match scenario {
+            Some(scenario_id) => use_event_batch::table
+                .filter(use_event_batch::use_scenario_id.eq(scenario_id))
+                .count()
+                .get_result(conn)?,
+            None => use_event_batch::table.count().get_result(conn)?,
+        };
+        Ok(count as u64)
+    }
+
     #[tracing::instrument(level = "debug", skip_all, err)]
     pub fn get_events_and_boats_for_batch(
         conn: &mut SqliteConnection,

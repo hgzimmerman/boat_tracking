@@ -1,10 +1,11 @@
 use maud::{html, Markup};
 use crate::db::{issue::Issue, boat::Boat};
-use crate::templates::components::common::{page_content, page_header, empty_state, status_badge, BTN_PRIMARY, BTN_SM_GREEN, BTN_SM_YELLOW};
+use crate::handlers::PaginationMeta;
+use crate::templates::components::common::{page_content, page_header, empty_state, status_badge, pagination_controls, BTN_PRIMARY, BTN_SM_GREEN, BTN_SM_YELLOW};
 
-/// Issue list page
-pub fn issue_list_page(issues: &[(Issue, Option<Boat>)]) -> Markup {
-    crate::templates::layout::page("Issues", page_content(html! {
+/// Issue list content (without page wrapper)
+pub fn issue_list_content(issues: &[(Issue, Option<Boat>)], meta: &PaginationMeta) -> Markup {
+    page_content(html! {
         div class="flex flex-col flex-grow xl:px-12 w-full bg-gray-50 dark:bg-slate-600 md:min-w-96 max-w-xxl" {
             (page_header("Issues", html! {
                 a href="/issues/new" class=(BTN_PRIMARY) {
@@ -36,9 +37,10 @@ pub fn issue_list_page(issues: &[(Issue, Option<Boat>)]) -> Markup {
                         }
                     }
                 }
+                (pagination_controls(meta, "/issues"))
             }
         }
-    }))
+    })
 }
 
 fn issue_row(issue: &Issue, boat: Option<&Boat>) -> Markup {

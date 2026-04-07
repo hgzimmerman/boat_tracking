@@ -1,21 +1,17 @@
 use maud::{html, Markup};
 use crate::db::use_event_batch::BatchAndCounts;
 use crate::db::use_scenario::{UseScenario, UseScenarioId};
-use crate::templates::components::common::{page_content, page_header, empty_state, csv_export_link, BTN_PRIMARY};
+use crate::handlers::PaginationMeta;
+use crate::templates::components::common::{page_content, page_header, empty_state, csv_export_link, pagination_controls, BTN_PRIMARY};
 use std::collections::HashMap;
 
-/// Batch list page
-pub fn batch_list_page(batches: &[BatchAndCounts], scenarios: &[UseScenario]) -> Markup {
-    crate::templates::layout::page("Boat Uses", batch_list_content(batches, scenarios))
-}
-
 /// Batch list content (without page wrapper)
-pub fn batch_list_content(batches: &[BatchAndCounts], scenarios: &[UseScenario]) -> Markup {
-    page_content(batch_list(batches, scenarios))
+pub fn batch_list_content(batches: &[BatchAndCounts], scenarios: &[UseScenario], meta: &PaginationMeta) -> Markup {
+    page_content(batch_list(batches, scenarios, meta))
 }
 
 /// Batch list component
-pub fn batch_list(batches: &[BatchAndCounts], scenarios: &[UseScenario]) -> Markup {
+fn batch_list(batches: &[BatchAndCounts], scenarios: &[UseScenario], meta: &PaginationMeta) -> Markup {
     let scenario_names: HashMap<UseScenarioId, &str> = scenarios
         .iter()
         .map(|s| (s.id, s.name.as_str()))
@@ -54,6 +50,7 @@ pub fn batch_list(batches: &[BatchAndCounts], scenarios: &[UseScenario]) -> Mark
                 div id="boats-tooltip"
                     class="fixed z-50 bg-slate-100 dark:bg-slate-600 dark:text-white rounded border-2 border-slate-200 dark:border-white p-2 min-w-48 pointer-events-none empty:hidden"
                 {}
+                (pagination_controls(meta, "/batches"))
                 style {
                     (maud::PreEscaped(r#"
                         #boats-tooltip::after {

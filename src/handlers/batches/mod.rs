@@ -1,11 +1,12 @@
 mod session;
 
 use axum::{
-    extract::{Path, State, FromRequest, Request, Form},
+    extract::{Path, Query, State, FromRequest, Request, Form},
     response::{Html, IntoResponse},
     http::StatusCode,
     body::Bytes,
 };
+use axum_htmx::HxRequest;
 use chrono::TimeZone;
 use serde::Deserialize;
 
@@ -49,6 +50,8 @@ use crate::{
 /// Handler for batch list page
 pub async fn batch_list_handler(
     State(state): State<AppState>,
+    hx_request: HxRequest,
+    Query(pagination): Query<super::PaginationParams>,
 ) -> Result<Html<String>, StatusCode> {
     let conn = state.pool().get().await
         .map_err(|error| {
@@ -56,11 +59,15 @@ pub async fn batch_list_handler(
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
-    let (batches, scenarios) = conn
-        .interact(|conn| {
-            let batches = UseEventBatch::get_most_recent_batches_and_their_use_count(conn, None, 0, 100)?;
+    let offset = pagination.offset() as usize;
+    let limit = pagination.per_page as usize;
+
+    let (batches, scenarios, total_count) = conn
+        .interact(move |conn| {
+            let batches = UseEventBatch::get_most_recent_batches_and_their_use_count(conn, None, offset, limit)?;
             let scenarios = UseScenario::get_all(conn)?;
-            Ok::<_, diesel::result::Error>((batches, scenarios))
+            let total_count = UseEventBatch::count_batches(conn, None)?;
+            Ok::<_, diesel::result::Error>((batches, scenarios, total_count))
         })
         .await
         .map_err(|error| {
@@ -72,8 +79,10 @@ pub async fn batch_list_handler(
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
-    tracing::debug!("Retrieved {} batches", batches.len());
-    Ok(Html(templates::batches::list::batch_list_page(&batches, &scenarios).into_string()))
+    let meta = pagination.metadata(total_count);
+    tracing::debug!("Retrieved {} batches (page {}/{})", batches.len(), meta.current_page, meta.total_pages);
+    let content = templates::batches::list::batch_list_content(&batches, &scenarios, &meta);
+    Ok(super::maybe_page("Boat Uses", content, hx_request))
 }
 
 /// Query parameters for batch creation page
