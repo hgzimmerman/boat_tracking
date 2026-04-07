@@ -21,20 +21,20 @@ pub async fn issue_list_handler(
     State(state): State<AppState>,
 ) -> Result<Html<String>, StatusCode> {
     let conn = state.pool().get().await
-        .map_err(|e| {
-            tracing::error!("Failed to get database connection: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get database connection");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
     let issues = conn
         .interact(|conn| Issue::get_all_issues_with_boats(conn, DbOrdering::Desc))
         .await
-        .map_err(|e| {
-            tracing::error!("Database interaction error: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Database interaction error");
             StatusCode::INTERNAL_SERVER_ERROR
         })?
-        .map_err(|e| {
-            tracing::error!("Failed to get issues: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get issues");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
@@ -46,8 +46,8 @@ pub async fn new_issue_handler(
     State(state): State<AppState>,
 ) -> Result<Html<String>, StatusCode> {
     let conn = state.pool().get().await
-        .map_err(|e| {
-            tracing::error!("Failed to get database connection: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get database connection");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
@@ -61,12 +61,12 @@ pub async fn new_issue_handler(
     let boats = conn
         .interact(move |conn| Boat::get_filtered_boats(conn, filter, None))
         .await
-        .map_err(|e| {
-            tracing::error!("Database interaction error: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Database interaction error");
             StatusCode::INTERNAL_SERVER_ERROR
         })?
-        .map_err(|e| {
-            tracing::error!("Failed to get boats: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get boats");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
@@ -108,8 +108,8 @@ pub async fn create_issue_handler(
 
     // Create the issue
     let conn = state.pool().get().await
-        .map_err(|e| {
-            tracing::error!("Failed to get database connection: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get database connection");
             Html("<p>Database connection error</p>".to_string())
         })?;
 
@@ -124,12 +124,12 @@ pub async fn create_issue_handler(
     let _issue = conn
         .interact(|conn| Issue::add_issue(conn, new_issue))
         .await
-        .map_err(|e| {
-            tracing::error!("Database interaction error: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Database interaction error");
             Html("<p>Database error</p>".to_string())
         })?
-        .map_err(|e| {
-            tracing::error!("Failed to create issue: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to create issue");
             Html("<p>Failed to create issue</p>".to_string())
         })?;
 
@@ -149,20 +149,20 @@ pub async fn resolve_issue_handler(
     Path(issue_id): Path<IssueId>,
 ) -> Result<impl IntoResponse, Html<String>> {
     let conn = state.pool().get().await
-        .map_err(|e| {
-            tracing::error!("Failed to get database connection: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get database connection");
             Html("<p>Database connection error</p>".to_string())
         })?;
 
     let _issue = conn
         .interact(move |conn| Issue::resolve_issue(conn, issue_id))
         .await
-        .map_err(|e| {
-            tracing::error!("Database interaction error: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Database interaction error");
             Html("<p>Database error</p>".to_string())
         })?
-        .map_err(|e| {
-            tracing::error!("Failed to resolve issue: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to resolve issue");
             Html("<p>Failed to resolve issue</p>".to_string())
         })?;
 
@@ -182,20 +182,20 @@ pub async fn unresolve_issue_handler(
     Path(issue_id): Path<IssueId>,
 ) -> Result<impl IntoResponse, Html<String>> {
     let conn = state.pool().get().await
-        .map_err(|e| {
-            tracing::error!("Failed to get database connection: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get database connection");
             Html("<p>Database connection error</p>".to_string())
         })?;
 
     let _issue = conn
         .interact(move |conn| Issue::unresolve_issue(conn, issue_id))
         .await
-        .map_err(|e| {
-            tracing::error!("Database interaction error: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Database interaction error");
             Html("<p>Database error</p>".to_string())
         })?
-        .map_err(|e| {
-            tracing::error!("Failed to unresolve issue: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to unresolve issue");
             Html("<p>Failed to unresolve issue</p>".to_string())
         })?;
 

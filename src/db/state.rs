@@ -37,7 +37,7 @@ impl AppState {
             if applied.is_empty() {
                 tracing::info!("Database is up to date, no migrations needed");
             } else {
-                tracing::info!("Applied {} migration(s)", applied.len());
+                tracing::info!(count = applied.len(), "Applied migrations");
             }
         }
 

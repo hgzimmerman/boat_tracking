@@ -22,24 +22,24 @@ pub async fn boat_list_handler(
     State(state): State<AppState>,
 ) -> Result<Html<String>, StatusCode> {
     let conn = state.pool().get().await
-        .map_err(|e| {
-            tracing::error!("Failed to get database connection: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get database connection");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
     let boats = conn
         .interact(BoatAndStats::get_boats)
         .await
-        .map_err(|e| {
-            tracing::error!("Database interaction error: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Database interaction error");
             StatusCode::INTERNAL_SERVER_ERROR
         })?
-        .map_err(|e| {
-            tracing::error!("Failed to get boats: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get boats");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
-    tracing::debug!("Retrieved {} boats", boats.len());
+    tracing::debug!(count = boats.len(), "Retrieved boats");
     Ok(Html(templates::boats::boat_list_page(&boats).into_string()))
 }
 
@@ -146,8 +146,8 @@ pub async fn create_boat_handler(
     let new_boat = NewBoat::new(input.name, weight_class, boat_type, acquired_at, manufactured_at);
 
     let conn = state.pool().get().await
-        .map_err(|e| {
-            tracing::error!("Failed to get database connection: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get database connection");
             Html("Database connection error".to_string())
         })?;
 
@@ -155,12 +155,12 @@ pub async fn create_boat_handler(
         Boat::new_boat(conn, new_boat)
     })
     .await
-    .map_err(|e| {
-            tracing::error!("Database interaction error: {}", e);
+    .map_err(|error| {
+            tracing::error!(?error, "Database interaction error");
             Html("Database error".to_string())
         })?
-    .map_err(|e| {
-        tracing::error!("Failed to create boat: {}", e);
+    .map_err(|error| {
+        tracing::error!(?error, "Failed to create boat");
         Html("Failed to create boat".to_string())
     })?;
 
@@ -168,20 +168,20 @@ pub async fn create_boat_handler(
 
     // Get boats list to return
     let conn = state.pool().get().await
-        .map_err(|e| {
-            tracing::error!("Failed to get database connection: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get database connection");
             Html("Database connection error".to_string())
         })?;
 
     let boats = conn
         .interact(BoatAndStats::get_boats)
         .await
-        .map_err(|e| {
-            tracing::error!("Database interaction error: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Database interaction error");
             Html("Database error".to_string())
         })?
-        .map_err(|e| {
-            tracing::error!("Failed to get boats: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get boats");
             Html("Failed to get boats".to_string())
         })?;
 
@@ -205,24 +205,24 @@ pub async fn boat_detail_handler(
     hx_request: HxRequest,
 ) -> Result<Html<String>, StatusCode> {
     let conn = state.pool().get().await
-        .map_err(|e| {
-            tracing::error!("Failed to get database connection: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get database connection");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
     let boat = conn
         .interact(move |conn| BoatAndStats::get_boat(conn, boat_id))
         .await
-        .map_err(|e| {
-            tracing::error!("Database interaction error: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Database interaction error");
             StatusCode::INTERNAL_SERVER_ERROR
         })?
-        .map_err(|e| {
-            tracing::warn!("Boat not found: {}", e);
+        .map_err(|error| {
+            tracing::warn!(?error, "Boat not found");
             StatusCode::NOT_FOUND
         })?;
 
-    tracing::debug!("Retrieved boat details for {}", boat.boat.name);
+    tracing::debug!(boat_name = %boat.boat.name, "Retrieved boat details");
     let content = templates::boats::detail::boat_detail_content(&boat);
     Ok(super::maybe_page(&format!("{} - Boat Details", boat.boat.name), content, hx_request))
 }
@@ -234,8 +234,8 @@ pub async fn boat_issues_handler(
     hx_request: HxRequest,
 ) -> Result<Html<String>, StatusCode> {
     let conn = state.pool().get().await
-        .map_err(|e| {
-            tracing::error!("Failed to get database connection: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get database connection");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
@@ -246,12 +246,12 @@ pub async fn boat_issues_handler(
             Ok::<_, diesel::result::Error>((boat, issues))
         })
         .await
-        .map_err(|e| {
-            tracing::error!("Database interaction error: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Database interaction error");
             StatusCode::INTERNAL_SERVER_ERROR
         })?
-        .map_err(|e| {
-            tracing::warn!("Boat not found: {}", e);
+        .map_err(|error| {
+            tracing::warn!(?error, "Boat not found");
             StatusCode::NOT_FOUND
         })?;
 
@@ -271,12 +271,12 @@ pub async fn edit_boat_handler(
     let boat = conn
         .interact(move |conn| Boat::get_boat(conn, boat_id))
         .await
-        .map_err(|e| {
-            tracing::error!("Database interaction error: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Database interaction error");
             StatusCode::INTERNAL_SERVER_ERROR
         })?
-        .map_err(|e| {
-            tracing::warn!("Boat not found: {}", e);
+        .map_err(|error| {
+            tracing::warn!(?error, "Boat not found");
             StatusCode::NOT_FOUND
         })?;
 
@@ -377,8 +377,8 @@ pub async fn update_boat_handler(
     // Update boat - first get the existing boat, then update it
     let weight_class = weight_class.unwrap();
     let conn = state.pool().get().await
-        .map_err(|e| {
-            tracing::error!("Failed to get database connection: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get database connection");
             Html("Database connection error".to_string())
         })?;
 
@@ -386,12 +386,12 @@ pub async fn update_boat_handler(
     let mut boat = conn
         .interact(move |conn| Boat::get_boat(conn, boat_id))
         .await
-        .map_err(|e| {
-            tracing::error!("Database interaction error: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Database interaction error");
             Html("Database error".to_string())
         })?
-        .map_err(|e| {
-            tracing::warn!("Boat not found: {}", e);
+        .map_err(|error| {
+            tracing::warn!(?error, "Boat not found");
             Html("Boat not found".to_string())
         })?;
 
@@ -412,8 +412,8 @@ pub async fn update_boat_handler(
 
     // Save updated boat
     let conn = state.pool().get().await
-        .map_err(|e| {
-            tracing::error!("Failed to get database connection: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get database connection");
             Html("Database connection error".to_string())
         })?;
 
@@ -421,33 +421,33 @@ pub async fn update_boat_handler(
         Boat::update_boat(conn, &boat)
     })
     .await
-    .map_err(|e| {
-        tracing::error!("Database interaction error: {}", e);
+    .map_err(|error| {
+        tracing::error!(?error, "Database interaction error");
         Html("Database error".to_string())
     })?
-    .map_err(|e| {
-        tracing::error!("Failed to update boat: {}", e);
+    .map_err(|error| {
+        tracing::error!(?error, "Failed to update boat");
         Html("Failed to update boat".to_string())
     })?;
 
-    tracing::info!("Successfully updated boat {}", boat_id.as_int());
+    tracing::info!(%boat_id, "Successfully updated boat");
 
     // Get boats list to return
     let conn = state.pool().get().await
-        .map_err(|e| {
-            tracing::error!("Failed to get database connection: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get database connection");
             Html("Database connection error".to_string())
         })?;
 
     let boats = conn
         .interact(BoatAndStats::get_boats)
         .await
-        .map_err(|e| {
-            tracing::error!("Database interaction error: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Database interaction error");
             Html("Database error".to_string())
         })?
-        .map_err(|e| {
-            tracing::error!("Failed to get boats: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get boats");
             Html("Failed to get boats".to_string())
         })?;
 
@@ -470,8 +470,8 @@ pub async fn daily_chart_handler(
     Path(boat_id): Path<BoatId>,
 ) -> Result<Response, StatusCode> {
     let conn = state.pool().get().await
-        .map_err(|e| {
-            tracing::error!("Failed to get database connection: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get database connection");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
@@ -482,12 +482,12 @@ pub async fn daily_chart_handler(
             UseEvent::daily_timeseries_for_boat(conn, boat_id, start, None)
         })
         .await
-        .map_err(|e| {
-            tracing::error!("Database interaction error: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Database interaction error");
             StatusCode::INTERNAL_SERVER_ERROR
         })?
-        .map_err(|e| {
-            tracing::error!("Failed to get daily timeseries: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get daily timeseries");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
@@ -498,8 +498,8 @@ pub async fn daily_chart_handler(
 
     // Generate SVG
     let svg = templates::boats::charts::monthly_usage_chart(&data)
-        .map_err(|e| {
-            tracing::error!("Failed to generate chart: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to generate chart");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
@@ -517,8 +517,8 @@ pub async fn monthly_chart_handler(
     Path(boat_id): Path<BoatId>,
 ) -> Result<Response, StatusCode> {
     let conn = state.pool().get().await
-        .map_err(|e| {
-            tracing::error!("Failed to get database connection: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get database connection");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
@@ -529,12 +529,12 @@ pub async fn monthly_chart_handler(
             UseEvent::monthly_timeseries_for_boat(conn, boat_id, start, None)
         })
         .await
-        .map_err(|e| {
-            tracing::error!("Database interaction error: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Database interaction error");
             StatusCode::INTERNAL_SERVER_ERROR
         })?
-        .map_err(|e| {
-            tracing::error!("Failed to get monthly timeseries: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get monthly timeseries");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
@@ -545,8 +545,8 @@ pub async fn monthly_chart_handler(
 
     // Generate SVG
     let svg = templates::boats::charts::yearly_usage_chart(&data)
-        .map_err(|e| {
-            tracing::error!("Failed to generate chart: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to generate chart");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 

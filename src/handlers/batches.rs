@@ -20,14 +20,14 @@ where
     async fn from_request(req: Request, state: &S) -> Result<Self, Self::Rejection> {
         let body = Bytes::from_request(req, state)
             .await
-            .map_err(|e| (StatusCode::BAD_REQUEST, format!("Failed to read body: {}", e)))?;
+            .map_err(|error| (StatusCode::BAD_REQUEST, format!("Failed to read body: {error}")))?;
 
         let body_str = std::str::from_utf8(&body)
             .map_err(|_| (StatusCode::BAD_REQUEST, "Invalid UTF-8 in form data".to_string()))?;
 
         let value = serde_qs::Config::new(5, false)
             .deserialize_str(body_str)
-            .map_err(|e| (StatusCode::UNPROCESSABLE_ENTITY, format!("Failed to parse form: {}", e)))?;
+            .map_err(|error| (StatusCode::UNPROCESSABLE_ENTITY, format!("Failed to parse form: {error}")))?;
 
         Ok(QsForm(value))
     }
@@ -47,8 +47,8 @@ pub async fn batch_list_handler(
     State(state): State<AppState>,
 ) -> Result<Html<String>, StatusCode> {
     let conn = state.pool().get().await
-        .map_err(|e| {
-            tracing::error!("Failed to get database connection: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get database connection");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
@@ -59,12 +59,12 @@ pub async fn batch_list_handler(
             Ok::<_, diesel::result::Error>((batches, scenarios))
         })
         .await
-        .map_err(|e| {
-            tracing::error!("Database interaction error: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Database interaction error");
             StatusCode::INTERNAL_SERVER_ERROR
         })?
-        .map_err(|e| {
-            tracing::error!("Failed to get batches: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get batches");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
@@ -84,8 +84,8 @@ pub async fn new_batch_handler(
     axum::extract::Query(query): axum::extract::Query<NewBatchQuery>,
 ) -> Result<Html<String>, StatusCode> {
     let conn = state.pool().get().await
-        .map_err(|e| {
-            tracing::error!("Failed to get database connection: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get database connection");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
@@ -95,8 +95,8 @@ pub async fn new_batch_handler(
             UseEventBatch::get_events_and_boats_for_batch(conn, batch_id)
         })
         .await
-        .map_err(|e| {
-            tracing::error!("Database interaction error: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Database interaction error");
             StatusCode::INTERNAL_SERVER_ERROR
         })?
         .ok() // Convert Result to Option, ignoring errors for template
@@ -107,12 +107,12 @@ pub async fn new_batch_handler(
     let scenarios = conn
         .interact(UseScenario::get_all)
         .await
-        .map_err(|e| {
-            tracing::error!("Database interaction error: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Database interaction error");
             StatusCode::INTERNAL_SERVER_ERROR
         })?
-        .map_err(|e| {
-            tracing::error!("Failed to get scenarios: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get scenarios");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
@@ -149,8 +149,8 @@ pub async fn create_batch_handler(
 
     // Create the batch
     let conn = state.pool().get().await
-        .map_err(|e| {
-            tracing::error!("Failed to get database connection: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get database connection");
             Html("<p>Database connection error</p>".to_string())
         })?;
 
@@ -165,12 +165,12 @@ pub async fn create_batch_handler(
     let _batch_id = conn
         .interact(|conn| UseEventBatch::create_batch(conn, new_batch))
         .await
-        .map_err(|e| {
-            tracing::error!("Database interaction error: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Database interaction error");
             Html("<p>Database error</p>".to_string())
         })?
-        .map_err(|e| {
-            tracing::error!("Failed to create batch: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to create batch");
             Html("<p>Failed to create batch</p>".to_string())
         })?;
 
@@ -230,20 +230,20 @@ pub async fn list_boats_handler(
     State(state): State<AppState>,
 ) -> Result<Html<String>, StatusCode> {
     let conn = state.pool().get().await
-        .map_err(|e| {
-            tracing::error!("Failed to get database connection: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get database connection");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
     let boats = conn
         .interact(crate::db::boat::BoatAndStats::get_boats)
         .await
-        .map_err(|e| {
-            tracing::error!("Database interaction error: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Database interaction error");
             StatusCode::INTERNAL_SERVER_ERROR
         })?
-        .map_err(|e| {
-            tracing::error!("Failed to get boats: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get boats");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
@@ -257,20 +257,20 @@ pub async fn search_boats_handler(
 ) -> Result<Html<String>, StatusCode> {
 
     let conn = state.pool().get().await
-        .map_err(|e| {
-            tracing::error!("Failed to get database connection: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get database connection");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
     let boats = conn
         .interact(crate::db::boat::BoatAndStats::get_boats)
         .await
-        .map_err(|e| {
-            tracing::error!("Database interaction error: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Database interaction error");
             StatusCode::INTERNAL_SERVER_ERROR
         })?
-        .map_err(|e| {
-            tracing::error!("Failed to get boats: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get boats");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
@@ -366,8 +366,8 @@ pub async fn batch_detail_handler(
     Path(batch_id): Path<BatchId>,
 ) -> Result<Html<String>, StatusCode> {
     let conn = state.pool().get().await
-        .map_err(|e| {
-            tracing::error!("Failed to get database connection: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get database connection");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
@@ -383,13 +383,13 @@ pub async fn batch_detail_handler(
             Ok::<_, diesel::result::Error>((batch, boats, scenario_name))
         })
         .await
-        .map_err(|e| {
-            tracing::error!("Database interaction error: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Database interaction error");
             StatusCode::INTERNAL_SERVER_ERROR
         })?
-        .map_err(|e| {
-            tracing::error!("Failed to get batch details: {}", e);
-            if matches!(e, diesel::result::Error::NotFound) {
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get batch details");
+            if matches!(error, diesel::result::Error::NotFound) {
                 StatusCode::NOT_FOUND
             } else {
                 StatusCode::INTERNAL_SERVER_ERROR
@@ -405,8 +405,8 @@ pub async fn batch_boats_preview_handler(
     Path(batch_id): Path<BatchId>,
 ) -> Result<Html<String>, StatusCode> {
     let conn = state.pool().get().await
-        .map_err(|e| {
-            tracing::error!("Failed to get database connection: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get database connection");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
@@ -416,12 +416,12 @@ pub async fn batch_boats_preview_handler(
             UseEventBatch::get_events_and_boats_for_batch(conn, batch_id)
         })
         .await
-        .map_err(|e| {
-            tracing::error!("Database interaction error: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Database interaction error");
             StatusCode::INTERNAL_SERVER_ERROR
         })?
-        .map_err(|e| {
-            tracing::error!("Failed to get boats for batch: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get boats for batch");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
