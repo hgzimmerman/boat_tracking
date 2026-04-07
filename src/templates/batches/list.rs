@@ -51,6 +51,26 @@ pub fn batch_list(batches: &[BatchAndCounts], scenarios: &[UseScenario]) -> Mark
                         }
                     }
                 }
+                div id="boats-tooltip"
+                    class="fixed z-50 bg-slate-100 dark:bg-slate-600 dark:text-white rounded border-2 border-slate-200 dark:border-white p-2 min-w-48 pointer-events-none empty:hidden"
+                {}
+                script {
+                    (maud::PreEscaped(r#"
+                        function positionTooltip(cell) {
+                            var tip = document.getElementById('boats-tooltip');
+                            var rect = cell.getBoundingClientRect();
+                            tip.style.top = (rect.bottom + 4) + 'px';
+                            tip.style.right = (window.innerWidth - rect.right) + 'px';
+                            tip.style.left = '';
+                            tip.innerHTML = '';
+                        }
+                        function hideTooltip() {
+                            var tip = document.getElementById('boats-tooltip');
+                            tip.innerHTML = '';
+                        }
+                        document.addEventListener('scroll', hideTooltip, true);
+                    "#))
+                }
             }
         }
     }
@@ -74,29 +94,26 @@ fn batch_row(batch: &BatchAndCounts, scenario_names: &HashMap<UseScenarioId, &st
             td class="px-4 py-3 text-sm" {
                 (scenario_name)
             }
-            td class="px-4 py-3 text-sm text-right relative cursor-pointer"
-                onmouseenter="document.querySelectorAll('[id^=\"boats-preview-\"]').forEach(el => el.innerHTML = '')"
-                onmouseleave=(format!("setTimeout(() => document.getElementById('boats-preview-{batch_id}').innerHTML = '', 100)"))
+            td class="px-4 py-3 text-sm text-right cursor-pointer"
                 hx-get=(format!("/api/batches/{batch_id}/boats"))
-                hx-trigger="mouseenter delay:500ms"
-                hx-target=(format!("#boats-preview-{batch_id}"))
+                hx-trigger="mouseenter delay:300ms"
+                hx-target="#boats-tooltip"
                 hx-swap="innerHTML"
+                onmouseenter="positionTooltip(this)"
+                onmouseleave="hideTooltip()"
             {
                 (batch.use_counts)
-                div id=(format!("boats-preview-{batch_id}")) {}
             }
         }
     }
 }
 
-/// Boat preview popup (rendered on hover)
+/// Boat preview popup content (rendered on hover, inserted into shared tooltip)
 pub fn boats_preview_popup(boat_names: &[String]) -> Markup {
     html! {
-        div class="absolute top-full right-0 mt-1 bg-slate-100 dark:bg-slate-600 rounded border-2 border-slate-200 dark:border-white z-50 p-2 min-w-48" {
-            ul {
-                @for boat_name in boat_names {
-                    li { (boat_name) }
-                }
+        ul {
+            @for boat_name in boat_names {
+                li { (boat_name) }
             }
         }
     }
