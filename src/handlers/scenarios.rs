@@ -19,20 +19,20 @@ pub async fn scenario_list_handler(
     State(state): State<AppState>,
 ) -> Result<Html<String>, StatusCode> {
     let conn = state.pool().get().await
-        .map_err(|e| {
-            tracing::error!("Failed to get database connection: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get database connection");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
     let scenarios = conn
         .interact(UseScenario::get_all)
         .await
-        .map_err(|e| {
-            tracing::error!("Database interaction error: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Database interaction error");
             StatusCode::INTERNAL_SERVER_ERROR
         })?
-        .map_err(|e| {
-            tracing::error!("Failed to get scenarios: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get scenarios");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
@@ -64,8 +64,8 @@ pub async fn create_scenario_handler(
     Form(input): Form<ScenarioFormInput>,
 ) -> Result<Html<String>, StatusCode> {
     let conn = state.pool().get().await
-        .map_err(|e| {
-            tracing::error!("Failed to get database connection: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get database connection");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
@@ -82,12 +82,12 @@ pub async fn create_scenario_handler(
             )
         })
         .await
-        .map_err(|e| {
-            tracing::error!("Database interaction error: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Database interaction error");
             StatusCode::INTERNAL_SERVER_ERROR
         })?
-        .map_err(|e| {
-            tracing::error!("Failed to create scenario: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to create scenario");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
@@ -95,12 +95,12 @@ pub async fn create_scenario_handler(
     let scenarios = conn
         .interact(UseScenario::get_all)
         .await
-        .map_err(|e| {
-            tracing::error!("Database interaction error: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Database interaction error");
             StatusCode::INTERNAL_SERVER_ERROR
         })?
-        .map_err(|e| {
-            tracing::error!("Failed to get scenarios: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get scenarios");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
@@ -113,20 +113,20 @@ pub async fn edit_scenario_handler(
     Path(scenario_id): Path<UseScenarioId>,
 ) -> Result<Html<String>, StatusCode> {
     let conn = state.pool().get().await
-        .map_err(|e| {
-            tracing::error!("Failed to get database connection: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get database connection");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
     let scenario = conn
         .interact(move |conn| UseScenario::get_by_id(conn, scenario_id))
         .await
-        .map_err(|e| {
-            tracing::error!("Database interaction error: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Database interaction error");
             StatusCode::INTERNAL_SERVER_ERROR
         })?
-        .map_err(|e| {
-            tracing::error!("Failed to get scenario: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get scenario");
             StatusCode::INTERNAL_SERVER_ERROR
         })?
         .ok_or(StatusCode::NOT_FOUND)?;
@@ -143,8 +143,8 @@ pub async fn update_scenario_handler(
     let default_time = parse_default_time(&input.default_time);
 
     let conn = state.pool().get().await
-        .map_err(|e| {
-            tracing::error!("Failed to get database connection: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get database connection");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
@@ -160,12 +160,12 @@ pub async fn update_scenario_handler(
             )
         })
         .await
-        .map_err(|e| {
-            tracing::error!("Database interaction error: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Database interaction error");
             StatusCode::INTERNAL_SERVER_ERROR
         })?
-        .map_err(|e| {
-            tracing::error!("Failed to update scenario: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to update scenario");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
@@ -173,12 +173,12 @@ pub async fn update_scenario_handler(
     let scenarios = conn
         .interact(UseScenario::get_all)
         .await
-        .map_err(|e| {
-            tracing::error!("Database interaction error: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Database interaction error");
             StatusCode::INTERNAL_SERVER_ERROR
         })?
-        .map_err(|e| {
-            tracing::error!("Failed to get scenarios: {}", e);
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get scenarios");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 

@@ -67,7 +67,7 @@ fn batch_row(batch: &BatchAndCounts, scenario_names: &HashMap<UseScenarioId, &st
         tr class="hover:bg-gray-50 dark:hover:bg-gray-600 dark:text-white" {
             td class="px-4 py-3 text-sm" {
                 a class="text-blue-600 hover:underline dark:text-blue-400 font-medium"
-                  href=(format!("/batches/{}", batch_id)) {
+                  href=(format!("/batches/{batch_id}")) {
                     (batch.batch.recorded_at.with_timezone(&chrono::Local).format("%Y-%m-%d %-I:%M %p"))
                 }
             }
@@ -76,14 +76,14 @@ fn batch_row(batch: &BatchAndCounts, scenario_names: &HashMap<UseScenarioId, &st
             }
             td class="px-4 py-3 text-sm text-right relative cursor-pointer"
                 onmouseenter="document.querySelectorAll('[id^=\"boats-preview-\"]').forEach(el => el.innerHTML = '')"
-                onmouseleave=(format!("setTimeout(() => document.getElementById('boats-preview-{}').innerHTML = '', 100)", batch_id))
-                hx-get=(format!("/api/batches/{}/boats", batch_id))
+                onmouseleave=(format!("setTimeout(() => document.getElementById('boats-preview-{batch_id}').innerHTML = '', 100)"))
+                hx-get=(format!("/api/batches/{batch_id}/boats"))
                 hx-trigger="mouseenter delay:500ms"
-                hx-target=(format!("#boats-preview-{}", batch_id))
+                hx-target=(format!("#boats-preview-{batch_id}"))
                 hx-swap="innerHTML"
             {
                 (batch.use_counts)
-                div id=(format!("boats-preview-{}", batch_id)) {}
+                div id=(format!("boats-preview-{batch_id}")) {}
             }
         }
     }

@@ -35,8 +35,8 @@ pub fn toast(id: &str, toast_type: ToastType, message: &str) -> Markup {
     html! {
         div hx-swap-oob="beforeend:#toast-container" {
             div
-                id=(format!("toast-{}", id))
-                class=(format!("{} text-white px-6 py-4 rounded shadow-lg flex items-center gap-3 min-w-64", bg_color))
+                id=(format!("toast-{id}"))
+                class=(format!("{bg_color} text-white px-6 py-4 rounded shadow-lg flex items-center gap-3 min-w-64"))
                 data-auto-dismiss="4000"
             {
                 span .text-xl .font-bold { (icon) }
@@ -58,7 +58,7 @@ pub fn simple_toast(toast_type: ToastType, message: &str) -> Markup {
     html! {
         div
             id=(format!("toast-{}", chrono::Utc::now().timestamp_millis()))
-            class=(format!("{} text-white px-6 py-4 rounded shadow-lg flex items-center gap-3 min-w-64", bg_color))
+            class=(format!("{bg_color} text-white px-6 py-4 rounded shadow-lg flex items-center gap-3 min-w-64"))
             data-auto-dismiss="4000"
         {
             span .text-xl .font-bold { (icon) }
@@ -69,19 +69,19 @@ pub fn simple_toast(toast_type: ToastType, message: &str) -> Markup {
 
 /// Convenience functions for common toast types
 pub fn success_toast(message: &str) -> Markup {
-    toast(&format!("{}", chrono::Utc::now().timestamp_millis()), ToastType::Success, message)
+    toast(&chrono::Utc::now().timestamp_millis().to_string(), ToastType::Success, message)
 }
 
 pub fn error_toast(message: &str) -> Markup {
-    toast(&format!("{}", chrono::Utc::now().timestamp_millis()), ToastType::Error, message)
+    toast(&chrono::Utc::now().timestamp_millis().to_string(), ToastType::Error, message)
 }
 
 pub fn warning_toast(message: &str) -> Markup {
-    toast(&format!("{}", chrono::Utc::now().timestamp_millis()), ToastType::Warning, message)
+    toast(&chrono::Utc::now().timestamp_millis().to_string(), ToastType::Warning, message)
 }
 
 pub fn info_toast(message: &str) -> Markup {
-    toast(&format!("{}", chrono::Utc::now().timestamp_millis()), ToastType::Info, message)
+    toast(&chrono::Utc::now().timestamp_millis().to_string(), ToastType::Info, message)
 }
 
 /// Simple convenience functions (no OOB)
