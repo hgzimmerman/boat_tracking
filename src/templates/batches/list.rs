@@ -51,6 +51,53 @@ pub fn batch_list(batches: &[BatchAndCounts], scenarios: &[UseScenario]) -> Mark
                         }
                     }
                 }
+                div id="boats-tooltip"
+                    class="fixed z-50 bg-slate-100 dark:bg-slate-600 dark:text-white rounded border-2 border-slate-200 dark:border-white p-2 min-w-48 pointer-events-none empty:hidden"
+                {}
+                style {
+                    (maud::PreEscaped(r#"
+                        #boats-tooltip::after {
+                            content: '';
+                            position: absolute;
+                            top: 50%;
+                            right: -12px;
+                            transform: translateY(-50%);
+                            border: 6px solid transparent;
+                            border-left-color: rgb(203 213 225);
+                        }
+                        @media (prefers-color-scheme: dark) {
+                            #boats-tooltip::after {
+                                border-left-color: white;
+                            }
+                        }
+                    "#))
+                }
+                script {
+                    (maud::PreEscaped(r#"
+                        var expectedPath = null;
+                        function positionTooltip(cell) {
+                            expectedPath = cell.getAttribute('hx-get');
+                            var tip = document.getElementById('boats-tooltip');
+                            var rect = cell.getBoundingClientRect();
+                            tip.style.top = (rect.top + rect.height / 2) + 'px';
+                            tip.style.transform = 'translateY(-50%)';
+                            tip.style.right = (window.innerWidth - rect.left + 12) + 'px';
+                            tip.style.left = '';
+                            tip.innerHTML = '';
+                        }
+                        function hideTooltip() {
+                            expectedPath = null;
+                            var tip = document.getElementById('boats-tooltip');
+                            tip.innerHTML = '';
+                        }
+                        document.addEventListener('scroll', hideTooltip, true);
+                        document.body.addEventListener('htmx:afterSwap', function(evt) {
+                            if (evt.detail.target.id === 'boats-tooltip' && evt.detail.requestConfig.path !== expectedPath) {
+                                evt.detail.target.innerHTML = '';
+                            }
+                        });
+                    "#))
+                }
             }
         }
     }
@@ -74,29 +121,29 @@ fn batch_row(batch: &BatchAndCounts, scenario_names: &HashMap<UseScenarioId, &st
             td class="px-4 py-3 text-sm" {
                 (scenario_name)
             }
-            td class="px-4 py-3 text-sm text-right relative cursor-pointer"
-                onmouseenter="document.querySelectorAll('[id^=\"boats-preview-\"]').forEach(el => el.innerHTML = '')"
-                onmouseleave=(format!("setTimeout(() => document.getElementById('boats-preview-{batch_id}').innerHTML = '', 100)"))
-                hx-get=(format!("/api/batches/{batch_id}/boats"))
-                hx-trigger="mouseenter delay:500ms"
-                hx-target=(format!("#boats-preview-{batch_id}"))
-                hx-swap="innerHTML"
+            td class="px-4 py-3 text-sm text-right"
+                onmouseleave="hideTooltip()"
             {
-                (batch.use_counts)
-                div id=(format!("boats-preview-{batch_id}")) {}
+                span class="pl-6 py-3 -my-3 cursor-pointer"
+                    hx-get=(format!("/api/batches/{batch_id}/boats"))
+                    hx-trigger="mouseenter delay:300ms"
+                    hx-target="#boats-tooltip"
+                    hx-swap="innerHTML"
+                    onmouseenter="positionTooltip(this)"
+                {
+                    (batch.use_counts)
+                }
             }
         }
     }
 }
 
-/// Boat preview popup (rendered on hover)
+/// Boat preview popup content (rendered on hover, inserted into shared tooltip)
 pub fn boats_preview_popup(boat_names: &[String]) -> Markup {
     html! {
-        div class="absolute top-full right-0 mt-1 bg-slate-100 dark:bg-slate-600 rounded border-2 border-slate-200 dark:border-white z-50 p-2 min-w-48" {
-            ul {
-                @for boat_name in boat_names {
-                    li { (boat_name) }
-                }
+        ul {
+            @for boat_name in boat_names {
+                li { (boat_name) }
             }
         }
     }
