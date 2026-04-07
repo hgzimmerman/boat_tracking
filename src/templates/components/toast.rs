@@ -12,14 +12,17 @@ pub enum ToastType {
 /// Create a toast notification for HTMX out-of-band swap
 ///
 /// Usage in a handler:
-/// ```rust
+/// ```
+/// use maud::html;
+/// use boat_tracking::templates::components::toast::{toast, ToastType};
+///
 /// html! {
 ///     // Main response content
 ///     div { "Operation completed" }
 ///
 ///     // Toast (out-of-band)
 ///     (toast("success-123", ToastType::Success, "Boat created successfully!"))
-/// }
+/// };
 /// ```
 pub fn toast(id: &str, toast_type: ToastType, message: &str) -> Markup {
     let (bg_color, icon) = match toast_type {
