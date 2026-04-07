@@ -1,3 +1,5 @@
+mod session;
+
 use axum::{
     extract::{Path, State, FromRequest, Request, Form},
     response::{Html, IntoResponse},
@@ -32,13 +34,15 @@ where
         Ok(QsForm(value))
     }
 }
+use axum_extra::extract::cookie::SignedCookieJar;
 use crate::{
     db::{
-        boat::types::BoatId,
+        boat::{Boat, types::BoatId},
         state::AppState,
         use_scenario::{UseScenario, UseScenarioId},
         use_event_batch::{BatchId, NewBatch, NewBatchArgs, UseEventBatch},
     },
+    handlers::batches::session::{read_selected_boats, write_selected_boats, clear_selected_boats},
     templates,
 };
 
@@ -81,27 +85,58 @@ pub struct NewBatchQuery {
 /// Handler for new batch creation page
 pub async fn new_batch_handler(
     State(state): State<AppState>,
+    jar: SignedCookieJar,
     axum::extract::Query(query): axum::extract::Query<NewBatchQuery>,
-) -> Result<Html<String>, StatusCode> {
+) -> Result<(SignedCookieJar, Html<String>), StatusCode> {
     let conn = state.pool().get().await
         .map_err(|error| {
             tracing::error!(?error, "Failed to get database connection");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
-    // If template ID is provided, fetch boats from that batch
-    let template_boats = if let Some(batch_id) = query.template {
-        conn.interact(move |conn| {
-            UseEventBatch::get_events_and_boats_for_batch(conn, batch_id)
-        })
-        .await
-        .map_err(|error| {
-            tracing::error!(?error, "Database interaction error");
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?
-        .ok() // Convert Result to Option, ignoring errors for template
+    // Read existing selection from cookie
+    let mut selected = read_selected_boats(&jar);
+
+    // If template ID is provided and no boats are currently selected, populate from template
+    let jar = if let Some(batch_id) = query.template {
+        if selected.boat_ids.is_empty() {
+            let template_boats = conn.interact(move |conn| {
+                UseEventBatch::get_events_and_boats_for_batch(conn, batch_id)
+            })
+            .await
+            .map_err(|error| {
+                tracing::error!(?error, "Database interaction error");
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?
+            .ok();
+
+            if let Some(boats) = template_boats {
+                selected.boat_ids = boats.iter().map(|(_event, boat)| boat.id).collect();
+                write_selected_boats(jar, &selected)
+            } else {
+                jar
+            }
+        } else {
+            jar
+        }
     } else {
-        None
+        jar
+    };
+
+    // Fetch boat records for selected IDs
+    let selected_boats = if selected.boat_ids.is_empty() {
+        Vec::new()
+    } else {
+        conn.interact(move |conn| Boat::get_boats_by_ids(conn, &selected.boat_ids))
+            .await
+            .map_err(|error| {
+                tracing::error!(?error, "Database interaction error");
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?
+            .map_err(|error| {
+                tracing::error!(?error, "Failed to get selected boats");
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?
     };
 
     let scenarios = conn
@@ -116,7 +151,7 @@ pub async fn new_batch_handler(
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
-    Ok(Html(templates::batches::creation::batch_creation_page(&scenarios, template_boats.as_deref()).into_string()))
+    Ok((jar, Html(templates::batches::creation::batch_creation_page(&scenarios, &selected_boats).into_string())))
 }
 
 /// Form data for creating a batch
@@ -130,6 +165,7 @@ pub struct BatchFormInput {
 /// Handler for creating a new batch
 pub async fn create_batch_handler(
     State(state): State<AppState>,
+    jar: SignedCookieJar,
     QsForm(input): QsForm<BatchFormInput>,
 ) -> Result<impl IntoResponse, Html<String>> {
     // Parse datetime (local time from form) and convert to UTC, or use current time
@@ -174,7 +210,9 @@ pub async fn create_batch_handler(
             Html("<p>Failed to create batch</p>".to_string())
         })?;
 
-    // Redirect to batch list using HX-Redirect header
+    // Clear the selected boats cookie and redirect to batch list
+    let cleared_jar = clear_selected_boats(jar);
+
     use axum::response::Response;
     use axum::http::header;
 
@@ -184,7 +222,7 @@ pub async fn create_batch_handler(
         header::HeaderValue::from_static("/batches")
     );
 
-    Ok(response)
+    Ok((cleared_jar, response))
 }
 
 /// Cox filter for boat search
@@ -343,21 +381,67 @@ pub async fn search_boats_handler(
 
 /// Handler for adding a boat to the session (HTMX endpoint)
 pub async fn add_boat_to_session_handler(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
+    jar: SignedCookieJar,
     Path(boat_id): Path<BoatId>,
-) -> Result<Html<String>, StatusCode> {
-    // TODO: Implement session management with cookies/session storage
-    // For now, return a placeholder
-    Ok(Html(format!("<p>Added boat {} to session</p>", boat_id)))
+) -> Result<(SignedCookieJar, Html<String>), StatusCode> {
+    let mut selected = read_selected_boats(&jar);
+    selected.add(boat_id);
+    let updated_jar = write_selected_boats(jar, &selected);
+
+    let conn = state.pool().get().await
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get database connection");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    let boats = conn
+        .interact(move |conn| Boat::get_boats_by_ids(conn, &selected.boat_ids))
+        .await
+        .map_err(|error| {
+            tracing::error!(?error, "Database interaction error");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get boats");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    Ok((updated_jar, Html(templates::batches::creation::selected_boats_fragment(&boats).into_string())))
 }
 
 /// Handler for removing a boat from the session (HTMX endpoint)
 pub async fn remove_boat_from_session_handler(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
+    jar: SignedCookieJar,
     Path(boat_id): Path<BoatId>,
-) -> Result<Html<String>, StatusCode> {
-    // TODO: Implement session management with cookies/session storage
-    Ok(Html(format!("<p>Removed boat {} from session</p>", boat_id)))
+) -> Result<(SignedCookieJar, Html<String>), StatusCode> {
+    let mut selected = read_selected_boats(&jar);
+    selected.remove(boat_id);
+    let updated_jar = write_selected_boats(jar, &selected);
+
+    let boats = if selected.boat_ids.is_empty() {
+        Vec::new()
+    } else {
+        let conn = state.pool().get().await
+            .map_err(|error| {
+                tracing::error!(?error, "Failed to get database connection");
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?;
+
+        conn.interact(move |conn| Boat::get_boats_by_ids(conn, &selected.boat_ids))
+            .await
+            .map_err(|error| {
+                tracing::error!(?error, "Database interaction error");
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?
+            .map_err(|error| {
+                tracing::error!(?error, "Failed to get boats");
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?
+    };
+
+    Ok((updated_jar, Html(templates::batches::creation::selected_boats_fragment(&boats).into_string())))
 }
 
 /// Handler for batch detail page

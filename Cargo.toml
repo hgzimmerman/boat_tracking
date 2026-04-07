@@ -33,6 +33,7 @@ maud = "0.26"
 plotters = { version = "0.3", default-features = false, features = ["svg_backend"] }
 tower-http = { version = "0.6", features = ["fs", "trace"] }
 axum-htmx = "0.8"
+axum-extra = { version = "0.10", features = ["cookie-signed"] }
 http = "1.4"
 
 anyhow = "1.0.80"
