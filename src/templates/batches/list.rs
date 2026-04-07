@@ -79,7 +79,7 @@ pub fn batch_list(batches: &[BatchAndCounts], scenarios: &[UseScenario]) -> Mark
                             var rect = cell.getBoundingClientRect();
                             tip.style.top = (rect.top + rect.height / 2) + 'px';
                             tip.style.transform = 'translateY(-50%)';
-                            tip.style.right = (window.innerWidth - rect.left + 8) + 'px';
+                            tip.style.right = (window.innerWidth - rect.left + 12) + 'px';
                             tip.style.left = '';
                             tip.innerHTML = '';
                         }
@@ -118,10 +118,11 @@ fn batch_row(batch: &BatchAndCounts, scenario_names: &HashMap<UseScenarioId, &st
                 hx-trigger="mouseenter delay:300ms"
                 hx-target="#boats-tooltip"
                 hx-swap="innerHTML"
-                onmouseenter="positionTooltip(this)"
                 onmouseleave="hideTooltip()"
             {
-                (batch.use_counts)
+                span class="px-2 py-1" onmouseenter="positionTooltip(this)" {
+                    (batch.use_counts)
+                }
             }
         }
     }
