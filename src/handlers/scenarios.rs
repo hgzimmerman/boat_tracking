@@ -110,10 +110,8 @@ pub async fn create_scenario_handler(
 /// Handler for edit scenario form
 pub async fn edit_scenario_handler(
     State(state): State<AppState>,
-    Path(id): Path<i32>,
+    Path(scenario_id): Path<UseScenarioId>,
 ) -> Result<Html<String>, StatusCode> {
-    let scenario_id = UseScenarioId::new(id);
-
     let conn = state.pool().get().await
         .map_err(|e| {
             tracing::error!("Failed to get database connection: {}", e);
@@ -139,10 +137,9 @@ pub async fn edit_scenario_handler(
 /// Handler for updating an existing scenario
 pub async fn update_scenario_handler(
     State(state): State<AppState>,
-    Path(id): Path<i32>,
+    Path(scenario_id): Path<UseScenarioId>,
     Form(input): Form<ScenarioFormInput>,
 ) -> Result<Html<String>, StatusCode> {
-    let scenario_id = UseScenarioId::new(id);
     let default_time = parse_default_time(&input.default_time);
 
     let conn = state.pool().get().await

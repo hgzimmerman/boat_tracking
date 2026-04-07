@@ -201,10 +201,9 @@ pub async fn create_boat_handler(
 /// Handler for boat detail page
 pub async fn boat_detail_handler(
     State(state): State<AppState>,
-    Path(id): Path<i32>,
+    Path(boat_id): Path<BoatId>,
     hx_request: HxRequest,
 ) -> Result<Html<String>, StatusCode> {
-    let boat_id = BoatId::new(id);
     let conn = state.pool().get().await
         .map_err(|e| {
             tracing::error!("Failed to get database connection: {}", e);
@@ -231,10 +230,9 @@ pub async fn boat_detail_handler(
 /// Handler for boat issues page
 pub async fn boat_issues_handler(
     State(state): State<AppState>,
-    Path(id): Path<i32>,
+    Path(boat_id): Path<BoatId>,
     hx_request: HxRequest,
 ) -> Result<Html<String>, StatusCode> {
-    let boat_id = BoatId::new(id);
     let conn = state.pool().get().await
         .map_err(|e| {
             tracing::error!("Failed to get database connection: {}", e);
@@ -264,10 +262,9 @@ pub async fn boat_issues_handler(
 /// Handler for edit boat form page
 pub async fn edit_boat_handler(
     State(state): State<AppState>,
-    Path(id): Path<i32>,
+    Path(boat_id): Path<BoatId>,
     hx_request: HxRequest,
 ) -> Result<Html<String>, StatusCode> {
-    let boat_id = BoatId::new(id);
     let conn = state.pool().get().await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
@@ -297,10 +294,9 @@ pub async fn edit_boat_handler(
 /// Handler for updating an existing boat
 pub async fn update_boat_handler(
     State(state): State<AppState>,
-    Path(id): Path<i32>,
+    Path(boat_id): Path<BoatId>,
     Form(input): Form<BoatFormInput>,
 ) -> Result<impl IntoResponse, Html<String>> {
-    let boat_id = BoatId::new(id);
 
     // Validate input (similar to create)
     let mut errors = templates::boats::form::BoatFormErrors::default();
@@ -471,9 +467,8 @@ pub async fn update_boat_handler(
 /// Handler for daily usage chart (30 days)
 pub async fn daily_chart_handler(
     State(state): State<AppState>,
-    Path(id): Path<i32>,
+    Path(boat_id): Path<BoatId>,
 ) -> Result<Response, StatusCode> {
-    let boat_id = BoatId::new(id);
     let conn = state.pool().get().await
         .map_err(|e| {
             tracing::error!("Failed to get database connection: {}", e);
@@ -519,9 +514,8 @@ pub async fn daily_chart_handler(
 /// Handler for monthly usage chart (12 months)
 pub async fn monthly_chart_handler(
     State(state): State<AppState>,
-    Path(id): Path<i32>,
+    Path(boat_id): Path<BoatId>,
 ) -> Result<Response, StatusCode> {
-    let boat_id = BoatId::new(id);
     let conn = state.pool().get().await
         .map_err(|e| {
             tracing::error!("Failed to get database connection: {}", e);

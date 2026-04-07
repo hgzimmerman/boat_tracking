@@ -76,7 +76,7 @@ pub async fn new_issue_handler(
 /// Form data for creating an issue
 #[derive(Debug, Deserialize)]
 pub struct IssueFormInput {
-    pub boat_id: Option<i32>,
+    pub boat_id: Option<BoatId>,
     pub note: String,
     pub recorded_at: Option<String>,
 }
@@ -90,9 +90,6 @@ pub async fn create_issue_handler(
     if input.note.trim().is_empty() {
         return Err(Html("<p>Issue description cannot be empty</p>".to_string()));
     }
-
-    // Parse boat ID if provided
-    let boat_id = input.boat_id.map(BoatId::new);
 
     // Parse datetime (local time from form) and convert to UTC, or use current time
     let recorded_at = if let Some(dt_str) = input.recorded_at {
@@ -117,7 +114,7 @@ pub async fn create_issue_handler(
         })?;
 
     let new_issue = NewIssue {
-        boat_id,
+        boat_id: input.boat_id,
         use_event_id: None,
         recorded_at,
         note: input.note,
@@ -149,10 +146,8 @@ pub async fn create_issue_handler(
 /// Handler for resolving an issue
 pub async fn resolve_issue_handler(
     State(state): State<AppState>,
-    Path(issue_id): Path<i32>,
+    Path(issue_id): Path<IssueId>,
 ) -> Result<impl IntoResponse, Html<String>> {
-    let issue_id = IssueId::new(issue_id);
-
     let conn = state.pool().get().await
         .map_err(|e| {
             tracing::error!("Failed to get database connection: {}", e);
@@ -184,10 +179,8 @@ pub async fn resolve_issue_handler(
 /// Handler for unresolving an issue
 pub async fn unresolve_issue_handler(
     State(state): State<AppState>,
-    Path(issue_id): Path<i32>,
+    Path(issue_id): Path<IssueId>,
 ) -> Result<impl IntoResponse, Html<String>> {
-    let issue_id = IssueId::new(issue_id);
-
     let conn = state.pool().get().await
         .map_err(|e| {
             tracing::error!("Failed to get database connection: {}", e);

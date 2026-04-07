@@ -75,7 +75,7 @@ pub async fn batch_list_handler(
 /// Query parameters for batch creation page
 #[derive(Debug, Deserialize)]
 pub struct NewBatchQuery {
-    pub template: Option<i32>,
+    pub template: Option<BatchId>,
 }
 
 /// Handler for new batch creation page
@@ -90,9 +90,7 @@ pub async fn new_batch_handler(
         })?;
 
     // If template ID is provided, fetch boats from that batch
-    let template_boats = if let Some(template_id) = query.template {
-        let batch_id = BatchId::new(template_id);
-
+    let template_boats = if let Some(batch_id) = query.template {
         conn.interact(move |conn| {
             UseEventBatch::get_events_and_boats_for_batch(conn, batch_id)
         })
@@ -124,9 +122,9 @@ pub async fn new_batch_handler(
 /// Form data for creating a batch
 #[derive(Debug, Deserialize)]
 pub struct BatchFormInput {
-    pub use_scenario_id: i32,
+    pub use_scenario_id: UseScenarioId,
     pub recorded_at: Option<String>,
-    pub boat_ids: Vec<i32>,
+    pub boat_ids: Vec<BoatId>,
 }
 
 /// Handler for creating a new batch
@@ -134,8 +132,6 @@ pub async fn create_batch_handler(
     State(state): State<AppState>,
     QsForm(input): QsForm<BatchFormInput>,
 ) -> Result<impl IntoResponse, Html<String>> {
-    let use_scenario_id = UseScenarioId::new(input.use_scenario_id);
-
     // Parse datetime (local time from form) and convert to UTC, or use current time
     let recorded_at = if let Some(dt_str) = input.recorded_at {
         let naive = chrono::NaiveDateTime::parse_from_str(&dt_str, "%Y-%m-%dT%H:%M")
@@ -147,12 +143,7 @@ pub async fn create_batch_handler(
         chrono::Utc::now()
     };
 
-    // Convert boat IDs
-    let boat_ids: Vec<BoatId> = input.boat_ids.into_iter()
-        .map(BoatId::new)
-        .collect();
-
-    if boat_ids.is_empty() {
+    if input.boat_ids.is_empty() {
         return Err(Html("<p>At least one boat must be selected</p>".to_string()));
     }
 
@@ -164,9 +155,9 @@ pub async fn create_batch_handler(
         })?;
 
     let new_batch = NewBatchArgs {
-        boat_ids,
+        boat_ids: input.boat_ids,
         batch: NewBatch {
-            use_scenario_id,
+            use_scenario_id: input.use_scenario_id,
             recorded_at,
         },
     };
@@ -353,7 +344,7 @@ pub async fn search_boats_handler(
 /// Handler for adding a boat to the session (HTMX endpoint)
 pub async fn add_boat_to_session_handler(
     State(_state): State<AppState>,
-    Path(boat_id): Path<i32>,
+    Path(boat_id): Path<BoatId>,
 ) -> Result<Html<String>, StatusCode> {
     // TODO: Implement session management with cookies/session storage
     // For now, return a placeholder
@@ -363,7 +354,7 @@ pub async fn add_boat_to_session_handler(
 /// Handler for removing a boat from the session (HTMX endpoint)
 pub async fn remove_boat_from_session_handler(
     State(_state): State<AppState>,
-    Path(boat_id): Path<i32>,
+    Path(boat_id): Path<BoatId>,
 ) -> Result<Html<String>, StatusCode> {
     // TODO: Implement session management with cookies/session storage
     Ok(Html(format!("<p>Removed boat {} from session</p>", boat_id)))
@@ -372,10 +363,8 @@ pub async fn remove_boat_from_session_handler(
 /// Handler for batch detail page
 pub async fn batch_detail_handler(
     State(state): State<AppState>,
-    Path(batch_id): Path<i32>,
+    Path(batch_id): Path<BatchId>,
 ) -> Result<Html<String>, StatusCode> {
-    let batch_id = BatchId::new(batch_id);
-
     let conn = state.pool().get().await
         .map_err(|e| {
             tracing::error!("Failed to get database connection: {}", e);
@@ -413,10 +402,8 @@ pub async fn batch_detail_handler(
 /// Handler for batch boats preview (HTMX hover endpoint)
 pub async fn batch_boats_preview_handler(
     State(state): State<AppState>,
-    Path(batch_id): Path<i32>,
+    Path(batch_id): Path<BatchId>,
 ) -> Result<Html<String>, StatusCode> {
-    let batch_id = BatchId::new(batch_id);
-
     let conn = state.pool().get().await
         .map_err(|e| {
             tracing::error!("Failed to get database connection: {}", e);
