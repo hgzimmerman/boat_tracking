@@ -4,10 +4,13 @@ use maud::{html, Markup};
 ///
 /// Usage:
 /// ```
+/// use maud::html;
+/// use boat_tracking::templates::components::modal::modal;
+///
 /// modal(false, html! {
 ///     h2 { "Modal Title" }
 ///     p { "Modal content..." }
-/// })
+/// });
 /// ```
 pub fn modal(hidden: bool, content: Markup) -> Markup {
     html! {
