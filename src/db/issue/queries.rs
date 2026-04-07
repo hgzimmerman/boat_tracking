@@ -19,7 +19,7 @@ impl Issue {
         conn: &mut SqliteConnection,
         issue_id: IssueId,
     ) -> Result<Issue, diesel::result::Error> {
-        let now = chrono::Local::now().naive_local();
+        let now = chrono::Utc::now();
         diesel::update(issue::table.filter(issue::id.eq(issue_id)))
             .set(issue::resolved_at.eq(Some(now)))
             .get_result(conn)
@@ -31,7 +31,7 @@ impl Issue {
         issue_id: IssueId,
     ) -> Result<Issue, diesel::result::Error> {
         diesel::update(issue::table.filter(issue::id.eq(issue_id)))
-            .set(issue::resolved_at.eq(None::<chrono::NaiveDateTime>))
+            .set(issue::resolved_at.eq(None::<chrono::DateTime<chrono::Utc>>))
             .get_result(conn)
     }
 

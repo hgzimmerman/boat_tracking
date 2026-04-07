@@ -47,7 +47,7 @@ fn issue_row(issue: &Issue, boat: Option<&Boat>) -> Markup {
     html! {
         tr class="hover:bg-gray-50 dark:hover:bg-gray-600 dark:text-white" {
             td class="px-4 py-3 text-sm" {
-                (issue.recorded_at.format("%Y-%m-%d %H:%M"))
+                (issue.recorded_at.with_timezone(&chrono::Local).format("%Y-%m-%d %H:%M"))
             }
             td class="px-4 py-3 text-sm" {
                 @if let Some(boat) = boat {
@@ -67,7 +67,7 @@ fn issue_row(issue: &Issue, boat: Option<&Boat>) -> Markup {
             }
             td class="px-4 py-3 text-sm" {
                 @if let Some(resolved) = issue.resolved_at {
-                    (resolved.format("%Y-%m-%d"))
+                    (resolved.with_timezone(&chrono::Local).format("%Y-%m-%d"))
                 } @else {
                     span class="text-gray-400" { "-" }
                 }

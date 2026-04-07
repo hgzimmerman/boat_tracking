@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use super::*;
 use crate::api::wire::BoatUseCsvRow;
 use crate::schema::{boat, use_event};
-use chrono::{Datelike, NaiveDate, NaiveDateTime};
+use chrono::{DateTime, Datelike, NaiveDate, Utc};
 use diesel::SqliteConnection;
 use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
 
@@ -36,8 +36,8 @@ impl UseEvent {
     pub fn daily_timeseries_for_boat(
         conn: &mut SqliteConnection,
         boat_id: BoatId,
-        date_start: NaiveDateTime,
-        date_end: Option<NaiveDateTime>,
+        date_start: DateTime<Utc>,
+        date_end: Option<DateTime<Utc>>,
     ) -> Result<Vec<(NaiveDate, usize)>, diesel::result::Error> {
         let mut filter = use_event::table
             .filter(use_event::boat_id.eq(boat_id))
@@ -48,24 +48,23 @@ impl UseEvent {
         }
 
         // kind of a lame strategy, but the idea is to grab the dates, and then do the correlation server-side
-        let datetimes: Vec<NaiveDateTime> = filter
+        let datetimes: Vec<DateTime<Utc>> = filter
             .order_by(use_event::recorded_at.asc()) // oldest first
             .select(use_event::recorded_at)
-            .get_results::<NaiveDateTime>(conn)?;
+            .get_results(conn)?;
 
         let ts_map = datetimes
             .into_iter()
-            .map(|datetime: NaiveDateTime| datetime.date())
+            .map(|datetime| datetime.date_naive())
             .fold(HashMap::new(), |mut acc, next| {
                 *acc.entry(next).or_default() += 1usize;
                 acc
             });
 
-        let start = date_start.date();
+        let start = date_start.date_naive();
         let end = date_end
-            .as_ref()
-            .map(chrono::NaiveDateTime::date)
-            .unwrap_or_else(|| chrono::Utc::now().naive_utc().date());
+            .map(|dt| dt.date_naive())
+            .unwrap_or_else(|| Utc::now().date_naive());
 
         let list = start
             .iter_days()
@@ -81,8 +80,8 @@ impl UseEvent {
     pub fn monthly_timeseries_for_boat(
         conn: &mut SqliteConnection,
         boat_id: BoatId,
-        date_start: NaiveDateTime,
-        date_end: Option<NaiveDateTime>,
+        date_start: DateTime<Utc>,
+        date_end: Option<DateTime<Utc>>,
     ) -> Result<Vec<(NaiveDate, usize)>, diesel::result::Error> {
         let mut filter = use_event::table
             .filter(use_event::boat_id.eq(boat_id))
@@ -93,14 +92,14 @@ impl UseEvent {
         }
 
         // kind of a lame strategy, but the idea is to grab the dates, and then do the correlation server-side
-        let datetimes: Vec<NaiveDateTime> = filter
+        let datetimes: Vec<DateTime<Utc>> = filter
             .order_by(use_event::recorded_at.asc()) // oldest first
             .select(use_event::recorded_at)
-            .get_results::<NaiveDateTime>(conn)?;
+            .get_results(conn)?;
 
         let ts_map = datetimes
             .into_iter()
-            .map(|datetime: NaiveDateTime| datetime.date())
+            .map(|datetime| datetime.date_naive())
             .fold(HashMap::new(), |mut acc, next| {
                 let key = NaiveDate::from_ymd_opt(next.year(), next.month(), 1)
                     .expect("Should be valid date");
@@ -108,13 +107,12 @@ impl UseEvent {
                 acc
             });
 
-        let start = date_start.date();
+        let start = date_start.date_naive();
         let start =
             NaiveDate::from_ymd_opt(start.year(), start.month(), 1).expect("should be valid date");
         let end = date_end
-            .as_ref()
-            .map(chrono::NaiveDateTime::date)
-            .unwrap_or_else(|| chrono::Utc::now().naive_utc().date());
+            .map(|dt| dt.date_naive())
+            .unwrap_or_else(|| Utc::now().date_naive());
         let end =
             NaiveDate::from_ymd_opt(end.year(), end.month(), 1).expect("should be valid date");
 
@@ -131,8 +129,8 @@ impl UseEvent {
     #[tracing::instrument(level = "debug", skip_all, err)]
     pub fn export_events(
         conn: &mut SqliteConnection,
-        date_start: Option<NaiveDateTime>,
-        date_end: Option<NaiveDateTime>,
+        date_start: Option<DateTime<Utc>>,
+        date_end: Option<DateTime<Utc>>,
         boat_ids: Option<Vec<BoatId>>,
     ) -> Result<Vec<BoatUseCsvRow>, diesel::result::Error> {
         let mut query = use_event::table.inner_join(boat::table).into_boxed();
@@ -154,7 +152,7 @@ impl UseEvent {
                     let boat_type = {
                         let bt = boat.boat_type();
                         if bt.is_none() {
-                            tracing::error!(?boat.name, ?boat.id, "boat type cant be known, filtering events") 
+                            tracing::error!(?boat.name, ?boat.id, "boat type cant be known, filtering events")
                         }
                         bt?
                     };

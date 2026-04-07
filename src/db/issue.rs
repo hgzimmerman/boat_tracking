@@ -9,9 +9,9 @@ pub struct Issue {
     pub id: IssueId,
     pub boat_id: Option<BoatId>,
     pub use_event_id: Option<UseEventId>,
-    pub recorded_at: chrono::NaiveDateTime,
+    pub recorded_at: chrono::DateTime<chrono::Utc>,
     pub note: String,
-    pub resolved_at: Option<chrono::NaiveDateTime>,
+    pub resolved_at: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 #[derive(Debug, Clone, diesel::Insertable)]
@@ -19,9 +19,9 @@ pub struct Issue {
 pub struct NewIssue {
     pub boat_id: Option<BoatId>,
     pub use_event_id: Option<UseEventId>,
-    pub recorded_at: chrono::NaiveDateTime,
+    pub recorded_at: chrono::DateTime<chrono::Utc>,
     pub note: String,
-    pub resolved_at: Option<chrono::NaiveDateTime>,
+    pub resolved_at: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 #[derive(

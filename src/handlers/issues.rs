@@ -4,6 +4,7 @@ use axum::{
     http::{StatusCode, header},
     Form,
 };
+use chrono::TimeZone;
 use serde::Deserialize;
 use crate::{
     db::{
@@ -93,16 +94,19 @@ pub async fn create_issue_handler(
     // Parse boat ID if provided
     let boat_id = input.boat_id.map(BoatId::new);
 
-    // Parse datetime or use current time
+    // Parse datetime (local time from form) and convert to UTC, or use current time
     let recorded_at = if let Some(dt_str) = input.recorded_at {
         if dt_str.is_empty() {
-            chrono::Local::now().naive_local()
+            chrono::Utc::now()
         } else {
-            chrono::NaiveDateTime::parse_from_str(&dt_str, "%Y-%m-%dT%H:%M")
-                .map_err(|_| Html("<p>Invalid datetime format</p>".to_string()))?
+            let naive = chrono::NaiveDateTime::parse_from_str(&dt_str, "%Y-%m-%dT%H:%M")
+                .map_err(|_| Html("<p>Invalid datetime format</p>".to_string()))?;
+            chrono::Local.from_local_datetime(&naive).single()
+                .ok_or_else(|| Html("<p>Ambiguous or invalid local datetime</p>".to_string()))?
+                .with_timezone(&chrono::Utc)
         }
     } else {
-        chrono::Local::now().naive_local()
+        chrono::Utc::now()
     };
 
     // Create the issue

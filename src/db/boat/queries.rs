@@ -81,7 +81,7 @@ impl Boat {
         conn: &mut SqliteConnection,
         id: BoatId,
     ) -> Result<Boat, diesel::result::Error> {
-        let now = chrono::Utc::now().naive_utc().date();
+        let now = chrono::Utc::now().date_naive();
         let target = boat::table.filter(boat::id.eq(id));
         diesel::update(target)
             .set(boat::relinquished_at.eq(Some(now)))
@@ -95,7 +95,7 @@ impl BoatAndStats {
         conn: &mut SqliteConnection,
         id: BoatId,
     ) -> Result<Self, diesel::result::Error> {
-        let ago_30_d = chrono::Utc::now().naive_utc() - chrono::TimeDelta::days(30);
+        let ago_30_d = chrono::Utc::now() - chrono::TimeDelta::days(30);
         boat::table
             .filter(boat::id.eq(id))
             .select((
@@ -122,7 +122,7 @@ impl BoatAndStats {
 
     #[tracing::instrument(level = "debug", skip_all, err)]
     pub fn get_boats(conn: &mut SqliteConnection) -> Result<Vec<Self>, diesel::result::Error> {
-        let ago_30_d = chrono::Utc::now().naive_utc() - chrono::TimeDelta::days(30);
+        let ago_30_d = chrono::Utc::now() - chrono::TimeDelta::days(30);
         boat::table
             .left_outer_join(issue::table.on(issue::boat_id.eq(boat::id.nullable())))
             .left_outer_join(use_event::table.on(use_event::boat_id.eq(boat::id)))

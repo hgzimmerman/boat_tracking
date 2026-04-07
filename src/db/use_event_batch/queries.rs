@@ -110,7 +110,7 @@ impl UseEventBatch {
         batch_id: BatchId,
         boat_ids: Vec<BoatId>,
         use_type: Option<UseScenario>,
-        recorded_at: Option<chrono::NaiveDateTime>,
+        recorded_at: Option<chrono::DateTime<chrono::Utc>>,
     ) -> Result<BatchId, diesel::result::Error> {
         conn.transaction(|conn| {
             let target = use_event::table.filter(use_event::batch_id.eq(batch_id));

@@ -57,7 +57,7 @@ fn batch_row(batch: &BatchAndCounts) -> Markup {
             td class="px-4 py-3 text-sm" {
                 a class="text-blue-600 hover:underline dark:text-blue-400 font-medium"
                   href=(format!("/batches/{}", batch_id)) {
-                    (batch.batch.recorded_at.format("%Y-%m-%d %H:%M"))
+                    (batch.batch.recorded_at.with_timezone(&chrono::Local).format("%Y-%m-%d %H:%M"))
                 }
             }
             td class="px-4 py-3 text-sm" {
