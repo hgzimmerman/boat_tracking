@@ -78,7 +78,7 @@ fn issue_row(issue: &Issue, boat: Option<&Boat>) -> Markup {
                 @if is_resolved {
                     button
                         hx-post=(format!("/issues/{}/unresolve", issue.id.as_int()))
-                        hx-target="body"
+                        hx-target="#content"
                         class=(BTN_SM_YELLOW)
                     {
                         "Reopen"
@@ -86,7 +86,7 @@ fn issue_row(issue: &Issue, boat: Option<&Boat>) -> Markup {
                 } @else {
                     button
                         hx-post=(format!("/issues/{}/resolve", issue.id.as_int()))
-                        hx-target="body"
+                        hx-target="#content"
                         class=(BTN_SM_GREEN)
                     {
                         "Resolve"
