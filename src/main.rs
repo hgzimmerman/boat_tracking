@@ -1,16 +1,17 @@
 #![cfg_attr(feature = "tauri", windows_subsystem = "windows")]
 
 use anyhow::Error;
-use axum::routing::get;
-use axum::Router;
-use boat_tracking::db::state::AppState;
 use rolling_file::{BasicRollingFileAppender, RollingConditionBasic};
 use tokio::net::TcpListener;
 use tracing_subscriber::prelude::*;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-    let conn_string = "db.sql";
+    let conn_string = std::env::var("DATABASE_URL").unwrap_or_else(|_| "db.sql".to_string());
+    let port: u16 = std::env::var("PORT")
+        .ok()
+        .and_then(|p| p.parse().ok())
+        .unwrap_or(3000);
 
     let stdout_layer = tracing_subscriber::fmt::layer()
         .with_ansi(false)
@@ -38,38 +39,9 @@ async fn main() -> Result<(), Error> {
         .with(file_layer)
         .init();
 
-    let state = AppState::new(conn_string);
+    let app = boat_tracking::build_router(&conn_string);
 
-    let app = Router::new()
-        // HTMX + Maud routes
-        .merge(boat_tracking::handlers::create_router())
-        // CSV export routes
-        .route(
-            "/uses_export.csv",
-            get(boat_tracking::api::export_uses_csv_handler),
-        )
-        .route(
-            "/boats_export.csv",
-            get(boat_tracking::api::export_boats_csv_handler),
-        )
-        // Serve static files from public/ relative to the executable, with
-        // fallback to cwd for development builds.
-        .fallback_service({
-            let exe_relative = std::env::current_exe()?
-                .parent()
-                .expect("executable must have a parent directory")
-                .join("public");
-            let public_dir = if exe_relative.is_dir() {
-                exe_relative
-            } else {
-                std::path::PathBuf::from("public")
-            };
-            tower_http::services::ServeDir::new(public_dir)
-        })
-        .with_state(state)
-        .layer(tower_http::trace::TraceLayer::new_for_http());
-
-    let addr = std::net::SocketAddr::from(([127, 0, 0, 1], 3000));
+    let addr = std::net::SocketAddr::from(([127, 0, 0, 1], port));
     println!("running at http://{addr}");
 
     #[cfg(feature = "tauri")]
@@ -83,6 +55,17 @@ async fn main() -> Result<(), Error> {
         });
 
         tauri::Builder::default()
+            .setup(move |app| {
+                use tauri::Manager;
+                if let Some(window) = app.get_webview_window("main") {
+                    if port != 3000 {
+                        let url: tauri::Url = format!("http://localhost:{port}").parse().unwrap();
+                        window.navigate(url)?;
+                        window.set_fullscreen(false)?;
+                    }
+                }
+                Ok(())
+            })
             .run(tauri::generate_context!())
             .expect("error running tauri application");
     }
