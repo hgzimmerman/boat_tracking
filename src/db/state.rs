@@ -1,3 +1,4 @@
+use axum_extra::extract::cookie::Key;
 use deadpool_diesel::sqlite::Pool;
 use diesel::Connection;
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
@@ -10,6 +11,7 @@ pub type ArcPool = Arc<Pool>;
 #[derive(Clone)]
 pub struct AppState {
     pool: ArcPool,
+    cookie_key: Key,
 }
 
 impl std::fmt::Debug for AppState {
@@ -42,11 +44,24 @@ impl AppState {
         }
 
         let pool = Arc::new(pool);
-        Self { pool }
+        Self {
+            pool,
+            cookie_key: Key::generate(),
+        }
     }
 
     pub fn pool(&self) -> Arc<deadpool_diesel::sqlite::Pool> {
         self.pool.clone()
+    }
+
+    pub fn cookie_key(&self) -> &Key {
+        &self.cookie_key
+    }
+}
+
+impl axum::extract::FromRef<AppState> for Key {
+    fn from_ref(state: &AppState) -> Self {
+        state.cookie_key().clone()
     }
 }
 

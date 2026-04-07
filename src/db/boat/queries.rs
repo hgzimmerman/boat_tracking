@@ -75,6 +75,15 @@ impl Boat {
         boat::table.filter(boat::id.eq(id)).get_result(conn)
     }
 
+    /// Fetches boats matching the provided IDs.
+    #[tracing::instrument(level = "debug", skip_all, err)]
+    pub fn get_boats_by_ids(
+        conn: &mut SqliteConnection,
+        ids: &[BoatId],
+    ) -> Result<Vec<Boat>, diesel::result::Error> {
+        boat::table.filter(boat::id.eq_any(ids)).get_results(conn)
+    }
+
     /// Gets rid of the boat by setting its relinquished_at value to today's date
     #[tracing::instrument(level = "debug", skip(conn), err)]
     pub fn get_rid_of_boat(

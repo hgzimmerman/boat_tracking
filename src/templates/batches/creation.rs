@@ -1,40 +1,14 @@
 use maud::{html, Markup};
-use crate::db::{boat::{Boat, BoatAndStats}, use_event::UseEvent, use_scenario::UseScenario};
-use crate::templates::components::common::{boat_indicator, boat_indicator_raw};
+use crate::db::{boat::{Boat, BoatAndStats}, use_scenario::UseScenario};
+use crate::templates::components::common::boat_indicator;
 
 /// Batch creation page with two-pane interface
-pub fn batch_creation_page(scenarios: &[UseScenario], template_boats: Option<&[(UseEvent, Boat)]>) -> Markup {
-    crate::templates::layout::page("Record Boat Uses", batch_creation_content(scenarios, template_boats))
+pub fn batch_creation_page(scenarios: &[UseScenario], selected_boats: &[Boat]) -> Markup {
+    crate::templates::layout::page("Record Boat Uses", batch_creation_content(scenarios, selected_boats))
 }
 
 /// Batch creation content
-pub fn batch_creation_content(scenarios: &[UseScenario], template_boats: Option<&[(UseEvent, Boat)]>) -> Markup {
-    // Build initial selectedBoats JSON array for Alpine.js
-    let initial_boats_json = if let Some(boats) = template_boats {
-        let boats_array: Vec<String> = boats.iter().map(|(_event, boat)| {
-            let boat_type = if let Some(bt) = boat.boat_type() {
-                format!("{} {}", boat.weight_class, bt)
-            } else {
-                boat.weight_class.to_string()
-            };
-            let indicator = boat_indicator_raw(
-                boat.weight_class,
-                boat.seat_count.count(),
-                boat.oars_per_seat.count() == 2,
-            );
-            format!(
-                r#"{{ id: {}, name: '{}', type: '{}', indicator: '{}' }}"#,
-                boat.id.as_int(),
-                boat.name.replace('\'', "\\'"),
-                boat_type.replace('\'', "\\'"),
-                indicator.replace('\'', "\\'")
-            )
-        }).collect();
-        format!("[{}]", boats_array.join(", "))
-    } else {
-        "[]".to_string()
-    };
-
+pub fn batch_creation_content(scenarios: &[UseScenario], selected_boats: &[Boat]) -> Markup {
     html! {
         div class="overflow-y-auto flex flex-col flex-grow max-h-[calc(100vh-42px)]" {
             div class="flex-grow flex flex-col bg-gray-50 dark:bg-gray-600 p-4" {
@@ -46,19 +20,7 @@ pub fn batch_creation_content(scenarios: &[UseScenario], template_boats: Option<
                     }
                 }
 
-                // Alpine.js data store for selected boats
-                div
-                    x-data=(format!(
-                        "{{ selectedBoats: {}, useScenarioId: '{}', recordedAt: '', scenarioDefaults: {{{}}} }}",
-                        initial_boats_json,
-                        scenarios.first().map(|s| s.id.as_int()).unwrap_or(0),
-                        scenarios.iter()
-                            .filter_map(|s| s.default_time.map(|t| format!("'{}': '{}'", s.id.as_int(), t.format("%H:%M"))))
-                            .collect::<Vec<_>>()
-                            .join(", ")
-                    ))
-                    class="flex flex-col md:flex-row gap-4 flex-grow"
-                {
+                div class="flex flex-col md:flex-row gap-4 flex-grow" {
                     // Left pane: Search and boat list
                     div class="flex-1 bg-white dark:bg-slate-700 rounded shadow-md p-4 flex flex-col" {
                         h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3" {
@@ -169,94 +131,140 @@ pub fn batch_creation_content(scenarios: &[UseScenario], template_boats: Option<
                     div class="flex-1 bg-white dark:bg-slate-700 rounded shadow-md p-4 flex flex-col" {
                         h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3" {
                             "Selected Boats "
-                            span class="text-sm font-normal text-gray-600 dark:text-gray-400" {
-                                "(" span x-text="selectedBoats.length" {} ")"
+                            span id="selected-count" class="text-sm font-normal text-gray-600 dark:text-gray-400" {
+                                "(" (selected_boats.len()) ")"
                             }
                         }
 
-                        // Form for batch metadata
+                        // Form for batch metadata + selected boats
                         form
                             hx-post="/batches"
                             hx-target="body"
-                            class="mb-4 space-y-3"
+                            class="flex flex-col flex-grow"
                         {
-                            // Use scenario selector
-                            div {
-                                label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" {
-                                    "Use Scenario"
-                                }
-                                select
-                                    name="use_scenario_id"
-                                    x-model="useScenarioId"
-                                    x-on:change="if (recordedAt === '' && scenarioDefaults[useScenarioId]) { const now = new Date(); recordedAt = now.toISOString().slice(0,11) + scenarioDefaults[useScenarioId] }"
-                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-slate-600 dark:text-white"
-                                    required
-                                {
-                                    @for scenario in scenarios {
-                                        option value=(scenario.id.as_int()) { (scenario.name) }
+                            // Alpine.js only for scenario selector and datetime picker
+                            div
+                                x-data=(format!(
+                                    "{{ useScenarioId: '{}', recordedAt: '', scenarioDefaults: {{{}}} }}",
+                                    scenarios.first().map(|s| s.id.as_int()).unwrap_or(0),
+                                    scenarios.iter()
+                                        .filter_map(|s| s.default_time.map(|t| format!("'{}': '{}'", s.id.as_int(), t.format("%H:%M"))))
+                                        .collect::<Vec<_>>()
+                                        .join(", ")
+                                ))
+                                class="mb-4 space-y-3"
+                            {
+                                // Use scenario selector
+                                div {
+                                    label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" {
+                                        "Use Scenario"
                                     }
-                                }
-                            }
-
-                            // Date/time picker
-                            div {
-                                label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" {
-                                    "Date & Time (optional)"
-                                }
-                                input
-                                    type="datetime-local"
-                                    name="recorded_at"
-                                    x-model="recordedAt"
-                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-slate-600 dark:text-white";
-                            }
-
-                            // Hidden inputs for selected boat IDs
-                            template x-for="boat in selectedBoats" x-bind:key="boat.id" {
-                                input type="hidden" name="boat_ids[]" x-bind:value="boat.id";
-                            }
-
-                            // Submit button
-                            div class="pt-2" {
-                                button
-                                    type="submit"
-                                    class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition disabled:opacity-50 disabled:cursor-not-allowed"
-                                    x-bind:disabled="selectedBoats.length === 0"
-                                {
-                                    "Record Boat Uses"
-                                }
-                            }
-                        }
-
-                        // Selected boats list
-                        div class="flex-grow overflow-y-auto border-t border-gray-200 dark:border-gray-600 pt-3" {
-                            template x-if="selectedBoats.length === 0" {
-                                p class="text-gray-500 dark:text-gray-400 text-center py-8 text-sm" {
-                                    "No boats selected yet"
-                                }
-                            }
-                            template x-if="selectedBoats.length > 0" {
-                                div class="space-y-2" {
-                                    template x-for="boat in selectedBoats" x-bind:key="boat.id" {
-                                        div class="flex items-center justify-between p-2 bg-gray-50 dark:bg-slate-600 rounded" {
-                                            div class="flex-grow" {
-                                                div class="font-medium text-gray-900 dark:text-white" x-text="boat.name" {}
-                                                div class="text-sm text-gray-600 dark:text-gray-400" x-text="boat.type" {}
-                                                div x-html="boat.indicator" {}
-                                            }
-                                            button
-                                                type="button"
-                                                class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 font-bold"
-                                                x-on:click="selectedBoats = selectedBoats.filter(b => b.id !== boat.id)"
-                                            {
-                                                "✕"
-                                            }
+                                    select
+                                        name="use_scenario_id"
+                                        x-model="useScenarioId"
+                                        x-on:change="if (recordedAt === '' && scenarioDefaults[useScenarioId]) { const now = new Date(); recordedAt = now.toISOString().slice(0,11) + scenarioDefaults[useScenarioId] }"
+                                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-slate-600 dark:text-white"
+                                        required
+                                    {
+                                        @for scenario in scenarios {
+                                            option value=(scenario.id.as_int()) { (scenario.name) }
                                         }
                                     }
                                 }
+
+                                // Date/time picker
+                                div {
+                                    label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" {
+                                        "Date & Time (optional)"
+                                    }
+                                    input
+                                        type="datetime-local"
+                                        name="recorded_at"
+                                        x-model="recordedAt"
+                                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-slate-600 dark:text-white";
+                                }
+                            }
+
+                            // Server-rendered selected boats container
+                            div id="selected-boats-container" class="flex flex-col flex-grow" {
+                                (selected_boats_fragment(selected_boats))
                             }
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+/// Renders the selected boats panel interior as an HTMX fragment.
+/// Returned by add/remove session handlers and rendered inline on page load.
+pub fn selected_boats_fragment(boats: &[Boat]) -> Markup {
+    html! {
+        // OOB swap to update the count in the header
+        span id="selected-count" hx-swap-oob="true" class="text-sm font-normal text-gray-600 dark:text-gray-400" {
+            "(" (boats.len()) ")"
+        }
+
+        // Hidden inputs for form submission
+        @for boat in boats {
+            input type="hidden" name="boat_ids[]" value=(boat.id.as_int());
+        }
+
+        // Submit button
+        div class="pt-2 mb-4" {
+            button
+                type="submit"
+                class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled[boats.is_empty()]
+            {
+                "Record Boat Uses"
+            }
+        }
+
+        // Selected boats list
+        div class="flex-grow overflow-y-auto border-t border-gray-200 dark:border-gray-600 pt-3" {
+            @if boats.is_empty() {
+                p class="text-gray-500 dark:text-gray-400 text-center py-8 text-sm" {
+                    "No boats selected yet"
+                }
+            } @else {
+                div class="space-y-2" {
+                    @for boat in boats {
+                        (selected_boat_row(boat))
+                    }
+                }
+            }
+        }
+    }
+}
+
+fn selected_boat_row(boat: &Boat) -> Markup {
+    let boat_type = if let Some(bt) = boat.boat_type() {
+        format!("{} {}", boat.weight_class, bt)
+    } else {
+        boat.weight_class.to_string()
+    };
+
+    html! {
+        div class="flex items-center justify-between p-2 bg-gray-50 dark:bg-slate-600 rounded" {
+            div class="flex-grow" {
+                div class="font-medium text-gray-900 dark:text-white" { (boat.name) }
+                div class="text-sm text-gray-600 dark:text-gray-400" { (boat_type) }
+                (boat_indicator(
+                    boat.weight_class,
+                    boat.seat_count.count(),
+                    boat.oars_per_seat.count() == 2,
+                ))
+            }
+            button
+                type="button"
+                class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 font-bold"
+                hx-post=(format!("/api/batches/session/remove/{}", boat.id.as_int()))
+                hx-target="#selected-boats-container"
+                hx-swap="innerHTML"
+            {
+                "✕"
             }
         }
     }
@@ -290,23 +298,13 @@ fn boat_selectable_row(boat: &BoatAndStats) -> Markup {
     } else {
         boat.boat.weight_class.to_string()
     };
-    let indicator_svg = boat_indicator_raw(
-        boat.boat.weight_class,
-        boat.boat.seat_count.count(),
-        boat.boat.oars_per_seat.count() == 2,
-    );
 
     html! {
         div
             class="flex items-center justify-between p-2 bg-gray-50 dark:bg-slate-600 rounded hover:bg-gray-100 dark:hover:bg-slate-500 cursor-pointer transition"
-            x-on:click=(format!(
-                "if (!selectedBoats.find(b => b.id === {})) {{ selectedBoats.push({{ id: {}, name: '{}', type: '{}', indicator: '{}' }}) }}",
-                boat.boat.id.as_int(),
-                boat.boat.id.as_int(),
-                boat.boat.name.replace('\'', "\\'"),
-                boat_type.replace('\'', "\\'"),
-                indicator_svg.replace('\'', "\\'"),
-            ))
+            hx-post=(format!("/api/batches/session/add/{}", boat.boat.id.as_int()))
+            hx-target="#selected-boats-container"
+            hx-swap="innerHTML"
         {
             div class="flex-grow" {
                 div class="font-medium text-gray-900 dark:text-white" {
