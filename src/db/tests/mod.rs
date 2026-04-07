@@ -12,6 +12,7 @@ mod batch_events;
 mod boat_stats;
 mod issue_boat;
 mod use_event_boat;
+mod use_scenario;
 
 /// Seeded scenario IDs from the migration.
 fn masters_am_scenario_id() -> UseScenarioId { UseScenarioId::new(3) }
