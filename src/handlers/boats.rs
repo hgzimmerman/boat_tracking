@@ -20,6 +20,7 @@ use crate::{
 /// Handler for boat list page
 pub async fn boat_list_handler(
     State(state): State<AppState>,
+    hx_request: HxRequest,
 ) -> Result<Html<String>, StatusCode> {
     let conn = state.pool().get().await
         .map_err(|error| {
@@ -40,7 +41,8 @@ pub async fn boat_list_handler(
         })?;
 
     tracing::debug!(count = boats.len(), "Retrieved boats");
-    Ok(Html(templates::boats::boat_list_page(&boats).into_string()))
+    let content = templates::boats::boat_list_content(&boats);
+    Ok(super::maybe_page("Boats", content, hx_request))
 }
 
 /// Form data for creating/updating a boat

@@ -3,6 +3,7 @@ use axum::{
     response::Html,
     http::StatusCode,
 };
+use axum_htmx::HxRequest;
 use chrono::NaiveTime;
 use serde::Deserialize;
 
@@ -17,6 +18,7 @@ use crate::{
 /// Handler for scenario list page
 pub async fn scenario_list_handler(
     State(state): State<AppState>,
+    hx_request: HxRequest,
 ) -> Result<Html<String>, StatusCode> {
     let conn = state.pool().get().await
         .map_err(|error| {
@@ -36,7 +38,8 @@ pub async fn scenario_list_handler(
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
-    Ok(Html(templates::scenarios::list::scenario_list_page(&scenarios).into_string()))
+    let content = templates::scenarios::list::scenario_list_content(&scenarios);
+    Ok(super::maybe_page("Scenarios", content, hx_request))
 }
 
 /// Handler for new scenario form
@@ -61,6 +64,7 @@ fn parse_default_time(input: &Option<String>) -> Option<NaiveTime> {
 /// Handler for creating a new scenario
 pub async fn create_scenario_handler(
     State(state): State<AppState>,
+    hx_request: HxRequest,
     Form(input): Form<ScenarioFormInput>,
 ) -> Result<Html<String>, StatusCode> {
     let conn = state.pool().get().await
@@ -104,7 +108,8 @@ pub async fn create_scenario_handler(
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
-    Ok(Html(templates::scenarios::list::scenario_list_page(&scenarios).into_string()))
+    let content = templates::scenarios::list::scenario_list_content(&scenarios);
+    Ok(super::maybe_page("Scenarios", content, hx_request))
 }
 
 /// Handler for edit scenario form
@@ -137,6 +142,7 @@ pub async fn edit_scenario_handler(
 /// Handler for updating an existing scenario
 pub async fn update_scenario_handler(
     State(state): State<AppState>,
+    hx_request: HxRequest,
     Path(scenario_id): Path<UseScenarioId>,
     Form(input): Form<ScenarioFormInput>,
 ) -> Result<Html<String>, StatusCode> {
@@ -182,5 +188,6 @@ pub async fn update_scenario_handler(
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
-    Ok(Html(templates::scenarios::list::scenario_list_page(&scenarios).into_string()))
+    let content = templates::scenarios::list::scenario_list_content(&scenarios);
+    Ok(super::maybe_page("Scenarios", content, hx_request))
 }
