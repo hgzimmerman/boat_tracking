@@ -74,7 +74,9 @@ pub fn batch_list(batches: &[BatchAndCounts], scenarios: &[UseScenario]) -> Mark
                 }
                 script {
                     (maud::PreEscaped(r#"
+                        var expectedPath = null;
                         function positionTooltip(cell) {
+                            expectedPath = cell.getAttribute('hx-get');
                             var tip = document.getElementById('boats-tooltip');
                             var rect = cell.getBoundingClientRect();
                             tip.style.top = (rect.top + rect.height / 2) + 'px';
@@ -84,10 +86,16 @@ pub fn batch_list(batches: &[BatchAndCounts], scenarios: &[UseScenario]) -> Mark
                             tip.innerHTML = '';
                         }
                         function hideTooltip() {
+                            expectedPath = null;
                             var tip = document.getElementById('boats-tooltip');
                             tip.innerHTML = '';
                         }
                         document.addEventListener('scroll', hideTooltip, true);
+                        document.body.addEventListener('htmx:afterSwap', function(evt) {
+                            if (evt.detail.target.id === 'boats-tooltip' && evt.detail.requestConfig.path !== expectedPath) {
+                                evt.detail.target.innerHTML = '';
+                            }
+                        });
                     "#))
                 }
             }
@@ -113,14 +121,16 @@ fn batch_row(batch: &BatchAndCounts, scenario_names: &HashMap<UseScenarioId, &st
             td class="px-4 py-3 text-sm" {
                 (scenario_name)
             }
-            td class="px-4 py-3 text-sm text-right cursor-pointer"
-                hx-get=(format!("/api/batches/{batch_id}/boats"))
-                hx-trigger="mouseenter delay:300ms"
-                hx-target="#boats-tooltip"
-                hx-swap="innerHTML"
+            td class="px-4 py-3 text-sm text-right"
                 onmouseleave="hideTooltip()"
             {
-                span class="px-2 py-1" onmouseenter="positionTooltip(this)" {
+                span class="pl-6 py-3 -my-3 cursor-pointer"
+                    hx-get=(format!("/api/batches/{batch_id}/boats"))
+                    hx-trigger="mouseenter delay:300ms"
+                    hx-target="#boats-tooltip"
+                    hx-swap="innerHTML"
+                    onmouseenter="positionTooltip(this)"
+                {
                     (batch.use_counts)
                 }
             }
