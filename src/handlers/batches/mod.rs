@@ -275,7 +275,10 @@ pub struct BoatSearchInput {
 /// Handler for listing all boats (HTMX endpoint)
 pub async fn list_boats_handler(
     State(state): State<AppState>,
+    jar: SignedCookieJar,
 ) -> Result<Html<String>, StatusCode> {
+    let selected = read_selected_boats(&jar);
+
     let conn = state.pool().get().await
         .map_err(|error| {
             tracing::error!(?error, "Failed to get database connection");
@@ -294,14 +297,20 @@ pub async fn list_boats_handler(
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
+    let boats: Vec<_> = boats.into_iter()
+        .filter(|boat| !selected.boat_ids.contains(&boat.boat.id))
+        .collect();
+
     Ok(Html(templates::batches::creation::boat_search_results(&boats, None).into_string()))
 }
 
 /// Handler for searching boats (HTMX endpoint)
 pub async fn search_boats_handler(
     State(state): State<AppState>,
+    jar: SignedCookieJar,
     Form(input): Form<BoatSearchInput>,
 ) -> Result<Html<String>, StatusCode> {
+    let selected = read_selected_boats(&jar);
 
     let conn = state.pool().get().await
         .map_err(|error| {
@@ -378,7 +387,10 @@ pub async fn search_boats_handler(
                 })
                 .unwrap_or(true);
 
-            matches_search && matches_weight && matches_oars && matches_cox && matches_boat_type
+            // Exclude already-selected boats
+            let not_selected = !selected.boat_ids.contains(&boat.boat.id);
+
+            matches_search && matches_weight && matches_oars && matches_cox && matches_boat_type && not_selected
         })
         .collect();
 
@@ -393,7 +405,7 @@ pub async fn add_boat_to_session_handler(
     State(state): State<AppState>,
     jar: SignedCookieJar,
     Path(boat_id): Path<BoatId>,
-) -> Result<(SignedCookieJar, Html<String>), StatusCode> {
+) -> Result<impl IntoResponse, StatusCode> {
     let mut selected = read_selected_boats(&jar);
     selected.add(boat_id);
     let updated_jar = write_selected_boats(jar, &selected);
@@ -416,7 +428,11 @@ pub async fn add_boat_to_session_handler(
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
-    Ok((updated_jar, Html(templates::batches::creation::selected_boats_fragment(&boats).into_string())))
+    Ok((
+        updated_jar,
+        [("HX-Trigger", "boats-changed")],
+        Html(templates::batches::creation::selected_boats_fragment(&boats).into_string()),
+    ))
 }
 
 /// Handler for removing a boat from the session (HTMX endpoint)
@@ -424,7 +440,7 @@ pub async fn remove_boat_from_session_handler(
     State(state): State<AppState>,
     jar: SignedCookieJar,
     Path(boat_id): Path<BoatId>,
-) -> Result<(SignedCookieJar, Html<String>), StatusCode> {
+) -> Result<impl IntoResponse, StatusCode> {
     let mut selected = read_selected_boats(&jar);
     selected.remove(boat_id);
     let updated_jar = write_selected_boats(jar, &selected);
@@ -450,7 +466,11 @@ pub async fn remove_boat_from_session_handler(
             })?
     };
 
-    Ok((updated_jar, Html(templates::batches::creation::selected_boats_fragment(&boats).into_string())))
+    Ok((
+        updated_jar,
+        [("HX-Trigger", "boats-changed")],
+        Html(templates::batches::creation::selected_boats_fragment(&boats).into_string()),
+    ))
 }
 
 /// Handler for batch detail page
