@@ -60,7 +60,7 @@ pub fn batch_list(batches: &[BatchAndCounts], scenarios: &[UseScenario]) -> Mark
                             var tip = document.getElementById('boats-tooltip');
                             var rect = cell.getBoundingClientRect();
                             tip.style.top = (rect.bottom + 4) + 'px';
-                            tip.style.right = (window.innerWidth - rect.right) + 'px';
+                            tip.style.right = (window.innerWidth - rect.right + 40) + 'px';
                             tip.style.left = '';
                             tip.innerHTML = '';
                         }
