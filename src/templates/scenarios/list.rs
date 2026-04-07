@@ -1,6 +1,14 @@
 use maud::{html, Markup};
+use chrono::NaiveTime;
 use crate::db::use_scenario::UseScenario;
 use crate::templates::components::common::{page_content, page_header, empty_state, BTN_PRIMARY};
+
+/// Format an HH:MM time string to 12-hour format with AM/PM.
+fn format_time_12h(time: &str) -> String {
+    NaiveTime::parse_from_str(time, "%H:%M")
+        .map(|t| t.format("%-I:%M %p").to_string())
+        .unwrap_or_else(|_| time.to_string())
+}
 
 /// Scenario list page
 pub fn scenario_list_page(scenarios: &[UseScenario]) -> Markup {
@@ -34,7 +42,7 @@ pub fn scenario_list_page(scenarios: &[UseScenario]) -> Markup {
                                     }
                                     td class="px-4 py-3 text-sm" {
                                         @if let Some(ref time) = scenario.default_time {
-                                            (time)
+                                            (format_time_12h(time))
                                         } @else {
                                             span class="text-gray-400" { "-" }
                                         }

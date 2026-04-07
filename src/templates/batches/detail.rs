@@ -52,7 +52,7 @@ pub fn batch_detail_content(
                             "Date & Time"
                         }
                         p class="text-lg text-gray-900 dark:text-white" {
-                            (batch.recorded_at.with_timezone(&chrono::Local).format("%Y-%m-%d %H:%M"))
+                            (batch.recorded_at.with_timezone(&chrono::Local).format("%Y-%m-%d %-I:%M %p"))
                         }
                     }
                     div {

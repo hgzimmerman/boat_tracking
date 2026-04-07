@@ -68,7 +68,7 @@ fn batch_row(batch: &BatchAndCounts, scenario_names: &HashMap<UseScenarioId, &st
             td class="px-4 py-3 text-sm" {
                 a class="text-blue-600 hover:underline dark:text-blue-400 font-medium"
                   href=(format!("/batches/{}", batch_id)) {
-                    (batch.batch.recorded_at.with_timezone(&chrono::Local).format("%Y-%m-%d %H:%M"))
+                    (batch.batch.recorded_at.with_timezone(&chrono::Local).format("%Y-%m-%d %-I:%M %p"))
                 }
             }
             td class="px-4 py-3 text-sm" {
