@@ -13,12 +13,17 @@ fn available_port() -> u16 {
         .port()
 }
 
-/// Returns the path to the built Tauri binary.
-fn app_binary_path() -> std::path::PathBuf {
-    let manifest_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
-    let target_dir = manifest_dir.parent().unwrap().join("target").join("debug");
+/// Returns the project root directory (parent of the e2e crate).
+fn project_root() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .unwrap()
+        .to_path_buf()
+}
 
-    let binary = target_dir.join("boat_tracking");
+/// Returns the path to the built Tauri binary.
+fn app_binary_path() -> PathBuf {
+    let binary = project_root().join("target").join("debug").join("boat_tracking");
     assert!(
         binary.exists(),
         "App binary not found at {binary:?}. Run `cargo build --features tauri` first."
@@ -46,6 +51,22 @@ impl TestInstance {
         // Ensure no leftover DB from a previous run.
         let _ = std::fs::remove_file(&db_path);
 
+        // Copy public/ next to the binary so the exe-relative static file
+        // lookup works the same way it does in a real deployment.
+        let binary = app_binary_path();
+        let target_public = binary.parent().unwrap().join("public");
+        let source_public = project_root().join("public");
+        if !target_public.exists() {
+            let _ = std::fs::create_dir(&target_public);
+            if let Ok(entries) = std::fs::read_dir(&source_public) {
+                for entry in entries.flatten() {
+                    if entry.file_type().map(|t| t.is_file()).unwrap_or(false) {
+                        let _ = std::fs::copy(entry.path(), target_public.join(entry.file_name()));
+                    }
+                }
+            }
+        }
+
         let tauri_driver = Command::new("tauri-driver")
             .arg("--port")
             .arg(driver_port.to_string())
@@ -53,6 +74,7 @@ impl TestInstance {
             .arg(native_port.to_string())
             .env("PORT", app_port.to_string())
             .env("DATABASE_URL", db_path.to_str().unwrap())
+            .env("FULLSCREEN", "false")
             .stdout(std::process::Stdio::null())
             .stderr(std::process::Stdio::null())
             .spawn()

@@ -58,11 +58,12 @@ async fn main() -> Result<(), Error> {
             .setup(move |app| {
                 use tauri::Manager;
                 if let Some(window) = app.get_webview_window("main") {
-                    if port != 3000 {
-                        let url: tauri::Url = format!("http://localhost:{port}").parse().unwrap();
-                        window.navigate(url)?;
-                        window.set_fullscreen(false)?;
-                    }
+                    let url: tauri::Url = format!("http://localhost:{port}").parse().unwrap();
+                    window.navigate(url)?;
+                    let fullscreen = std::env::var("FULLSCREEN")
+                        .map(|v| v != "false" && v != "0")
+                        .unwrap_or(true);
+                    window.set_fullscreen(fullscreen)?;
                 }
                 Ok(())
             })
