@@ -78,9 +78,6 @@ async fn main() -> Result<(), Error> {
                 Some(vec![]),
             ))
             .setup(move |app| {
-                use tauri_plugin_autostart::ManagerExt;
-                let autostart = app.autolaunch();
-                let _ = autostart.enable();
                 use tauri::Manager;
                 if let Some(window) = app.get_webview_window("main") {
                     let url: tauri::Url = format!("http://localhost:{port}").parse().unwrap();
