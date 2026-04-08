@@ -35,9 +35,5 @@
       }
     }
   },
-  "plugins": {
-    "autostart": {
-      "allowAutostart": true
-    }
-  }
+  "plugins": {}
 }
