@@ -26,17 +26,23 @@ jobs:
       - name: Build Tailwind CSS
         run: ./tailwindcss-linux-x64 -i input.css -o public/tailwind.css --minify
 
-      - name: Stage artifact
+      - name: Package artifact
         run: |
-          mkdir -p staging
-          cp target/release/boat_tracking staging/
-          cp -r public staging/
+          mkdir -p staging/boat-tracking-linux
+          cp target/release/boat_tracking staging/boat-tracking-linux/
+          cp -r public staging/boat-tracking-linux/
+          tar -czf boat-tracking-linux.tar.gz -C staging boat-tracking-linux
 
-      - name: Upload artifact
+      - name: Upload artifact to workflow
         uses: actions/upload-artifact@v5
         with:
           name: boat-tracking-linux
-          path: staging/
+          path: staging/boat-tracking-linux/
+
+      - name: Upload artifact to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" boat-tracking-linux.tar.gz
 
   build-windows-tauri:
     runs-on: windows-latest
@@ -54,14 +60,20 @@ jobs:
       - name: Build Tauri app
         run: cargo build --release --features tauri
 
-      - name: Stage artifact
+      - name: Package artifact
         run: |
-          New-Item -ItemType Directory -Force staging
-          Copy-Item target/release/boat_tracking.exe staging/
-          Copy-Item -Recurse public staging/
+          New-Item -ItemType Directory -Force staging/boat-tracking-windows
+          Copy-Item target/release/boat_tracking.exe staging/boat-tracking-windows/
+          Copy-Item -Recurse public staging/boat-tracking-windows/
+          Compress-Archive -Path staging/boat-tracking-windows -DestinationPath boat-tracking-windows.zip
 
-      - name: Upload artifact
+      - name: Upload artifact to workflow
         uses: actions/upload-artifact@v5
         with:
           name: boat-tracking-windows
-          path: staging/
+          path: staging/boat-tracking-windows/
+
+      - name: Upload artifact to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" boat-tracking-windows.zip
