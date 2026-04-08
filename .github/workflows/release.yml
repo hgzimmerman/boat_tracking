@@ -54,29 +54,27 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
 
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli --locked
+
       - name: Download Tailwind CSS standalone CLI
         run: Invoke-WebRequest -Uri "https://github.com/tailwindlabs/tailwindcss/releases/download/v3.4.19/tailwindcss-windows-x64.exe" -OutFile "tailwindcss.exe"
 
       - name: Build Tailwind CSS
         run: .\tailwindcss.exe -i input.css -o public/tailwind.css --minify
 
-      - name: Build Tauri app
-        run: cargo build --release --features tauri
+      - name: Build Tauri installer
+        run: cargo tauri build
 
-      - name: Package artifact
-        run: |
-          New-Item -ItemType Directory -Force staging/boat-tracking-windows
-          Copy-Item target/release/boat_tracking.exe staging/boat-tracking-windows/
-          Copy-Item -Recurse public staging/boat-tracking-windows/
-          Compress-Archive -Path staging/boat-tracking-windows -DestinationPath boat-tracking-windows.zip
-
-      - name: Upload artifact to workflow
+      - name: Upload installer to workflow
         uses: actions/upload-artifact@v5
         with:
-          name: boat-tracking-windows
-          path: staging/boat-tracking-windows/
+          name: boat-tracking-windows-installer
+          path: target/release/bundle/nsis/*.exe
 
-      - name: Upload artifact to release
+      - name: Upload installer to release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" boat-tracking-windows.zip
+        run: |
+          $installer = Get-ChildItem target/release/bundle/nsis/*.exe | Select-Object -First 1
+          gh release upload "${{ github.event.release.tag_name }}" $installer.FullName

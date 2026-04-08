@@ -39,5 +39,8 @@ jobs:
       - name: Build Tailwind CSS
         run: .\tailwindcss.exe -i input.css -o public/tailwind.css --minify
 
-      - name: Build Tauri app
-        run: cargo build --release --features tauri
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli --locked
+
+      - name: Build Tauri installer
+        run: cargo tauri build

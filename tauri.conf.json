@@ -21,10 +21,23 @@
   },
   "bundle": {
     "active": true,
+    "targets": ["nsis"],
+    "resources": {
+      "public/*": "public/"
+    },
     "icon": [
       "icons/icon.ico",
       "icons/icon.png"
-    ]
+    ],
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser"
+      }
+    }
   },
-  "plugins": {}
+  "plugins": {
+    "autostart": {
+      "allowAutostart": true
+    }
+  }
 }
