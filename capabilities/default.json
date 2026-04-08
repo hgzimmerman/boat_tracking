@@ -2,5 +2,5 @@
   "identifier": "default",
   "description": "Default permissions for the main window",
   "windows": ["main"],
-  "permissions": ["core:default"]
+  "permissions": ["core:default", "autostart:allow-enable", "autostart:allow-is-enabled"]
 }

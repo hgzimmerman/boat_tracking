@@ -7,7 +7,25 @@ use tracing_subscriber::prelude::*;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-    let conn_string = std::env::var("DATABASE_URL").unwrap_or_else(|_| "db.sql".to_string());
+    let conn_string = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
+        #[cfg(all(feature = "tauri", target_os = "windows"))]
+        {
+            // On Windows, installed apps can't write next to the executable,
+            // so put the database in %LOCALAPPDATA%.
+            directories::ProjectDirs::from("", "", "boat_tracking")
+                .map(|dirs| {
+                    let data_dir = dirs.data_local_dir();
+                    std::fs::create_dir_all(data_dir).expect("should create data directory");
+                    data_dir.join("db.sql").to_string_lossy().into_owned()
+                })
+                .unwrap_or_else(|| "db.sql".to_string())
+        }
+        #[cfg(not(all(feature = "tauri", target_os = "windows")))]
+        {
+            "db.sql".to_string()
+        }
+    });
+    tracing::info!(?conn_string, "Using database");
     let port: u16 = std::env::var("PORT")
         .ok()
         .and_then(|p| p.parse().ok())
@@ -55,7 +73,14 @@ async fn main() -> Result<(), Error> {
         });
 
         tauri::Builder::default()
+            .plugin(tauri_plugin_autostart::init(
+                tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+                Some(vec![]),
+            ))
             .setup(move |app| {
+                use tauri_plugin_autostart::ManagerExt;
+                let autostart = app.autolaunch();
+                let _ = autostart.enable();
                 use tauri::Manager;
                 if let Some(window) = app.get_webview_window("main") {
                     let url: tauri::Url = format!("http://localhost:{port}").parse().unwrap();
