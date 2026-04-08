@@ -72,12 +72,26 @@ async fn main() -> Result<(), Error> {
                 .unwrap();
         });
 
+        let args: Vec<String> = std::env::args().collect();
+        let enable_autostart = args.iter().any(|a| a == "--enable-autostart");
+        let disable_autostart = args.iter().any(|a| a == "--disable-autostart");
+
         tauri::Builder::default()
             .plugin(tauri_plugin_autostart::init(
                 tauri_plugin_autostart::MacosLauncher::LaunchAgent,
                 Some(vec![]),
             ))
             .setup(move |app| {
+                use tauri_plugin_autostart::ManagerExt;
+                let autostart = app.autolaunch();
+                if enable_autostart {
+                    autostart.enable()?;
+                    tracing::info!("Autostart enabled");
+                } else if disable_autostart {
+                    autostart.disable()?;
+                    tracing::info!("Autostart disabled");
+                }
+
                 use tauri::Manager;
                 if let Some(window) = app.get_webview_window("main") {
                     let url: tauri::Url = format!("http://localhost:{port}").parse().unwrap();
