@@ -18,6 +18,8 @@ pub fn new_issue_page(boats: &[Boat]) -> Markup {
 
             (form_card("Report New Issue", html! {}, html! {
                 form
+                    action="/issues"
+                    method="post"
                     hx-post="/issues"
                     hx-target="#content"
                     class="space-y-4"

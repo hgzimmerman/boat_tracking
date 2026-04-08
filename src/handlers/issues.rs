@@ -1,7 +1,7 @@
 use axum::{
     extract::{Query, State, Path},
-    response::{Html, IntoResponse, Response},
-    http::{StatusCode, header},
+    response::{Html, IntoResponse},
+    http::{StatusCode, HeaderMap},
     Form,
 };
 use axum_htmx::HxRequest;
@@ -96,6 +96,7 @@ pub struct IssueFormInput {
 /// Handler for creating a new issue
 pub async fn create_issue_handler(
     State(state): State<AppState>,
+    hx_request: HxRequest,
     Form(input): Form<IssueFormInput>,
 ) -> Result<impl IntoResponse, Html<String>> {
     // Validate note is not empty
@@ -145,19 +146,50 @@ pub async fn create_issue_handler(
             Html("<p>Failed to create issue</p>".to_string())
         })?;
 
-    // Redirect to issue list using HX-Redirect header
-    let mut response = Response::new(String::new());
-    response.headers_mut().insert(
-        header::HeaderName::from_static("hx-redirect"),
-        header::HeaderValue::from_static("/issues")
-    );
+    render_issue_list(&state, hx_request).await
+}
 
-    Ok(response)
+/// Fetches and renders the issue list, for reuse after mutations.
+async fn render_issue_list(
+    state: &AppState,
+    hx_request: HxRequest,
+) -> Result<(HeaderMap, Html<String>), Html<String>> {
+    let conn = state.pool().get().await
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get database connection");
+            Html("<p>Database connection error</p>".to_string())
+        })?;
+
+    let (issues, total_count) = conn
+        .interact(|conn| {
+            let issues = Issue::get_all_issues_with_boats(conn, DbOrdering::Desc, 0, 50)?;
+            let total_count = Issue::count_all_issues(conn)?;
+            Ok::<_, diesel::result::Error>((issues, total_count))
+        })
+        .await
+        .map_err(|error| {
+            tracing::error!(?error, "Database interaction error");
+            Html("<p>Database error</p>".to_string())
+        })?
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get issues");
+            Html("<p>Failed to get issues</p>".to_string())
+        })?;
+
+    let meta = super::PaginationParams { page: 1, per_page: 50 }.metadata(total_count);
+    let mut headers = HeaderMap::new();
+    headers.insert("HX-Push-Url", "/issues".parse().unwrap());
+
+    Ok((
+        headers,
+        super::maybe_page("Issues", templates::issues::issue_list_content(&issues, &meta), hx_request),
+    ))
 }
 
 /// Handler for resolving an issue
 pub async fn resolve_issue_handler(
     State(state): State<AppState>,
+    hx_request: HxRequest,
     Path(issue_id): Path<IssueId>,
 ) -> Result<impl IntoResponse, Html<String>> {
     let conn = state.pool().get().await
@@ -166,8 +198,7 @@ pub async fn resolve_issue_handler(
             Html("<p>Database connection error</p>".to_string())
         })?;
 
-    let _issue = conn
-        .interact(move |conn| Issue::resolve_issue(conn, issue_id))
+    conn.interact(move |conn| Issue::resolve_issue(conn, issue_id))
         .await
         .map_err(|error| {
             tracing::error!(?error, "Database interaction error");
@@ -178,19 +209,13 @@ pub async fn resolve_issue_handler(
             Html("<p>Failed to resolve issue</p>".to_string())
         })?;
 
-    // Redirect to issue list using HX-Redirect header
-    let mut response = Response::new(String::new());
-    response.headers_mut().insert(
-        header::HeaderName::from_static("hx-redirect"),
-        header::HeaderValue::from_static("/issues")
-    );
-
-    Ok(response)
+    render_issue_list(&state, hx_request).await
 }
 
 /// Handler for unresolving an issue
 pub async fn unresolve_issue_handler(
     State(state): State<AppState>,
+    hx_request: HxRequest,
     Path(issue_id): Path<IssueId>,
 ) -> Result<impl IntoResponse, Html<String>> {
     let conn = state.pool().get().await
@@ -199,8 +224,7 @@ pub async fn unresolve_issue_handler(
             Html("<p>Database connection error</p>".to_string())
         })?;
 
-    let _issue = conn
-        .interact(move |conn| Issue::unresolve_issue(conn, issue_id))
+    conn.interact(move |conn| Issue::unresolve_issue(conn, issue_id))
         .await
         .map_err(|error| {
             tracing::error!(?error, "Database interaction error");
@@ -211,12 +235,5 @@ pub async fn unresolve_issue_handler(
             Html("<p>Failed to unresolve issue</p>".to_string())
         })?;
 
-    // Redirect to issue list using HX-Redirect header
-    let mut response = Response::new(String::new());
-    response.headers_mut().insert(
-        header::HeaderName::from_static("hx-redirect"),
-        header::HeaderValue::from_static("/issues")
-    );
-
-    Ok(response)
+    render_issue_list(&state, hx_request).await
 }

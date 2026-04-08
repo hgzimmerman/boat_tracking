@@ -174,6 +174,7 @@ pub struct BatchFormInput {
 /// Handler for creating a new batch
 pub async fn create_batch_handler(
     State(state): State<AppState>,
+    hx_request: HxRequest,
     jar: SignedCookieJar,
     QsForm(input): QsForm<BatchFormInput>,
 ) -> Result<impl IntoResponse, Html<String>> {
@@ -219,19 +220,33 @@ pub async fn create_batch_handler(
             Html("<p>Failed to create batch</p>".to_string())
         })?;
 
-    // Clear the selected boats cookie and redirect to batch list
+    // Clear the selected boats cookie and return the batch list
     let cleared_jar = clear_selected_boats(jar);
 
-    use axum::response::Response;
-    use axum::http::header;
+    let (batches, scenarios, total_count) = conn
+        .interact(|conn| {
+            let batches = UseEventBatch::get_most_recent_batches_and_their_use_count(conn, None, 0, 50)?;
+            let scenarios = UseScenario::get_all(conn)?;
+            let total_count = UseEventBatch::count_batches(conn, None)?;
+            Ok::<_, diesel::result::Error>((batches, scenarios, total_count))
+        })
+        .await
+        .map_err(|error| {
+            tracing::error!(?error, "Database interaction error");
+            Html("<p>Database error</p>".to_string())
+        })?
+        .map_err(|error| {
+            tracing::error!(?error, "Failed to get batches");
+            Html("<p>Failed to get batches</p>".to_string())
+        })?;
 
-    let mut response = Response::new(String::new());
-    response.headers_mut().insert(
-        header::HeaderName::from_static("hx-redirect"),
-        header::HeaderValue::from_static("/batches")
-    );
+    let meta = super::PaginationParams { page: 1, per_page: 50 }.metadata(total_count);
+    let content = templates::batches::list::batch_list_content(&batches, &scenarios, &meta);
 
-    Ok((cleared_jar, response))
+    let mut headers = axum::http::HeaderMap::new();
+    headers.insert("HX-Push-Url", "/batches".parse().unwrap());
+
+    Ok((cleared_jar, headers, super::maybe_page("Boat Uses", content, hx_request)))
 }
 
 /// Cox filter for boat search

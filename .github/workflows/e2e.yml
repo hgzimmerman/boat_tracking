@@ -1,0 +1,35 @@
+name: E2E Tests
+
+on:
+  pull_request:
+    branches: [master]
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev webkit2gtk-driver xvfb
+
+      - name: Install tauri-driver
+        run: cargo install tauri-driver --locked
+
+      - name: Download Tailwind CSS standalone CLI
+        run: |
+          curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/download/v3.4.19/tailwindcss-linux-x64
+          chmod +x tailwindcss-linux-x64
+
+      - name: Build Tailwind CSS
+        run: ./tailwindcss-linux-x64 -i input.css -o public/tailwind.css --minify
+
+      - name: Build app with Tauri
+        run: cargo build --features tauri
+
+      - name: Run E2E tests
+        run: xvfb-run cargo test -p boat_tracking_e2e

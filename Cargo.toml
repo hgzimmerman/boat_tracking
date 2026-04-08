@@ -1,3 +1,7 @@
+[workspace]
+members = [".", "e2e"]
+default-members = ["."]
+
 [package]
 name = "boat_tracking"
 version = "0.1.0"
