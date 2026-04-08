@@ -23,16 +23,20 @@ pub fn build_router(conn_string: &str) -> Router {
             get(api::export_boats_csv_handler),
         )
         .fallback_service({
-            let exe_relative = std::env::current_exe()
+            let exe_dir = std::env::current_exe()
                 .expect("should resolve current exe")
                 .parent()
                 .expect("executable must have a parent directory")
-                .join("public");
-            let public_dir = if exe_relative.is_dir() {
-                exe_relative
-            } else {
-                std::path::PathBuf::from("public")
-            };
+                .to_path_buf();
+            // Check in order: next to exe, Tauri resource dir, CWD
+            let public_dir = [
+                exe_dir.join("public"),
+                exe_dir.join("resources").join("public"),
+            ]
+            .into_iter()
+            .find(|p| p.is_dir())
+            .unwrap_or_else(|| std::path::PathBuf::from("public"));
+            tracing::info!(?public_dir, "Serving static files");
             tower_http::services::ServeDir::new(public_dir)
         })
         .with_state(state)
