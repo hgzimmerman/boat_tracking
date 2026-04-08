@@ -7,7 +7,7 @@ use tracing_subscriber::prelude::*;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-    setup_logging()?;
+    let _log_guard = setup_logging()?;
 
     let conn_string = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
         #[cfg(all(feature = "tauri", target_os = "windows"))]
@@ -119,7 +119,7 @@ async fn main() -> Result<(), Error> {
 }
 
 
-fn setup_logging() -> Result<(), Error>{
+fn setup_logging() -> Result<tracing_appender::non_blocking::WorkerGuard, Error> {
     let stdout_layer = tracing_subscriber::fmt::layer()
         .with_ansi(false)
         .with_writer(std::io::stdout)
@@ -135,7 +135,7 @@ fn setup_logging() -> Result<(), Error>{
         RollingConditionBasic::new().max_size(10 * 1024 * 1024), // 10 MiB
         5, // keep up to 5 rotated files
     )?;
-    let (non_blocking, _guard) = tracing_appender::non_blocking(log_file);
+    let (non_blocking, guard) = tracing_appender::non_blocking(log_file);
     let file_layer = tracing_subscriber::fmt::layer()
         .with_ansi(false)
         .with_writer(non_blocking)
@@ -145,5 +145,5 @@ fn setup_logging() -> Result<(), Error>{
         .with(stdout_layer)
         .with(file_layer)
         .init();
-    Ok(())
+    Ok(guard)
 }
